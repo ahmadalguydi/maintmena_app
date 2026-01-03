@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Clock, Briefcase, AlertCircle, TrendingUp, Mail } from 'lucide-react';
+import { ArrowLeft, User, Clock, Briefcase, AlertCircle, TrendingUp, Mail, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +21,7 @@ const Login = ({
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
@@ -223,30 +224,30 @@ const Login = ({
     }
   };
   return <div className="min-h-screen bg-paper text-ink" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <header className="border-b border-rule py-4">
-        <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
-          <Link to="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="w-4 h-4" />
-              {currentLanguage === 'ar' ? 'العودة للرئيسية' : 'Back to Home'}
-            </Button>
-          </Link>
-          <div className="text-masthead">MaintMENA</div>
-        </div>
-      </header>
+    {/* Header */}
+    <header className="border-b border-rule py-4">
+      <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
+        <Link to="/">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+            {currentLanguage === 'ar' ? 'العودة للرئيسية' : 'Back to Home'}
+          </Button>
+        </Link>
+        <div className="text-masthead">MaintMENA</div>
+      </div>
+    </header>
 
-      <main className="py-16">
-        <div className="max-w-5xl mx-auto px-4">
-          {/* Hero Section */}
-          <motion.div initial={{
+    <main className="py-16">
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Hero Section */}
+        <motion.div initial={{
           opacity: 0,
           y: 20
         }} animate={{
           opacity: 1,
           y: 0
         }} className="text-center mb-12">
-            <motion.div initial={{
+          <motion.div initial={{
             scale: 0
           }} animate={{
             scale: 1
@@ -255,79 +256,84 @@ const Login = ({
             type: "spring",
             stiffness: 200
           }} className="mb-6">
-              <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto">
-                <User className="w-8 h-8 text-accent-foreground" />
-              </div>
-            </motion.div>
-            
-            <h1 className="text-headline-1 mb-4">{content[currentLanguage].title}</h1>
-            <p className="text-dek mb-4">{content[currentLanguage].subtitle}</p>
-            
-            <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto">
-              {emailNotConfirmed && <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Mail className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-ink mb-1">
-                        {content[currentLanguage].emailNotVerified}
-                      </h4>
-                      <p className="text-sm text-byline mb-3">
-                        {content[currentLanguage].emailNotVerifiedDesc}
-                      </p>
-                      <Button type="button" variant="outline" size="sm" onClick={handleResendVerification} disabled={resendingEmail} className="w-full">
-                        {resendingEmail ? content[currentLanguage].resending : content[currentLanguage].resendVerification}
-                      </Button>
-                    </div>
-                  </div>
-                </div>}
+            <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto">
+              <User className="w-8 h-8 text-accent-foreground" />
+            </div>
+          </motion.div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-ink mb-2">
-                  {currentLanguage === 'en' ? 'Email' : 'البريد الإلكتروني'}
-                </label>
-                <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-3 border border-ink/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-paper" placeholder={currentLanguage === 'en' ? 'your@email.com' : 'بريدك@الإلكتروني.com'} />
-              </div>
+          <h1 className="text-headline-1 mb-4">{content[currentLanguage].title}</h1>
+          <p className="text-dek mb-4">{content[currentLanguage].subtitle}</p>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-ink mb-2">
-                  {currentLanguage === 'en' ? 'Password' : 'كلمة المرور'}
-                </label>
-                <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-3 border border-ink/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-paper" placeholder={currentLanguage === 'en' ? 'Enter your password' : 'أدخل كلمة المرور'} />
-              </div>
-
-              <button type="submit" disabled={isSubmitting} className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                {isSubmitting ? currentLanguage === 'en' ? 'Signing in...' : 'جاري تسجيل الدخول...' : currentLanguage === 'en' ? 'Sign In' : 'تسجيل الدخول'}
-              </button>
-            </form>
-
-            {/* Prominent Sign Up Card */}
-            <div className="mt-8 p-6 rounded-lg bg-accent/10 border border-accent/20">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto">
+            {emailNotConfirmed && <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-ink mb-2">
-                    {currentLanguage === 'en' ? 'New to MaintMENA?' : 'جديد في مينت مينا؟'}
-                  </h3>
-                  <p className="text-sm text-ink/70 mb-4">
-                    {currentLanguage === 'en' ? 'Join thousands of buyers and sellers connecting on our trusted platform. Get started in minutes.' : 'انضم لآلاف المشترين والبائعين المتواصلين على منصتنا الموثوقة. ابدأ خلال دقائق.'}
+                  <h4 className="font-semibold text-ink mb-1">
+                    {content[currentLanguage].emailNotVerified}
+                  </h4>
+                  <p className="text-sm text-byline mb-3">
+                    {content[currentLanguage].emailNotVerifiedDesc}
                   </p>
-                  <Link to="/signup-choice">
-                    <Button variant="default" className="w-full">
-                      {currentLanguage === 'en' ? 'Create Your Account' : 'أنشئ حسابك'}
-                    </Button>
-                  </Link>
+                  <Button type="button" variant="outline" size="sm" onClick={handleResendVerification} disabled={resendingEmail} className="w-full">
+                    {resendingEmail ? content[currentLanguage].resending : content[currentLanguage].resendVerification}
+                  </Button>
                 </div>
+              </div>
+            </div>}
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-ink mb-2">
+                {currentLanguage === 'en' ? 'Email' : 'البريد الإلكتروني'}
+              </label>
+              <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-3 border border-ink/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-paper" placeholder={currentLanguage === 'en' ? 'your@email.com' : 'بريدك@الإلكتروني.com'} />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-ink mb-2">
+                {currentLanguage === 'en' ? 'Password' : 'كلمة المرور'}
+              </label>
+              <div className="relative">
+                <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required className={`w-full px-4 py-3 border border-ink/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-paper ${currentLanguage === 'ar' ? 'pl-10' : 'pr-10'}`} placeholder={currentLanguage === 'en' ? 'Enter your password' : 'أدخل كلمة المرور'} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className={`absolute top-1/2 -translate-y-1/2 text-ink/50 hover:text-ink ${currentLanguage === 'ar' ? 'left-3' : 'right-3'}`}>
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
-            
-          </motion.div>
-        </div>
-      </main>
-    </div>;
+            <button type="submit" disabled={isSubmitting} className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {isSubmitting ? currentLanguage === 'en' ? 'Signing in...' : 'جاري تسجيل الدخول...' : currentLanguage === 'en' ? 'Sign In' : 'تسجيل الدخول'}
+            </button>
+          </form>
+
+          {/* Prominent Sign Up Card */}
+          <div className="mt-8 p-6 rounded-lg bg-accent/10 border border-accent/20">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-ink mb-2">
+                  {currentLanguage === 'en' ? 'New to MaintMENA?' : 'جديد في مينت مينا؟'}
+                </h3>
+                <p className="text-sm text-ink/70 mb-4">
+                  {currentLanguage === 'en' ? 'Join thousands of buyers and sellers connecting on our trusted platform. Get started in minutes.' : 'انضم لآلاف المشترين والبائعين المتواصلين على منصتنا الموثوقة. ابدأ خلال دقائق.'}
+                </p>
+                <Link to="/signup-choice">
+                  <Button variant="default" className="w-full">
+                    {currentLanguage === 'en' ? 'Create Your Account' : 'أنشئ حسابك'}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+
+        </motion.div>
+      </div>
+    </main>
+  </div>;
 };
 export default Login;

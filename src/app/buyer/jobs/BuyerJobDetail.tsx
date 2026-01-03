@@ -353,6 +353,8 @@ export const BuyerJobDetail = ({ currentLanguage }: BuyerJobDetailProps) => {
     .replace(/\[تاريخ مرن\]/g, '')
     .replace(/\[Flexible Time\]/g, '')
     .replace(/\[وقت مرن\]/g, '')
+    .replace(/Time Window: \w+/gi, '')
+    .replace(/\n\nTime Window: \w+/gi, '')
     .trim();
 
   const timelineSteps = [

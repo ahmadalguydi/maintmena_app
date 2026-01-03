@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface LoginProps {
@@ -19,6 +19,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const content = {
     en: {
@@ -50,7 +51,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
     setLoading(true);
 
     const { error } = await signIn(email, password, currentLanguage);
-    
+
     if (!error) {
       // Check for pending action and redirect accordingly
       const pendingActionStr = localStorage.getItem('pendingAction');
@@ -59,7 +60,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
           const pendingAction = JSON.parse(pendingActionStr);
           // Clear the pending action flag but keep form data
           localStorage.removeItem('pendingAction');
-          
+
           if (pendingAction.type === 'booking' && pendingAction.returnPath) {
             // Redirect to vendor profile to continue booking
             navigate(pendingAction.returnPath);
@@ -75,7 +76,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
           console.error('Failed to parse pending action');
         }
       }
-      
+
       // Default redirect based on user type
       setTimeout(() => {
         const userType = localStorage.getItem('userType');
@@ -86,7 +87,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
         }
       }, 500);
     }
-    
+
     setLoading(false);
   };
 
@@ -100,7 +101,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
         >
           <ArrowLeft size={20} />
         </button>
-        
+
         <Button variant="ghost" size="sm" onClick={onToggle} className="text-sm">
           {currentLanguage === 'ar' ? 'English' : 'عربي'}
         </Button>
@@ -131,14 +132,23 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="password">{t.password}</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-12 text-base"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`h-12 text-base ${currentLanguage === 'ar' ? 'pl-10' : 'pr-10'}`}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground ${currentLanguage === 'ar' ? 'left-3' : 'right-3'}`}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           <Button

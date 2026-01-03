@@ -295,6 +295,7 @@ export const ContractAgreementScreen = ({
             .replace(/\[flexible date\]/gi, '')
             .replace(/\[ASAP\]/gi, '')
             .replace(/\[عاجل\]/g, '')
+            .replace(/Time Window: \w+/gi, '')
             .trim() || t.noDescription;
     };
 

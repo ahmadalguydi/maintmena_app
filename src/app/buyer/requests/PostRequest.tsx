@@ -239,6 +239,57 @@ export const PostRequest = ({ currentLanguage: propLanguage }: PostRequestProps)
   };
 
   const handleNext = async () => {
+    // Stage Validation
+    if (step === 1) {
+      if (!formData.title || formData.title.length < 5) {
+        toast.error(
+          currentLanguage === 'ar'
+            ? 'يرجى كتابة عنوان واضح (5 أحرف على الأقل)'
+            : 'Please write a clear title (at least 5 characters)',
+          { className: currentLanguage === 'ar' ? "font-['Noto_Sans_Arabic']" : "" }
+        );
+        return;
+      }
+      if (!formData.category) {
+        toast.error(
+          currentLanguage === 'ar'
+            ? 'يرجى اختيار الفئة'
+            : 'Please select a category',
+          { className: currentLanguage === 'ar' ? "font-['Noto_Sans_Arabic']" : "" }
+        );
+        return;
+      }
+    }
+
+    if (step === 2) {
+      if (!formData.city || !formData.neighborhood) {
+        toast.error(
+          currentLanguage === 'ar'
+            ? 'يرجى تحديد المدينة والحي'
+            : 'Please select city and neighborhood',
+          { className: currentLanguage === 'ar' ? "font-['Noto_Sans_Arabic']" : "" }
+        );
+        return;
+      }
+
+      const hasValidDate = formData.flexibleDate || formData.preferredDate;
+      const hasValidTime = formData.flexibleTime || formData.timeWindow;
+
+      // If date is set (not flexible), time must also be set (unless time is flexible)
+      // Exception: if date is 'asap', time doesn't matter as much, but let's enforce consistency
+      const isDateComplete = formData.flexibleDate || (formData.preferredDate && (formData.flexibleTime || formData.timeWindow || formData.preferredDate === 'asap'));
+
+      if (!isDateComplete) {
+        toast.error(
+          currentLanguage === 'ar'
+            ? 'يرجى تحديد الوقت والتاريخ المفضل'
+            : 'Please select preferred time and date',
+          { className: currentLanguage === 'ar' ? "font-['Noto_Sans_Arabic']" : "" }
+        );
+        return;
+      }
+    }
+
     await vibrate('light');
     setStep(step + 1);
   };

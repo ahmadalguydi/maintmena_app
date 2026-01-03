@@ -13,7 +13,8 @@ export const useConfetti = () => {
             spread: 70,
             origin: { y: 0.7, x: 0.5 },
             colors: ['#89430d', '#d4a574', '#fbbf24', '#f59e0b', '#78350f'],
-            disableForReducedMotion: true,
+            zIndex: 100, // Ensure it's above the modal (z-50)
+            disableForReducedMotion: false, // Force animation even if reduced motion is on
         });
 
         // Second burst for extra celebration
@@ -23,14 +24,16 @@ export const useConfetti = () => {
                 spread: 100,
                 origin: { y: 0.6, x: 0.3 },
                 colors: ['#89430d', '#d4a574', '#fbbf24'],
-                disableForReducedMotion: true,
+                zIndex: 100,
+                disableForReducedMotion: false,
             });
             confetti({
                 particleCount: 50,
                 spread: 100,
                 origin: { y: 0.6, x: 0.7 },
                 colors: ['#89430d', '#d4a574', '#fbbf24'],
-                disableForReducedMotion: true,
+                zIndex: 100,
+                disableForReducedMotion: false,
             });
         }, 200);
     }, []);

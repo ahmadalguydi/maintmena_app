@@ -48,7 +48,7 @@ export const signupSchema = z.object({
   password: passwordSchema,
   confirmPassword: z.string(),
   phone: z.string()
-    .regex(/^\+?[0-9]{10,15}$/, errors.phone.invalid)
+    .regex(/^[\d\+\-]+$/, errors.phone.invalid)
     .optional()
     .or(z.literal('')),
   companyName: z.string()

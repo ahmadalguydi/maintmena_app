@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/contexts/RoleContext';
-import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Eye, EyeOff } from 'lucide-react';
 import { ProgressBar } from '@/components/mobile/ProgressBar';
 import { signupSchema } from '@/lib/validationSchemas';
 import { handleError } from '@/lib/errorHandler';
@@ -36,6 +36,8 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
     password: '',
     confirmPassword: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const content = {
     en: {
@@ -75,6 +77,53 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
   const t = content[currentLanguage];
 
   const handleNext = () => {
+    // Stage Validation
+    if (step === 1) {
+      if (!formData.name.trim() || formData.name.trim().length < 2) {
+        toast.error(
+          currentLanguage === 'ar'
+            ? 'الاسم الكامل مطلوب (حرفين على الأقل)'
+            : 'Full name is required (at least 2 characters)',
+          { className: currentLanguage === 'ar' ? "font-['Noto_Sans_Arabic']" : "" }
+        );
+        return;
+      }
+
+      // Check for invalid characters (numbers, special symbols)
+      const nameRegex = /^[a-zA-Z\u0600-\u06FF\s\-'.]+$/;
+      if (!nameRegex.test(formData.name.trim())) {
+        toast.error(
+          currentLanguage === 'ar'
+            ? 'الاسم يحتوي على رموز غير صالحة'
+            : 'Name contains invalid characters',
+          { className: currentLanguage === 'ar' ? "font-['Noto_Sans_Arabic']" : "" }
+        );
+        return;
+      }
+    }
+
+    if (step === 2) {
+      if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        toast.error(
+          currentLanguage === 'ar'
+            ? 'البريد الإلكتروني غير صحيح'
+            : 'Invalid email address',
+          { className: currentLanguage === 'ar' ? "font-['Noto_Sans_Arabic']" : "" }
+        );
+        return;
+      }
+
+      if (formData.accountType === 'company' && !formData.companyName.trim()) {
+        toast.error(
+          currentLanguage === 'ar'
+            ? 'اسم الشركة مطلوب'
+            : 'Company name is required',
+          { className: currentLanguage === 'ar' ? "font-['Noto_Sans_Arabic']" : "" }
+        );
+        return;
+      }
+    }
+
     if (step < 3) setStep(step + 1);
   };
 
@@ -95,7 +144,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
     }
 
     setLoading(true);
-    
+
     // Auto-assign free plan for buyers
     const metadata: any = {
       full_name: formData.name,
@@ -154,7 +203,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
           const pendingAction = JSON.parse(pendingActionStr);
           // Clear the pending action flag but keep form data
           localStorage.removeItem('pendingAction');
-          
+
           if (pendingAction.type === 'booking' && pendingAction.returnPath) {
             // Redirect to vendor profile to continue booking
             navigate(pendingAction.returnPath);
@@ -180,7 +229,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
         <button onClick={handleBack} className="flex items-center gap-2 text-muted-foreground">
           <ArrowLeft size={20} />
         </button>
-        
+
         <LanguageToggle language={currentLanguage} onToggle={onToggle} />
       </div>
 
@@ -251,7 +300,10 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
                 <Input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9+\-]/g, '');
+                    setFormData({ ...formData, phone: value });
+                  }}
                   placeholder="+966"
                   className="h-12 text-base"
                 />
@@ -274,13 +326,22 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
             <>
               <div className="space-y-2">
                 <Label>{t.step3.password}</Label>
-                <Input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="h-12 text-base"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className={`h-12 text-base ${currentLanguage === 'ar' ? 'pl-10' : 'pr-10'}`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground ${currentLanguage === 'ar' ? 'left-3' : 'right-3'}`}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
                 {formData.password && (
                   <div className="space-y-1 text-xs">
                     <div className={`flex items-center gap-1 ${formData.password.length >= 8 ? 'text-green-600' : 'text-muted-foreground'}`}>
@@ -305,13 +366,22 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
 
               <div className="space-y-2">
                 <Label>{t.step3.confirm}</Label>
-                <Input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className="h-12 text-base"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className={`h-12 text-base ${currentLanguage === 'ar' ? 'pl-10' : 'pr-10'}`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground ${currentLanguage === 'ar' ? 'left-3' : 'right-3'}`}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
             </>
           )}

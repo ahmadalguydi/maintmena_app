@@ -303,9 +303,25 @@ export const ContractDetail = ({ currentLanguage }: ContractDetailProps) => {
   const sellerCounterProposal = booking?.seller_counter_proposal;
 
   // Unified display values with fallback hierarchy
-  const requestDescription = isBookingContract
-    ? (booking?.job_description || metadata?.job_description || t.noDescription)
-    : (mr?.description || t.noDescription);
+  // Helper to clean description
+  const cleanDescription = (text: string | undefined | null) => {
+    if (!text) return t.noDescription;
+    return text
+      .replace(/\[Flexible Date\]/gi, '')
+      .replace(/\[تاريخ مرن\]/g, '')
+      .replace(/\[Flexible Time\]/gi, '')
+      .replace(/\[وقت مرن\]/g, '')
+      .replace(/\[ASAP\]/gi, '')
+      .replace(/\[عاجل\]/g, '')
+      .replace(/Time Window: \w+/gi, '')
+      .trim() || t.noDescription;
+  };
+
+  const requestDescription = cleanDescription(
+    isBookingContract
+      ? (booking?.job_description || metadata?.job_description)
+      : mr?.description
+  );
 
   const quoteProposal = isBookingContract
     ? (booking?.seller_response || sellerCounterProposal?.notes || metadata?.notes || t.directBooking)

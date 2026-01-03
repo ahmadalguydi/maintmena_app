@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Wrench } from 'lucide-react';
+import { Building2, Wrench, Eye, EyeOff } from 'lucide-react';
 import PlanSelection from '@/components/PlanSelection';
 
 interface SignupProps {
@@ -18,13 +18,13 @@ const Signup = ({ currentLanguage }: SignupProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { signUp } = useAuth();
   const [loading, setLoading] = useState(false);
-  
+
   const userType = (searchParams.get('type') as 'buyer' | 'seller') || 'buyer';
   const selectedPlan = searchParams.get('plan');
   const billingCycle = searchParams.get('billing') as 'monthly' | 'annual' || 'monthly';
-  
+
   const [showPlanSelection, setShowPlanSelection] = useState(true);
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -36,6 +36,9 @@ const Signup = ({ currentLanguage }: SignupProps) => {
     plan: selectedPlan || '',
     billingCycle: billingCycle
   });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const content = {
     en: {
@@ -125,7 +128,7 @@ const Signup = ({ currentLanguage }: SignupProps) => {
   const handlePlanSelect = (plan: string, isAnnual: boolean) => {
     setFormData({ ...formData, plan, billingCycle: isAnnual ? 'annual' : 'monthly' });
     setShowPlanSelection(false);
-    
+
     // Update URL with plan selection
     const newParams = new URLSearchParams(searchParams);
     newParams.set('plan', plan);
@@ -135,7 +138,7 @@ const Signup = ({ currentLanguage }: SignupProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       alert(t.validation.passwordMismatch);
       return;
@@ -148,8 +151,8 @@ const Signup = ({ currentLanguage }: SignupProps) => {
 
     setLoading(true);
     const { error } = await signUp(
-      formData.email, 
-      formData.password, 
+      formData.email,
+      formData.password,
       formData.fullName,
       userType,
       formData.phone || undefined,
@@ -223,11 +226,10 @@ const Signup = ({ currentLanguage }: SignupProps) => {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, buyerType: 'company', companyName: formData.buyerType === 'individual' ? '' : formData.companyName })}
-                      className={`p-4 border-2 rounded-lg text-left transition-all ${
-                        formData.buyerType === 'company'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${formData.buyerType === 'company'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                        }`}
                     >
                       <Building2 className="w-5 h-5 mb-2" />
                       <div className="font-semibold">{t.fields.company}</div>
@@ -236,11 +238,10 @@ const Signup = ({ currentLanguage }: SignupProps) => {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, buyerType: 'individual', companyName: '' })}
-                      className={`p-4 border-2 rounded-lg text-left transition-all ${
-                        formData.buyerType === 'individual'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${formData.buyerType === 'individual'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                        }`}
                     >
                       <Wrench className="w-5 h-5 mb-2" />
                       <div className="font-semibold">{t.fields.individual}</div>
@@ -282,10 +283,13 @@ const Signup = ({ currentLanguage }: SignupProps) => {
                   type="tel"
                   placeholder="+966..."
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9+\-]/g, '');
+                    setFormData({ ...formData, phone: value });
+                  }}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">{t.fields.email} {t.required}</Label>
                 <Input
@@ -296,35 +300,47 @@ const Signup = ({ currentLanguage }: SignupProps) => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">{t.fields.password} {t.required}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  minLength={6}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    minLength={6}
+                    className={`pr-10 ${currentLanguage === 'ar' ? 'pl-10' : 'pr-10'}`}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground ${currentLanguage === 'ar' ? 'left-3' : 'right-3'}`}>
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">{t.fields.confirmPassword} {t.required}</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    required
+                    className={`pr-10 ${currentLanguage === 'ar' ? 'pl-10' : 'pr-10'}`}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground ${currentLanguage === 'ar' ? 'left-3' : 'right-3'}`}>
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
-              
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? t.loading : (isBuyer ? t.buyer.button : t.seller.button)}
               </Button>
             </form>
-            
+
             <div className="mt-4 text-center text-sm space-y-2">
               <div>
                 <span className="text-muted-foreground">{t.footer.hasAccount} </span>

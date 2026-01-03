@@ -118,7 +118,8 @@ async function fetchActiveJobs(userId: string) {
       activeRequestsData = activeRequestsRaw.map(r => ({
         ...r,
         contractId: r.contracts?.[0]?.id,
-        profiles: profileMap.get(r.assigned_seller_id)
+        profiles: profileMap.get(r.assigned_seller_id),
+        jobType: 'request'
       }));
     }
   }
@@ -160,7 +161,8 @@ async function fetchActiveJobs(userId: string) {
             ...b,
             contractId: contract?.id,
             contract_date: contractDate,
-            profiles: profileMap.get(b.seller_id)
+            profiles: profileMap.get(b.seller_id),
+            jobType: 'booking'
           };
         });
       }
@@ -381,7 +383,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
             </div>
             <div className="space-y-4">
               {activeJobs.map((job) => {
-                const isRequest = 'assigned_seller_id' in job;
+                const isRequest = (job as any).jobType === 'request';
                 const sellerName = isRequest
                   ? (job.profiles as any)?.company_name || (job.profiles as any)?.full_name
                   : (job.profiles as any)?.company_name || (job.profiles as any)?.full_name;
@@ -425,7 +427,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
                     paymentMethod={job.payment_method}
                     location={job.location || job.location_address || job.city || job.location_city}
                     date={job.contract_date || job.preferred_start_date || job.proposed_start_date || (currentLanguage === 'ar' ? 'موعد مرن' : 'Flexible Date')}
-                    onClick={() => navigate(`/app/buyer/job/${job.id}`)}
+                    onClick={() => navigate(`/app/buyer/job/${job.id}?type=${isRequest ? 'request' : 'booking'}`)}
                     contractId={(job as any).contractId}
                     completionPhotos={Array.isArray(job.completion_photos) ? job.completion_photos as string[] : undefined}
                   />
