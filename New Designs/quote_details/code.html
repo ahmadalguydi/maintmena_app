@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quote Details - MaintMENA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89430d",
+                        "background-light": "#f9f7f6",
+                        "background-dark": "#211511",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2d1e19",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                    boxShadow: {
+                        "soft": "0 4px 20px -2px rgba(137, 67, 13, 0.08)",
+                        "glow": "0 0 15px rgba(137, 67, 13, 0.3)"
+                    }
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.2) 20%,
+                rgba(255, 255, 255, 0.5) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display antialiased text-gray-900 bg-background-light dark:bg-background-dark dark:text-white transition-colors duration-300">
+<div class="relative flex flex-col h-screen w-full overflow-hidden max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-2xl">
+<header class="flex items-center justify-between p-4 pt-6 z-10 bg-background-light dark:bg-background-dark sticky top-0">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-primary/10 transition-colors text-gray-800 dark:text-white">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h2 class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">Quote #2401</h2>
+<div class="w-10"></div>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar pb-36 px-4">
+<div class="flex flex-col items-center pt-6 pb-4">
+<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Estimated Cost</span>
+<h1 class="text-5xl font-extrabold text-primary tracking-tight mt-1 mb-2">SAR 350</h1>
+</div>
+<div class="mt-2 mb-8">
+<details class="group bg-white dark:bg-surface-dark border border-gray-100 dark:border-white/5 rounded-2xl shadow-soft overflow-hidden transition-all duration-300">
+<summary class="flex cursor-pointer items-center justify-between px-5 py-4 select-none hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<div class="flex items-center gap-3">
+<span class="bg-primary/10 text-primary p-1.5 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+</span>
+<p class="text-sm font-semibold text-gray-800 dark:text-gray-100">View Cost Breakdown</p>
+</div>
+<span class="material-symbols-outlined text-gray-400 group-open:rotate-180 transition-transform duration-300">expand_more</span>
+</summary>
+<div class="px-5 pb-5 pt-0 border-t border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5">
+<ul class="space-y-3 pt-4 text-sm">
+<li class="flex justify-between text-gray-600 dark:text-gray-300">
+<span>Labor Cost (5 hrs)</span>
+<span class="font-medium">SAR 200</span>
+</li>
+<li class="flex justify-between text-gray-600 dark:text-gray-300">
+<span>Spare Parts</span>
+<span class="font-medium">SAR 105</span>
+</li>
+<li class="flex justify-between text-gray-600 dark:text-gray-300">
+<span>VAT (15%)</span>
+<span class="font-medium">SAR 45</span>
+</li>
+<li class="flex justify-between text-primary font-bold pt-2 border-t border-gray-200 dark:border-white/10 mt-2">
+<span>Total</span>
+<span>SAR 350</span>
+</li>
+</ul>
+</div>
+</details>
+</div>
+<div class="relative group mb-6">
+<div class="flex items-start gap-4 bg-white dark:bg-surface-dark p-4 rounded-[2.5rem] shadow-soft border border-gray-100 dark:border-white/5 transition-transform hover:scale-[1.01]">
+<div class="relative shrink-0 mt-1">
+<div class="h-14 w-14 rounded-full bg-cover bg-center border-2 border-white dark:border-surface-dark shadow-md" data-alt="Portrait of a smiling professional maintenance worker" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBWT6ntWMS04NU2lmj4GJW82LOdnR5kwmqUghpKDS38y0cpjPsdhstmp5GqJO3omGb5ylNIsYW9t7g_cxkOB5fV5Wi0ghUEoXRCFQI4JbtdwH1W44Kvcbt-e7twIbSMxVbJTVQzyS9f8K9bDhQFgNT0ryqNkz5LymiyPs_ShGG1pIUajbPxNoyHz7d1r2qqaAKBiVYLmQ6iNMFVpBY92O0cCAWcru4GBQdc2BcX6vCEgkw7SdUlgrdN9GVoOsm_D0CJd3zVJkicTQ");'></div>
+<div class="absolute -bottom-1 -right-1 bg-primary text-white p-[2px] rounded-full border-2 border-white dark:border-surface-dark flex items-center justify-center" title="Verified Pro">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0 justify-center">
+<div class="flex items-center gap-2">
+<h3 class="text-base font-bold text-gray-900 dark:text-white truncate">Ahmed Al-Farsi</h3>
+<span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">Pro</span>
+</div>
+<p class="text-xs text-gray-500 dark:text-gray-400 truncate mb-2">Plumbing Specialist • 350+ Jobs</p>
+<button class="w-fit px-4 py-1.5 rounded-full bg-background-light dark:bg-white/5 text-primary dark:text-primary border border-primary/20 text-xs font-bold hover:bg-primary hover:text-white transition-colors">
+                            View Profile
+                        </button>
+</div>
+<div class="shrink-0 flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/20 px-2.5 py-1 rounded-full mt-1">
+<span class="material-symbols-outlined text-yellow-600 text-[16px] fill-1">star</span>
+<span class="text-sm font-bold text-gray-900 dark:text-white">4.9</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-6">
+<div class="bg-white dark:bg-surface-dark p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm flex flex-col items-center text-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-1">
+<span class="material-symbols-outlined">timer</span>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Duration</p>
+<p class="text-sm font-bold text-gray-900 dark:text-white">2 Days</p>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm flex flex-col items-center text-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-1">
+<span class="material-symbols-outlined">calendar_clock</span>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Start Date</p>
+<p class="text-sm font-bold text-gray-900 dark:text-white">Tomorrow</p>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-2xl p-5 border border-gray-100 dark:border-white/5 shadow-sm mb-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-lg">format_quote</span>
+<h4 class="text-sm font-bold text-gray-900 dark:text-white">Seller's Note</h4>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                    "This quote includes the complete replacement of the p-trap and sealing rings under the sink. I also offer a 30-day personal warranty on the labor provided."
+                </p>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-2xl p-5 border border-gray-100 dark:border-white/5 shadow-sm mb-6">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">attachment</span>
+<h4 class="text-sm font-bold text-gray-900 dark:text-white">Attachments</h4>
+</div>
+<span class="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">2</span>
+</div>
+<div class="flex flex-col gap-3">
+<a class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 hover:border-primary/30 transition-colors group" href="#">
+<div class="h-10 w-10 shrink-0 rounded-lg bg-white dark:bg-surface-dark shadow-sm flex items-center justify-center border border-gray-100 dark:border-white/5 overflow-hidden relative">
+<div class="absolute inset-0 bg-primary/10 animate-pulse"></div>
+<div class="w-full h-full bg-cover bg-center relative z-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBWT6ntWMS04NU2lmj4GJW82LOdnR5kwmqUghpKDS38y0cpjPsdhstmp5GqJO3omGb5ylNIsYW9t7g_cxkOB5fV5Wi0ghUEoXRCFQI4JbtdwH1W44Kvcbt-e7twIbSMxVbJTVQzyS9f8K9bDhQFgNT0ryqNkz5LymiyPs_ShGG1pIUajbPxNoyHz7d1r2qqaAKBiVYLmQ6iNMFVpBY92O0cCAWcru4GBQdc2BcX6vCEgkw7SdUlgrdN9GVoOsm_D0CJd3zVJkicTQ");'></div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-primary transition-colors">Sink_Damage_01.jpg</p>
+<p class="text-xs text-gray-500 dark:text-gray-400">2.4 MB • JPG</p>
+</div>
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors text-xl">visibility</span>
+</a>
+<a class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 hover:border-primary/30 transition-colors group" href="#">
+<div class="h-10 w-10 shrink-0 rounded-lg bg-white dark:bg-surface-dark shadow-sm flex items-center justify-center border border-gray-100 dark:border-white/5 text-red-500">
+<span class="material-symbols-outlined text-xl">picture_as_pdf</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-primary transition-colors">Warranty_Policy.pdf</p>
+<p class="text-xs text-gray-500 dark:text-gray-400">145 KB • PDF</p>
+</div>
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors text-xl">download</span>
+</a>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50">
+<div class="h-12 w-full bg-gradient-to-t from-background-light via-background-light/80 to-transparent dark:from-background-dark dark:via-background-dark/80 pointer-events-none"></div>
+<div class="bg-background-light dark:bg-background-dark px-5 pb-8 pt-2 flex flex-col gap-3 rounded-t-[2rem] shadow-[0_-10px_40px_-10px_rgba(137,67,13,0.1)] dark:shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.5)] border-t border-white/50 dark:border-white/5 backdrop-blur-md">
+<div class="grid grid-cols-5 gap-3">
+<button class="col-span-2 group relative flex items-center justify-center py-4 px-4 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-700 dark:text-gray-200 font-bold text-sm transition-all active:scale-95 hover:bg-primary/5 hover:border-primary hover:text-primary dark:hover:text-primary">
+<span class="mr-2">Modify</span>
+<span class="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform">edit_note</span>
+</button>
+<button class="col-span-3 relative flex items-center justify-center py-4 px-6 rounded-full bg-primary text-white font-bold text-sm shadow-lg shadow-primary/30 transition-all hover:shadow-primary/50 active:scale-95 hover:brightness-110 overflow-hidden">
+<div class="absolute inset-0 bg-white/20 translate-y-full hover:translate-y-0 transition-transform duration-300 skew-y-12 origin-bottom-left"></div>
+<span class="mr-2 relative z-10">Accept Quote</span>
+<span class="material-symbols-outlined text-[18px] relative z-10">check_circle</span>
+</button>
+</div>
+<button class="w-full py-4 rounded-full border border-red-500 text-red-600 dark:text-red-500 font-bold text-sm transition-all active:scale-95 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+                     Reject Quote
+                </button>
+</div>
+</div>
+</div>
+</body></html>

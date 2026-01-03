@@ -1,0 +1,170 @@
+[
+  {
+    "name": "AuthTriggerModal",
+    "usages": 10,
+    "category": "mobile",
+    "size": "5.0KB",
+    "status": "active"
+  },
+  {
+    "name": "SignatureModal",
+    "usages": 8,
+    "category": "root",
+    "size": "6.5KB",
+    "status": "active"
+  },
+  {
+    "name": "BookingRequestModal",
+    "usages": 6,
+    "category": "root",
+    "size": "16.5KB",
+    "status": "active"
+  },
+  {
+    "name": "LeaveReviewModal",
+    "usages": 4,
+    "category": "root",
+    "size": "6.7KB",
+    "status": "active"
+  },
+  {
+    "name": "AddEventModal",
+    "usages": 2,
+    "category": "root",
+    "size": "5.6KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "BookingPaymentModal",
+    "usages": 2,
+    "category": "root",
+    "size": "7.9KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "BookingResponseModal",
+    "usages": 2,
+    "category": "root",
+    "size": "18.2KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "BuyerNegotiationModal",
+    "usages": 2,
+    "category": "root",
+    "size": "12.9KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "CounterProposalResponseModal",
+    "usages": 2,
+    "category": "root",
+    "size": "12.0KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "EditQuoteModal",
+    "usages": 2,
+    "category": "root",
+    "size": "8.0KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "PhotoProofModal",
+    "usages": 2,
+    "category": "mobile",
+    "size": "10.2KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "NegotiationModal",
+    "usages": 2,
+    "category": "root",
+    "size": "5.5KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "QuoteDetailModal",
+    "usages": 2,
+    "category": "root",
+    "size": "8.8KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "RevisionRequestModal",
+    "usages": 2,
+    "category": "root",
+    "size": "5.8KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "SamplePdfModal",
+    "usages": 2,
+    "category": "root",
+    "size": "4.4KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "SellerNegotiationModal",
+    "usages": 2,
+    "category": "root",
+    "size": "6.4KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "SubscriptionManagementModal",
+    "usages": 2,
+    "category": "root",
+    "size": "22.2KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "PriceProposalModal",
+    "usages": 1,
+    "category": "mobile",
+    "size": "5.4KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "IssueModal",
+    "usages": 0,
+    "category": "root",
+    "size": "5.8KB",
+    "status": "dead"
+  },
+  {
+    "name": "WarrantyClaimModal",
+    "usages": 0,
+    "category": "mobile",
+    "size": "10.5KB",
+    "status": "dead"
+  },
+  {
+    "name": "StartTrialModal",
+    "usages": 0,
+    "category": "root",
+    "size": "8.1KB",
+    "status": "dead"
+  },
+  {
+    "name": "SubmissionKitModal",
+    "usages": 0,
+    "category": "root",
+    "size": "4.5KB",
+    "status": "dead"
+  },
+  {
+    "name": "SubscribeModal",
+    "usages": 0,
+    "category": "root",
+    "size": "5.9KB",
+    "status": "dead"
+  },
+  {
+    "name": "UpgradeModal",
+    "usages": 0,
+    "category": "root",
+    "size": "6.6KB",
+    "status": "dead"
+  }
+]

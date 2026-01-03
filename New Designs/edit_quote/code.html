@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Edit Quote - MaintMENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89430d",
+                        "background-light": "#fbfaf8",
+                        "background-dark": "#211811",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2a2018",
+                        "text-main": "#1b140e",
+                        "text-secondary": "#956e50",
+                        "border-light": "#e6dad1",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"],
+                        "body": ["Public Sans", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-main font-display antialiased selection:bg-primary/20">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark">
+<header class="sticky top-0 z-20 flex items-center justify-between bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md px-4 py-3 border-b border-border-light/50">
+<button class="text-text-secondary hover:text-primary transition-colors text-base font-medium">
+                Cancel
+            </button>
+<h1 class="text-text-main dark:text-white text-lg font-bold leading-tight">Edit Quote</h1>
+<button class="text-primary font-bold text-base hover:opacity-80 transition-opacity">
+                Save
+            </button>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar pb-32">
+<div class="px-4 py-6">
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-border-light dark:border-white/10 flex items-start gap-4">
+<div class="flex-1 space-y-1">
+<p class="text-text-secondary text-xs font-semibold uppercase tracking-wider">Quoting for</p>
+<h3 class="text-text-main dark:text-white text-lg font-bold leading-tight">AC Repair - Villa 12</h3>
+<div class="flex items-center gap-1 text-text-secondary text-sm">
+<span class="material-symbols-outlined text-[16px] align-middle">location_on</span>
+<span>Al Malqa • Job #4029</span>
+</div>
+</div>
+<div class="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-gray-100 relative">
+<div class="w-full h-full bg-cover bg-center" data-alt="Modern AC unit mounted on a clean white wall" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA9ORWaA4lMhBt6r0kL0Va8BqVdFp6jNZ2AHN7QgeqQZJNgVz0K5BgQkZr_LM5mQ_B6NEYFBZG3kWptOLiTeR8h7rGduJABJc_ARkPkfnXXhZU_LVwHX08Df7QkT1l1BWjGk6IeL7Ihhg_LAKNv9yFZyOqoxG5FBIXI_kJEgS0GqZZNLq3GL7j_V1hMdQWgJ9z8gorYer4wBLE9ghYZoYxruo9-c7TdFurZ3ydVAWtcfxWtiN2wlsYlSbNyehvabGe1vh8vPqKUSA');">
+</div>
+</div>
+</div>
+</div>
+<div class="px-4 pb-2">
+<label class="block text-text-main dark:text-white text-sm font-semibold mb-2 ml-1">Total Price</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="text-text-secondary font-medium">SAR</span>
+</div>
+<input class="w-full bg-surface-light dark:bg-surface-dark text-text-main dark:text-white border border-border-light dark:border-white/10 rounded-2xl py-4 pl-14 pr-4 text-xl font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-300" placeholder="0.00" type="number" value="450"/>
+<div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-text-secondary">edit</span>
+</div>
+</div>
+<p class="text-xs text-text-secondary mt-2 ml-1">Price includes VAT where applicable.</p>
+</div>
+<div class="px-4 py-6">
+<label class="block text-text-main dark:text-white text-sm font-semibold mb-3 ml-1">Estimated Duration</label>
+<div class="grid grid-cols-2 gap-3">
+<button class="group relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-white/10 text-text-main dark:text-white transition-all hover:bg-gray-50 hover:border-primary/30 active:bg-primary/5">
+<span class="text-sm font-medium">1-2 Hours</span>
+</button>
+<button class="group relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-white/10 text-text-main dark:text-white transition-all hover:bg-gray-50 hover:border-primary/30 active:bg-primary/5">
+<span class="text-sm font-medium">Half Day</span>
+</button>
+<button class="group relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-white shadow-md shadow-primary/20 transition-all hover:shadow-lg active:scale-95 ring-2 ring-primary ring-offset-2 ring-offset-background-light dark:ring-offset-background-dark">
+<span class="text-sm font-medium">Full Day</span>
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+</button>
+<button class="group relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-white/10 text-text-main dark:text-white transition-all hover:bg-gray-50 hover:border-primary/30 active:bg-primary/5">
+<span class="text-sm font-medium">Multiple Days</span>
+</button>
+</div>
+</div>
+<div class="px-4 pb-6">
+<label class="block text-text-main dark:text-white text-sm font-semibold mb-2 ml-1">Start Date</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-text-secondary">calendar_today</span>
+</div>
+<input class="w-full bg-surface-light dark:bg-surface-dark text-text-main dark:text-white border border-border-light dark:border-white/10 rounded-2xl py-4 pl-12 pr-10 text-base font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-text-secondary/50 appearance-none min-h-[58px]" type="date" value="2023-11-24"/>
+<div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-text-secondary">expand_more</span>
+</div>
+</div>
+</div>
+<div class="px-4 pb-6">
+<label class="block text-text-main dark:text-white text-sm font-semibold mb-2 ml-1">Description &amp; Notes</label>
+<textarea class="w-full min-h-[120px] bg-surface-light dark:bg-surface-dark text-text-main dark:text-white border border-border-light dark:border-white/10 rounded-2xl p-4 text-base leading-relaxed focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none placeholder:text-text-secondary/50" placeholder="Describe what is included in this quote...">Includes cleaning of filters, gas refill, and general maintenance checkup of the outdoor unit. I will also check the drainage pipe for any blockages.</textarea>
+</div>
+<div class="px-4 pb-6">
+<label class="block text-text-main dark:text-white text-sm font-semibold mb-3 ml-1">Attachments</label>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="shrink-0 w-24 h-24 rounded-2xl border-2 border-dashed border-border-light dark:border-white/20 flex flex-col items-center justify-center gap-2 text-text-secondary hover:text-primary hover:border-primary hover:bg-primary/5 transition-all group active:scale-95">
+<div class="w-8 h-8 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-white/10 flex items-center justify-center group-hover:border-primary/30 transition-colors">
+<span class="material-symbols-outlined text-xl">add</span>
+</div>
+<span class="text-[11px] font-bold">Add New</span>
+</button>
+<div class="relative shrink-0 w-24 h-24 rounded-2xl overflow-hidden group border border-border-light dark:border-white/10 shadow-sm">
+<div class="w-full h-full bg-cover bg-center transition-transform group-hover:scale-110 duration-500" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA9ORWaA4lMhBt6r0kL0Va8BqVdFp6jNZ2AHN7QgeqQZJNgVz0K5BgQkZr_LM5mQ_B6NEYFBZG3kWptOLiTeR8h7rGduJABJc_ARkPkfnXXhZU_LVwHX08Df7QkT1l1BWjGk6IeL7Ihhg_LAKNv9yFZyOqoxG5FBIXI_kJEgS0GqZZNLq3GL7j_V1hMdQWgJ9z8gorYer4wBLE9ghYZoYxruo9-c7TdFurZ3ydVAWtcfxWtiN2wlsYlSbNyehvabGe1vh8vPqKUSA');"></div>
+<div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none"></div>
+<button aria-label="Delete attachment" class="absolute top-1.5 right-1.5 w-6 h-6 bg-white/90 dark:bg-black/60 hover:bg-red-500 dark:hover:bg-red-500 hover:text-white backdrop-blur-sm rounded-full flex items-center justify-center text-text-main dark:text-white transition-all shadow-sm active:scale-90">
+<span class="material-symbols-outlined text-[14px] font-bold">close</span>
+</button>
+</div>
+<div class="relative shrink-0 w-24 h-24 rounded-2xl overflow-hidden group border border-border-light dark:border-white/10 bg-surface-light dark:bg-surface-dark shadow-sm">
+<div class="w-full h-full flex flex-col items-center justify-center gap-1 group-hover:bg-gray-50 dark:group-hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-3xl text-red-500">picture_as_pdf</span>
+<span class="text-[10px] font-bold text-text-main dark:text-white uppercase tracking-wide">Manual</span>
+</div>
+<button aria-label="Delete attachment" class="absolute top-1.5 right-1.5 w-6 h-6 bg-white/90 dark:bg-black/60 hover:bg-red-500 dark:hover:bg-red-500 hover:text-white backdrop-blur-sm rounded-full flex items-center justify-center text-text-main dark:text-white transition-all shadow-sm active:scale-90">
+<span class="material-symbols-outlined text-[14px] font-bold">close</span>
+</button>
+</div>
+</div>
+</div>
+<div class="px-4">
+<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 flex gap-3 items-start border border-blue-100 dark:border-blue-800/30">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400 shrink-0">info</span>
+<p class="text-sm text-blue-800 dark:text-blue-200 leading-normal">
+                        Updating this quote will notify the client immediately. Make sure all details are accurate before saving.
+                    </p>
+</div>
+</div>
+</main>
+<div class="absolute bottom-0 left-0 w-full bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-lg border-t border-border-light/50 p-4 pb-6 z-10">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-primary/25 transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
+<span>Update Quote</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</body></html>
