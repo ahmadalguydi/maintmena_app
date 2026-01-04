@@ -296,7 +296,7 @@ export const BuyerJobDetail = ({ currentLanguage }: BuyerJobDetailProps) => {
   };
 
   const getServiceCategory = () => {
-    const category = (job as any)?.service_category || (job as any)?.title;
+    const category = (job as any)?.category || (job as any)?.service_category || (job as any)?.title;
     if (category) {
       return getCategoryLabel(category, currentLanguage);
     }
@@ -480,7 +480,7 @@ export const BuyerJobDetail = ({ currentLanguage }: BuyerJobDetailProps) => {
               "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-border/50 shadow-sm float-left mr-3 mb-1",
               currentLanguage === 'ar' ? 'flex-row-reverse' : ''
             )}>
-              <span className="text-sm text-blue-500">{getCategoryIcon((job as any).service_category)}</span>
+              <span className="text-sm text-blue-500">{getCategoryIcon((job as any).category || (job as any).service_category)}</span>
               <span className={cn(
                 "text-xs font-medium text-foreground",
                 currentLanguage === 'ar' ? 'font-ar-body' : 'font-body'

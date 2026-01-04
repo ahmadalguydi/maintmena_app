@@ -61,13 +61,13 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
           // Clear the pending action flag but keep form data
           localStorage.removeItem('pendingAction');
 
-          if (pendingAction.type === 'booking' && pendingAction.returnPath) {
-            // Redirect to vendor profile to continue booking
+          if (pendingAction.returnPath) {
+            // Redirect to the original screen (booking, request, etc.)
             navigate(pendingAction.returnPath);
             setLoading(false);
             return;
           } else if (pendingAction.type === 'request') {
-            // Redirect to post request to continue
+            // Fallback for request type without returnPath
             navigate('/app/buyer/requests/new');
             setLoading(false);
             return;

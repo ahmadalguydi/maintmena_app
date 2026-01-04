@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Maintmena</string>
+    <string name="title_activity_main">Maintmena</string>
+    <string name="package_name">com.maintmena.app</string>
+    <string name="custom_url_scheme">com.maintmena.app</string>
+</resources>
