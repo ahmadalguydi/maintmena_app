@@ -90,20 +90,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
     queryFn: async (): Promise<ActiveRequest[]> => {
       if (!user?.id) return [];
 
-      const reqs = await executeSupabaseQuery<any[]>(
-        () => (supabase as any)
-          .from('maintenance_requests')
-          .select('id, category, title, description, location, city, latitude, longitude, urgency, status, preferred_start_date, created_at, assigned_seller_id, seller_pricing, final_amount, seller_marked_complete, buyer_price_approved, buyer_marked_complete')
-          .eq('buyer_id', user.id)
-          .in('status', ['open', 'accepted', 'en_route', 'arrived', 'in_progress', 'completed'])
-          .order('created_at', { ascending: false }),
-        {
-          context: 'buyer-home-active-requests',
-          fallbackData: [],
-          relationName: 'maintenance_requests',
-          throwOnError: true,
-        },
-      );
+      const reqs = await jobService.fetchBuyerRequests(user.id);
 
       if (!reqs || reqs.length === 0) return [];
 
@@ -148,7 +135,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
         const canonicalRequest = toCanonicalRequest(req);
         if (!canonicalRequest) continue;
 
-        let requestStatus: RequestStatus = getBuyerRequestPresentationStatus(canonicalRequest) as RequestStatus;
+        const requestStatus: RequestStatus = getBuyerRequestPresentationStatus(canonicalRequest) as RequestStatus;
         let providerName: string | undefined;
         let providerCompany: string | undefined;
         let providerAvatar: string | undefined;
@@ -167,7 +154,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
           }
         }
 
-        const categoryInfo = CATEGORY_LOOKUP.get(req.category);
+        const categoryInfo = CATEGORY_LOOKUP.get(canonicalRequest.category);
 
         // Compute estimated price from seller_pricing or final_amount
         let estimatedPrice: string | undefined;
@@ -185,13 +172,13 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
         }
 
         results.push({
-          id: req.id,
+          id: canonicalRequest.id,
           category: currentLanguage === 'ar'
-            ? (categoryInfo?.ar || req.category)
-            : (categoryInfo?.en || req.category),
+            ? (categoryInfo?.ar || canonicalRequest.category)
+            : (categoryInfo?.en || canonicalRequest.category),
           categoryIcon: categoryInfo?.icon || '🛠️',
-          situation: req.title ? req.title.split(' - ').pop() : undefined,
-          description: req.description ? req.description.replace(/^.*\n{2,}/, '') : undefined,
+          situation: canonicalRequest.title ? canonicalRequest.title.split(' - ').pop() : undefined,
+          description: canonicalRequest.description ? canonicalRequest.description.replace(/^.*\n{2,}/, '') : undefined,
           location: getRequestLocationLabel(req, currentLanguage === 'ar' ? 'الموقع قيد التحديث' : 'Location pending'),
           timeMode: canonicalRequest.timingMode,
           status: requestStatus,
@@ -202,8 +189,8 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
           providerRating,
           providerVerified,
           providerExperienceYears,
-          lat: req.latitude,
-          lng: req.longitude,
+          lat: canonicalRequest.latitude ?? canonicalRequest.lat,
+          lng: canonicalRequest.longitude ?? canonicalRequest.lng,
           estimatedPrice,
           sellerPricing: req.seller_pricing,
           finalAmount: req.final_amount,

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { executeSupabaseQuery } from '@/lib/supabaseQuery';
 
 interface Profile {
     id: string;
@@ -16,6 +17,34 @@ interface Profile {
     updated_at: string | null;
 }
 
+const PROFILE_SELECT_FULL = `
+  id,
+  email,
+  full_name,
+  phone,
+  company_name,
+  user_type,
+  buyer_type,
+  avatar_url,
+  trust_score,
+  reliability_rate,
+  created_at,
+  updated_at
+`;
+
+const PROFILE_SELECT_COMPAT = `
+  id,
+  email,
+  full_name,
+  phone,
+  company_name,
+  user_type,
+  buyer_type,
+  avatar_url,
+  created_at,
+  updated_at
+`;
+
 /**
  * Centralized profile hook using React Query.
  * Eliminates stale data flash by:
@@ -31,31 +60,48 @@ export const useProfile = (userId?: string) => {
         queryFn: async (): Promise<Profile | null> => {
             if (!userId) return null;
 
-            const { data, error } = await supabase
-                .from('profiles')
-                .select(`
-          id,
-          email,
-          full_name,
-          phone,
-          company_name,
-          user_type,
-          buyer_type,
-          avatar_url,
-          trust_score,
-          reliability_rate,
-          created_at,
-          updated_at
-        `)
-                .eq('id', userId)
-                .single();
+            const selectCandidates = [PROFILE_SELECT_FULL, PROFILE_SELECT_COMPAT];
+            let data: any = null;
+            let lastError: any = null;
 
-            if (error) {
-                console.error('[useProfile] Error fetching profile:', error);
+            for (let index = 0; index < selectCandidates.length; index += 1) {
+                const selectFields = selectCandidates[index];
+                const context = index === 0 ? 'profile-fetch' : `profile-fetch-fallback-${index}`;
+
+                try {
+                    data = await executeSupabaseQuery<any>(
+                        () => supabase
+                            .from('profiles')
+                            .select(selectFields)
+                            .eq('id', userId)
+                            .single(),
+                        {
+                            context,
+                            fallbackData: null,
+                            relationName: 'profiles',
+                            throwOnError: true,
+                        },
+                    );
+                    lastError = null;
+                    break;
+                } catch (error: any) {
+                    lastError = error;
+                    if (error?.code !== '42703' || index === selectCandidates.length - 1) {
+                        console.error('[useProfile] Error fetching profile:', error);
+                        return null;
+                    }
+                }
+            }
+
+            if (lastError || !data) {
                 return null;
             }
 
-            return data as Profile;
+            return {
+                trust_score: null,
+                reliability_rate: null,
+                ...data,
+            } as Profile;
         },
         enabled: !!userId,
         staleTime: 5 * 60 * 1000, // 5 minutes - prevents refetch flicker
