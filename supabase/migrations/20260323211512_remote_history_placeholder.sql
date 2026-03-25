@@ -1,0 +1,3 @@
+-- Placeholder migration for remote-only history entry 20260323211512.
+-- The change already exists on the linked Supabase project and is kept here
+-- only to reconcile local migration history with the remote project.

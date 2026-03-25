@@ -1,0 +1,142 @@
+[
+  {
+    "name": "SoftCard",
+    "usages": 204,
+    "category": "mobile",
+    "size": "1.3KB",
+    "status": "active"
+  },
+  {
+    "name": "TouchCard",
+    "usages": 15,
+    "category": "mobile",
+    "size": "1.5KB",
+    "status": "active"
+  },
+  {
+    "name": "JobTrackingCard",
+    "usages": 14,
+    "category": "mobile",
+    "size": "21.6KB",
+    "status": "active"
+  },
+  {
+    "name": "EnhancedBookingCard",
+    "usages": 6,
+    "category": "mobile",
+    "size": "11.1KB",
+    "status": "active"
+  },
+  {
+    "name": "WarrantyCard",
+    "usages": 5,
+    "category": "mobile",
+    "size": "6.5KB",
+    "status": "active"
+  },
+  {
+    "name": "CompletionWorkflowCard",
+    "usages": 3,
+    "category": "root",
+    "size": "11.3KB",
+    "status": "active"
+  },
+  {
+    "name": "EnhancedQuoteCard",
+    "usages": 3,
+    "category": "mobile",
+    "size": "12.7KB",
+    "status": "active"
+  },
+  {
+    "name": "EnhancedRequestCard",
+    "usages": 3,
+    "category": "mobile",
+    "size": "8.0KB",
+    "status": "active"
+  },
+  {
+    "name": "StatsCard",
+    "usages": 3,
+    "category": "mobile",
+    "size": "1.4KB",
+    "status": "active"
+  },
+  {
+    "name": "ActiveRequestCard",
+    "usages": 2,
+    "category": "mobile",
+    "size": "4.5KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "ConciergeCard",
+    "usages": 2,
+    "category": "mobile",
+    "size": "2.5KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "DualResolutionHaltedJobCard",
+    "usages": 2,
+    "category": "mobile",
+    "size": "8.3KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "HaltedJobCard",
+    "usages": 2,
+    "category": "mobile",
+    "size": "4.6KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "JobCard",
+    "usages": 2,
+    "category": "mobile",
+    "size": "4.4KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "PendingContractCard",
+    "usages": 2,
+    "category": "mobile",
+    "size": "4.6KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "ProfileCompletionCard",
+    "usages": 2,
+    "category": "mobile",
+    "size": "3.1KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "ReviewProgressCard",
+    "usages": 1,
+    "category": "mobile",
+    "size": "6.2KB",
+    "status": "low-usage"
+  },
+  {
+    "name": "GlassCard",
+    "usages": 0,
+    "category": "mobile",
+    "size": "0.8KB",
+    "status": "dead"
+  },
+  {
+    "name": "ProviderCard",
+    "usages": 0,
+    "category": "mobile",
+    "size": "2.7KB",
+    "status": "dead"
+  },
+  {
+    "name": "PipelineCard",
+    "usages": 0,
+    "category": "root",
+    "size": "6.9KB",
+    "status": "dead"
+  }
+]

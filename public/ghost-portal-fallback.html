@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Portal Safety Net - MaintMENA</title>
+    <script>
+        // Safety net for Ghost Portal integration
+        document.addEventListener('DOMContentLoaded', () => {
+            // Enhance any CTA that lacks data-portal (legacy blocks)
+            document.querySelectorAll('a[href*="maintmena.ghost.io/#/portal/"]').forEach(a => {
+                if (a.href.includes('#/portal/plans'))   a.setAttribute('data-portal','plans');
+                if (a.href.includes('#/portal/signup'))  a.setAttribute('data-portal','signup');
+                if (a.href.includes('#/portal/signin'))  a.setAttribute('data-portal','signin');
+                if (a.href.includes('#/portal/account')) a.setAttribute('data-portal','account');
+            });
+        });
+    </script>
+</head>
+<body>
+    <script>
+        // Redirect to Ghost Portal if accessed directly
+        window.location.href = 'https://maintmena.ghost.io/#/portal/plans';
+    </script>
+</body>
+</html>

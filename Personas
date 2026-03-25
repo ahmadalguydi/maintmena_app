@@ -1,0 +1,658 @@
+Goo
+
+# 🏠 BUYER PERSONAS 
+
+---
+
+# 👩‍🦱 Buyer 1 — “Hind”
+
+**Age:** 29
+**City:** Riyadh – rented apartment
+**Job:** HR executive
+**Lives with:** Sister
+**Income:** Comfortable but cost-conscious
+**Phone behavior:** Constantly on phone, multitasking
+**Tech behavior:** Uses HungerStation, Uber, Snapchat daily
+
+### What actually happens in her life
+
+* AC stops cooling at 11pm in July.
+* She panics because she can’t sleep in heat.
+* She opens Google → calls random numbers → no one answers.
+* Ends up messaging a WhatsApp group asking “مين يعرف فني؟”
+* Gets overcharged once → loses trust forever.
+
+### How she behaves as a user
+
+* Impatient. Wants immediate confirmation.
+* Doesn’t like long forms.
+* Skims text.
+* Will cancel if someone doesn’t reply fast.
+* Doesn’t enjoy negotiating price.
+* Will tolerate slightly higher price for certainty and speed.
+
+### What she really fears
+
+* Stranger entering home.
+* Being scammed because she doesn’t understand technical things.
+* Being stuck waiting for hours.
+
+### What makes her happy
+
+* “Technician arriving in 20 minutes” feels magical.
+* Clear upfront price.
+* Simple chat buttons instead of typing.
+* Seeing photo of technician + name + rating.
+
+### How she breaks systems
+
+* Books impulsively.
+* Cancels if better option appears.
+* May misdescribe the problem (“AC broken” when it just needs cleaning).
+
+### How MaintMENA must feel for her
+
+* Fast.
+* Reassuring.
+* Low thinking required.
+* Almost like ordering food.
+
+If your app feels slow, heavy, or formal → she leaves.
+
+---
+
+---
+
+# 👨 Buyer 2 — “Abu Mohammed”
+
+**Age:** 51
+**City:** Jeddah – owned apartment (old building)
+**Job:** Government employee
+**Family:** Wife + 4 kids
+**Income:** Stable but tight
+**Phone behavior:** Calls > messages
+**Tech behavior:** WhatsApp, YouTube, no apps obsession
+
+### What actually happens in his life
+
+* Water leaks under kitchen sink.
+* He waits days hoping it “goes away”.
+* Wife pressures him: “الموية بتخرب الخشب!”
+* Calls 3 plumbers → one answers → says “أجي بعد المغرب” → doesn’t show.
+* Gets angry but still calls him again tomorrow.
+
+### How he behaves as a user
+
+* Suspicious of prices.
+* Asks many questions verbally.
+* Doesn’t fully trust reviews.
+* Wants to talk to a human.
+* Often delays decisions.
+
+### What he really fears
+
+* Being cheated on parts.
+* Paying twice for same issue.
+* Technician breaking something else.
+
+### What makes him happy
+
+* Someone explaining simply.
+* Feeling respected.
+* Knowing the price range before agreeing.
+* Seeing other “normal people” reviews.
+
+### How he breaks systems
+
+* Might ignore notifications.
+* Might not upload photos.
+* Might forget appointment time.
+* Might negotiate heavily.
+
+### How MaintMENA must feel for him
+
+* Trustworthy.
+* Human.
+* Simple Arabic language.
+* Not “startup-y”.
+
+If your app feels too modern/complex → he feels lost.
+
+---
+
+---
+
+# 👩 Buyer 3 — “Sara”
+
+**Age:** 36
+**City:** Khobar – new villa
+**Job:** Interior-conscious homemaker
+**Family:** Husband + 2 kids
+**Phone behavior:** Takes photos of everything
+**Tech behavior:** Instagram, Pinterest, shopping apps
+
+### What actually happens in her life
+
+* Notices small cracks, imperfect paint edges, loose handles.
+* These bother her mentally every day.
+* She wants it “done properly” not “patched”.
+* Has bad experiences with rushed workers who leave mess.
+
+### How she behaves as a user
+
+* Sends many photos.
+* Asks detailed questions.
+* Wants clear scope.
+* Cares about cleanliness and finishing more than price.
+* Will wait longer for a good craftsman.
+
+### What she really fears
+
+* Mess in her home.
+* Ugly finish that she has to live with.
+* Workers rushing.
+
+### What makes her happy
+
+* Seeing before/after galleries.
+* Clear timeline.
+* Respectful behavior inside home.
+* Someone who treats her home carefully.
+
+### How she breaks systems
+
+* Can over-specify requirements.
+* Might change her mind mid-job.
+* Can be perfectionist.
+
+### How MaintMENA must feel for her
+
+* Premium.
+* Visual.
+* Trustworthy.
+* Detail-friendly.
+
+---
+---
+
+# 👵 Buyer 4 — “Um Khaled”
+
+**Age:** 63
+**City:** Taif – ground-floor apartment
+**Tech:** Very low (WhatsApp voice notes only)
+**Lives with:** Husband
+**Mobility:** Limited
+
+### Her reality
+
+* Heater breaks in winter → real anxiety.
+* Relies on sons/neighbors to find technicians.
+* Afraid of being cheated.
+* Doesn’t understand technical language at all.
+* Wants someone polite and patient.
+
+### Behavior
+
+* Prefers voice calls.
+* Forgets appointment times.
+* Repeats questions.
+* Trusts tone more than ratings.
+
+### What breaks systems
+
+* Can’t fill forms.
+* Doesn’t upload photos.
+* Misses notifications.
+
+### What MaintMENA must do for her
+
+* Voice-first UX
+* Big buttons
+* Family booking mode (“son books for her”)
+* Clear Arabic language
+
+---
+
+---
+
+# 🧔 Buyer 5 — “Mansour”
+
+**Age:** 38
+**City:** Buraydah – owns duplex
+**Job:** Small business owner
+**Personality:** Control-oriented, assertive
+
+### His reality
+
+* Hates waiting.
+* Expects immediate response.
+* Negotiates aggressively.
+* Wants dominance in conversation.
+
+### Behavior
+
+* Calls repeatedly.
+* Pushes for discounts.
+* Challenges technicians’ competence.
+
+### What breaks systems
+
+* Can harass sellers in chat.
+* Tries to exploit refunds or complaints.
+
+### What MaintMENA must do for him
+
+* Structured communication
+* Clear boundaries
+* System-enforced etiquette
+
+---
+
+---
+
+# 👩 Buyer 6 — “Lama”
+
+**Age:** 24
+**City:** Jeddah – shared apartment
+**Job:** Student / influencer side hustle
+
+### Her reality
+
+* Moves frequently.
+* Needs small jobs constantly.
+* Budget tight.
+* Documents everything visually.
+
+### Behavior
+
+* Takes many photos/videos.
+* Cares about aesthetics.
+* Writes emotional reviews.
+
+### What breaks systems
+
+* Overreacts to small imperfections.
+* Can escalate emotionally.
+
+### What MaintMENA must do for her
+
+* Visual previews
+* Clear expectations
+* Rating moderation
+
+---
+
+---
+
+# 🧔 Buyer 7 — “Saad”
+
+**Age:** 33
+**City:** Abha – villa
+**Job:** Remote software engineer
+
+### His reality
+
+* Works from home.
+* Noise-sensitive.
+* Schedules tightly.
+
+### Behavior
+
+* Needs precise timing.
+* Low tolerance for delays.
+* Technical mindset.
+
+### What breaks systems
+
+* Cancels if ETA slips.
+* Leaves harsh reviews if late.
+
+### What MaintMENA must do for him
+
+* Accurate ETAs
+* Quiet-hours controls
+* Predictable scheduling
+
+---
+
+---
+
+# 🧕 Buyer 8 — “Reem”
+
+**Age:** 41
+**City:** Makkah – family apartment
+**Job:** Homemaker
+
+### Her reality
+
+* Manages everything in home.
+* Constant small issues.
+* Prefers familiar technicians.
+
+### Behavior
+
+* Builds loyalty quickly.
+* Rebooks same seller repeatedly.
+
+### What breaks systems
+
+* Avoids trying new sellers.
+* Doesn’t explore features.
+
+### What MaintMENA must do for her
+
+* Easy rebooking
+* Favorite sellers
+* Relationship continuity
+
+---
+
+---
+
+# 👨 Buyer 9 — “Nasser”
+
+**Age:** 48
+**City:** Hail – rural outskirts
+**Connectivity:** Weak internet
+
+### His reality
+
+* Limited service availability.
+* Technicians travel far.
+* Phone signal unstable.
+
+### Behavior
+
+* Misses notifications.
+* Late responses.
+
+### What breaks systems
+
+* App may fail to load.
+* Location accuracy issues.
+
+### What MaintMENA must do for him
+
+* Low-data mode
+* SMS fallback
+* Offline tolerance
+
+---
+
+---
+
+# 🔧 SELLER PERSONAS
+
+---
+
+# 👨‍🔧 Seller 1 — “Abu Ahmad”
+
+**Age:** 44
+**City:** Jeddah
+**Work:** Independent AC + plumbing technician
+**Van:** Old HiAce
+**Phone:** Android, cracked screen
+**Daily reality:** 5–8 jobs/day
+
+### What his real day looks like
+
+* Starts late because first customer wasn’t ready.
+* Traffic delays mess his schedule.
+* One job turns into two-hour nightmare.
+* Customer argues about price.
+* Another customer keeps calling while he’s working.
+* Ends day exhausted.
+
+### How he behaves in apps
+
+* Accepts jobs quickly if nearby.
+* Sometimes forgets to update status.
+* Replies with short messages or voice notes.
+* Doesn’t like typing.
+* Gets defensive if accused unfairly.
+
+### What he really wants
+
+* Less wasted trips.
+* Faster payments.
+* Fewer arguments.
+* Clear location and parking.
+
+### What he fears
+
+* Bad ratings for things outside his control.
+* Customers cancelling last minute.
+* Platform freezing his money.
+
+### How he breaks systems
+
+* Might mark “on the way” late.
+* Might stack jobs unrealistically.
+* Might under-quote to win job.
+
+### How MaintMENA must feel for him
+
+* Simple.
+* Fair.
+* Not bureaucratic.
+* Fast money.
+
+---
+
+---
+
+# 👷 Seller 2 — “Yousef”
+
+**Age:** 28
+**City:** Riyadh
+**Work:** Furniture assembly + mounting + smart devices
+**Background:** Tech-savvy, clean presentation
+**Phone:** iPhone, organized
+
+### What his real day looks like
+
+* Schedules jobs carefully.
+* Arrives on time.
+* Keeps tools clean.
+* Documents his work.
+* Values reputation strongly.
+
+### How he behaves in apps
+
+* Uses chat properly.
+* Sends photos.
+* Updates ETA.
+* Declines unclear jobs.
+
+### What he really wants
+
+* Premium customers.
+* Clear scope.
+* Predictable schedule.
+* Good ratings.
+
+### What he fears
+
+* Low-quality customers dragging ratings.
+* Scope creep.
+* Price haggling.
+
+### How he breaks systems
+
+* Might reject many jobs.
+* Might price higher than average.
+
+### How MaintMENA must feel for him
+
+* Professional.
+* Merit-based.
+* Transparent.
+
+---
+
+---
+
+# 🧰 Seller 3 — “Salem”
+
+**Age:** 35
+**City:** Madinah
+**Work:** Painter + finishing
+**Work style:** Artistic, slow, perfectionist
+**Income:** Inconsistent
+
+### What his real day looks like
+
+* Works long hours on one job.
+* Gets frustrated when rushed.
+* Needs space and preparation.
+* Hates interruptions.
+
+### How he behaves in apps
+
+* Takes time to reply.
+* Wants photos and measurements.
+* Explains a lot.
+* Schedules blocks of time.
+
+### What he really wants
+
+* Customers who respect craftsmanship.
+* Clear expectations.
+* Fair pricing.
+
+### What he fears
+
+* Being forced to rush.
+* Customers who change scope constantly.
+* Bad reviews for subjective taste.
+
+### How MaintMENA must feel for him
+
+* Respectful.
+* Portfolio-driven.
+* Quality-oriented.
+
+---
+
+---
+
+# 👴 Seller 4 — “Abu Rashid”
+
+**Age:** 58
+**City:** Makkah
+**Skill:** Old-school electrician
+
+### Reality
+
+* Excellent hands-on skill.
+* Very slow with apps.
+* Prefers phone calls.
+
+### Behavior
+
+* Misses updates.
+* Struggles with UI.
+
+### What breaks systems
+
+* Doesn’t update statuses.
+* Confused by notifications.
+
+### What MaintMENA must do
+
+* Ultra-simple seller UI
+* Voice prompts
+* Minimal steps
+
+---
+
+---
+
+# 🚐 Seller 5 — “Khaled”
+
+**Age:** 34
+**City:** Riyadh
+**Skill:** Mobile handyman van
+**Work style:** Opportunistic
+
+### Reality
+
+* Drives around accepting nearby jobs.
+* Optimizes for quick cash.
+
+### Behavior
+
+* Cancels if better job appears.
+* Overbooks.
+
+### What breaks systems
+
+* Reliability issues.
+
+### What MaintMENA must do
+
+* Reliability scoring
+* Cancellation penalties
+* ETA enforcement
+
+---
+
+---
+
+# 🧑‍🔧 Seller 6 — “Bilal”
+
+**Age:** 26
+**City:** Dammam
+**Skill:** Apprentice technician
+
+### Reality
+
+* Learning on the job.
+* Sometimes slow.
+* Honest but inexperienced.
+
+### Behavior
+
+* Asks many questions.
+* Takes longer.
+
+### What breaks systems
+
+* Slower completion.
+* Lower ratings unfairly.
+
+### What MaintMENA must do
+
+* Skill tier labeling
+* Expectation setting
+
+---
+
+---
+
+# 🏗 Seller 7 — “Majed”
+
+**Age:** 41
+**City:** Medina
+**Skill:** Tile + masonry
+
+### Reality
+
+* Physically demanding work.
+* Requires long blocks.
+
+### Behavior
+
+* Books fewer jobs.
+* Needs prep.
+
+### What breaks systems
+
+* Misaligned scheduling.
+
+### What MaintMENA must do
+
+* Time-block booking
+* Prep instructions
+
+---

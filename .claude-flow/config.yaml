@@ -1,0 +1,40 @@
+version: "3.0.0"
+v3Mode: true
+sparc: false
+
+agents:
+  defaultType: coder
+  maxConcurrent: 8
+  autoSpawn: true
+  timeout: 300
+
+swarm:
+  topology: hierarchical
+  maxAgents: 8
+  autoScale: false
+  coordinationStrategy: specialized
+
+memory:
+  backend: hybrid
+  path: ./.swarm
+  cacheSize: 256
+  enableHNSW: true
+
+mcp:
+  transport: stdio
+  autoStart: true
+  tools: all
+
+providers:
+  - name: openai
+    priority: 1
+    enabled: true
+  - name: anthropic
+    priority: 2
+    enabled: false
+  - name: openrouter
+    priority: 3
+    enabled: false
+  - name: ollama
+    priority: 4
+    enabled: false

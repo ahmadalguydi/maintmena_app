@@ -1,0 +1,13 @@
+{
+  "id": "agent-1774379295244-jhjkkz",
+  "agentId": "agent-1774379295244-jhjkkz",
+  "type": "coordinator",
+  "agentType": "coordinator",
+  "status": "idle",
+  "health": 1,
+  "taskCount": 0,
+  "tasksCompleted": 0,
+  "currentTask": null,
+  "createdAt": "2026-03-24T19:08:15.244Z",
+  "model": "sonnet"
+}

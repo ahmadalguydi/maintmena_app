@@ -1,0 +1,13 @@
+{
+  "id": "agent-1774370926894-00nary",
+  "agentId": "agent-1774370926894-00nary",
+  "type": "reviewer",
+  "agentType": "reviewer",
+  "status": "idle",
+  "health": 1,
+  "taskCount": 0,
+  "tasksCompleted": 0,
+  "currentTask": null,
+  "createdAt": "2026-03-24T16:48:46.894Z",
+  "model": "sonnet"
+}

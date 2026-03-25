@@ -1,0 +1,13 @@
+{
+  "id": "agent-1774379304145-v164jn",
+  "agentId": "agent-1774379304145-v164jn",
+  "type": "tester",
+  "agentType": "tester",
+  "status": "idle",
+  "health": 1,
+  "taskCount": 0,
+  "tasksCompleted": 0,
+  "currentTask": null,
+  "createdAt": "2026-03-24T19:08:24.146Z",
+  "model": "sonnet"
+}

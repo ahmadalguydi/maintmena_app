@@ -1,0 +1,25 @@
+project_id = "owvzutteoguscbymypyl"
+
+[functions.generate-contract]
+verify_jwt = true
+
+[functions.translate-content]
+verify_jwt = false
+
+[functions.backfill-translations]
+verify_jwt = false
+
+[functions.generate-mock-vendors]
+verify_jwt = false
+
+[functions.send-brevo-email]
+verify_jwt = false
+
+[functions.send-verification-email]
+verify_jwt = false
+
+[functions.verify-email]
+verify_jwt = false
+
+[functions.nudge-completion]
+verify_jwt = false

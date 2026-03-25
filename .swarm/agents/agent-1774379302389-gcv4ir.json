@@ -1,0 +1,13 @@
+{
+  "id": "agent-1774379302389-gcv4ir",
+  "agentId": "agent-1774379302389-gcv4ir",
+  "type": "coder",
+  "agentType": "coder",
+  "status": "idle",
+  "health": 1,
+  "taskCount": 0,
+  "tasksCompleted": 0,
+  "currentTask": null,
+  "createdAt": "2026-03-24T19:08:22.389Z",
+  "model": "sonnet"
+}

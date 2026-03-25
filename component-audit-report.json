@@ -1,0 +1,3078 @@
+{
+  "timestamp": "2025-12-28T14:15:25.271Z",
+  "totalComponents": 245,
+  "activeComponents": 64,
+  "lowUsageComponents": 100,
+  "deadComponents": 81,
+  "components": [
+    {
+      "name": "SoftCard",
+      "importCount": 204,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingsList.tsx",
+        "app\\buyer\\explore\\BuyerExplore.tsx",
+        "app\\buyer\\explore\\VendorProfile.tsx",
+        "app\\buyer\\home\\BuyerHome.tsx",
+        "app\\buyer\\jobs\\BuyerJobDetail.tsx",
+        "app\\buyer\\profile\\BuyerProfile.tsx",
+        "app\\buyer\\profile\\ContractDetail.tsx",
+        "app\\buyer\\profile\\EditProfile.tsx",
+        "app\\buyer\\profile\\History.tsx",
+        "app\\buyer\\profile\\MyContracts.tsx",
+        "app\\buyer\\profile\\SavedVendors.tsx",
+        "app\\buyer\\quotes\\QuoteDetail.tsx",
+        "app\\buyer\\quotes\\QuotesComparison.tsx",
+        "app\\buyer\\requests\\RequestDetail.tsx",
+        "app\\buyer\\reviews\\ReviewForm.tsx",
+        "app\\buyer\\reviews\\ReviewSuccess.tsx",
+        "app\\seller\\bookings\\SellerBookingsList.tsx",
+        "app\\seller\\calendar\\SellerCalendar.tsx",
+        "app\\seller\\home\\SellerHome.tsx",
+        "app\\seller\\jobs\\SellerJobDetail.tsx",
+        "app\\seller\\marketplace\\JobDetail.tsx",
+        "app\\seller\\marketplace\\Marketplace.tsx",
+        "app\\seller\\profile\\Certifications.tsx",
+        "app\\seller\\profile\\EditProfile.tsx",
+        "app\\seller\\profile\\History.tsx",
+        "app\\seller\\profile\\ManageServices.tsx",
+        "app\\seller\\profile\\MyContracts.tsx",
+        "app\\seller\\profile\\PortfolioGallery.tsx",
+        "app\\seller\\profile\\SellerProfile.tsx",
+        "app\\seller\\profile\\ServiceAreas.tsx",
+        "app\\seller\\quotes\\EditQuote.tsx",
+        "app\\seller\\reviews\\SellerReviews.tsx",
+        "app\\shared\\Help.tsx",
+        "app\\shared\\MessagesHub.tsx",
+        "app\\shared\\Notifications.tsx",
+        "app\\shared\\Settings.tsx",
+        "app\\shared\\SignatureSettings.tsx",
+        "app\\shared\\Subscription.tsx",
+        "components\\contracts\\ContractAgreementScreen.tsx",
+        "components\\contracts\\ContractPreview.tsx",
+        "components\\contracts\\GeneralTerms.tsx",
+        "components\\mobile\\ActiveRequestCard.tsx",
+        "components\\mobile\\AddressManager.tsx",
+        "components\\mobile\\BookingConfirmedSheet.tsx",
+        "components\\mobile\\ConciergeCard.tsx",
+        "components\\mobile\\ContractExecutedSheet.tsx",
+        "components\\mobile\\CounterProposalReviewSheet.tsx",
+        "components\\mobile\\DualResolutionHaltedJobCard.tsx",
+        "components\\mobile\\EarningsSheet.tsx",
+        "components\\mobile\\EnhancedBookingCard.tsx",
+        "components\\mobile\\EnhancedQuoteCard.tsx",
+        "components\\mobile\\EnhancedRequestCard.tsx",
+        "components\\mobile\\HaltedJobCard.tsx",
+        "components\\mobile\\JobCard.tsx",
+        "components\\mobile\\JobCompletionSheet.tsx",
+        "components\\mobile\\JobTrackingCard.tsx",
+        "components\\mobile\\JobWonSheet.tsx",
+        "components\\mobile\\PendingContractCard.tsx",
+        "components\\mobile\\ProfileCompletionCard.tsx",
+        "components\\mobile\\ProviderCard.tsx",
+        "components\\mobile\\ReviewProgressCard.tsx",
+        "components\\mobile\\WarrantyCard.tsx",
+        "components\\QuoteTemplateManager.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1297,
+      "status": "active"
+    },
+    {
+      "name": "button",
+      "importCount": 155,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingDetail.tsx",
+        "app\\buyer\\bookings\\BookService.tsx",
+        "app\\buyer\\explore\\BuyerExplore.tsx",
+        "app\\buyer\\explore\\VendorProfile.tsx",
+        "app\\buyer\\home\\BuyerHome.tsx",
+        "app\\buyer\\profile\\BuyerProfile.tsx",
+        "app\\buyer\\profile\\EditProfile.tsx",
+        "app\\buyer\\profile\\History.tsx",
+        "app\\buyer\\profile\\SavedVendors.tsx",
+        "app\\buyer\\quotes\\QuoteDetail.tsx",
+        "app\\buyer\\requests\\EditRequest.tsx",
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "app\\buyer\\requests\\RequestsList.tsx",
+        "app\\onboarding\\LanguageWelcome.tsx",
+        "app\\onboarding\\Login.tsx",
+        "app\\onboarding\\Signup.tsx",
+        "app\\seller\\calendar\\SellerCalendar.tsx",
+        "app\\seller\\home\\SellerHome.tsx",
+        "app\\seller\\marketplace\\Marketplace.tsx",
+        "app\\seller\\marketplace\\QuoteComposer.tsx",
+        "app\\seller\\profile\\Certifications.tsx",
+        "app\\seller\\profile\\History.tsx",
+        "app\\seller\\profile\\ManageServices.tsx",
+        "app\\seller\\profile\\PortfolioGallery.tsx",
+        "app\\seller\\profile\\SellerProfile.tsx",
+        "app\\seller\\quotes\\EditQuote.tsx",
+        "app\\seller\\quotes\\MyQuoteDetail.tsx",
+        "app\\seller\\quotes\\MyQuotes.tsx",
+        "app\\shared\\MessageThread.tsx",
+        "app\\shared\\OnboardingSlides.tsx",
+        "app\\shared\\ResetPassword.tsx",
+        "app\\shared\\Settings.tsx",
+        "components\\AddEventModal.tsx",
+        "components\\admin\\SignalManager.tsx",
+        "components\\admin\\TenderManager.tsx",
+        "components\\BuyerMessagesSection.tsx",
+        "components\\contracts\\ContractProgressTracker.tsx",
+        "components\\contracts\\GeneralTerms.tsx",
+        "components\\FilterBar.tsx",
+        "components\\IssueModal.tsx",
+        "components\\landing\\PricingSection.tsx",
+        "components\\LeaveReviewModal.tsx",
+        "components\\LiveChat.tsx",
+        "components\\mobile\\ActiveRequestCard.tsx",
+        "components\\mobile\\AddressManager.tsx",
+        "components\\mobile\\AddressPicker.tsx",
+        "components\\mobile\\AppHeader.tsx",
+        "components\\mobile\\AuthTriggerModal.tsx",
+        "components\\mobile\\AvatarSelector.tsx",
+        "components\\mobile\\BookingNegotiationSheet.tsx",
+        "components\\mobile\\BottomSheet.tsx",
+        "components\\mobile\\CashSafetyBanner.tsx",
+        "components\\mobile\\EmailVerificationBanner.tsx",
+        "components\\mobile\\FloatingNav.tsx",
+        "components\\mobile\\GradientHeader.tsx",
+        "components\\mobile\\JobTrackingCard.tsx",
+        "components\\mobile\\JourneyTimelineOverlay.tsx",
+        "components\\mobile\\MenuGroup.tsx",
+        "components\\mobile\\PhotoProofModal.tsx",
+        "components\\mobile\\PremiumTabs.tsx",
+        "components\\mobile\\PromoBanner.tsx",
+        "components\\mobile\\RequestSubmittedSheet.tsx",
+        "components\\mobile\\SearchHero.tsx",
+        "components\\mobile\\SwipeableItem.tsx",
+        "components\\mobile\\WarrantyClaimModal.tsx",
+        "components\\Pricing.tsx",
+        "components\\SamplePdfModal.tsx",
+        "components\\StartTrialModal.tsx",
+        "components\\StickyTopBar.tsx",
+        "components\\SubscribeModal.tsx",
+        "components\\SubscriptionManagementModal.tsx",
+        "components\\TrialCountdownBanner.tsx",
+        "components\\ui\\sidebar.tsx",
+        "components\\UpgradeModal.tsx",
+        "components\\WeeklyBoard.tsx",
+        "pages\\Admin.tsx",
+        "pages\\Login.tsx",
+        "pages\\PostJob.tsx",
+        "pages\\PricingPage.tsx",
+        "pages\\SellerQuotes.tsx",
+        "pages\\Signup.tsx"
+      ],
+      "category": "ui",
+      "sizeBytes": 1991,
+      "status": "active"
+    },
+    {
+      "name": "Calendar",
+      "importCount": 139,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingDetail.tsx",
+        "app\\buyer\\bookings\\BookingsList.tsx",
+        "app\\buyer\\bookings\\BookService.tsx",
+        "app\\buyer\\jobs\\BuyerJobDetail.tsx",
+        "app\\buyer\\profile\\ContractDetail.tsx",
+        "app\\buyer\\profile\\History.tsx",
+        "app\\buyer\\profile\\MyContracts.tsx",
+        "app\\buyer\\quotes\\QuoteDetail.tsx",
+        "app\\buyer\\requests\\EditRequest.tsx",
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "app\\buyer\\requests\\RequestDetail.tsx",
+        "app\\seller\\bookings\\SellerBookingDetail.tsx",
+        "app\\seller\\bookings\\SellerBookingsList.tsx",
+        "app\\seller\\calendar\\SellerCalendar.tsx",
+        "app\\seller\\home\\SellerHome.tsx",
+        "app\\seller\\jobs\\SellerJobDetail.tsx",
+        "app\\seller\\marketplace\\JobDetail.tsx",
+        "app\\seller\\marketplace\\QuoteComposer.tsx",
+        "app\\seller\\profile\\ContractDetail.tsx",
+        "app\\seller\\profile\\History.tsx",
+        "app\\seller\\profile\\MyContracts.tsx",
+        "app\\seller\\quotes\\EditQuote.tsx",
+        "app\\seller\\quotes\\MyQuoteDetail.tsx",
+        "app\\shared\\Subscription.tsx",
+        "components\\admin\\BlogEditor.tsx",
+        "components\\admin\\BlogManager.tsx",
+        "components\\admin\\CalendarEventsManager.tsx",
+        "components\\admin\\ContactSubmissionsManager.tsx",
+        "components\\admin\\UserManager.tsx",
+        "components\\BookingHistoryArchive.tsx",
+        "components\\BookingManagement.tsx",
+        "components\\BookingRequestModal.tsx",
+        "components\\BookingResponseModal.tsx",
+        "components\\Calendar.tsx",
+        "components\\contracts\\ContractAgreementScreen.tsx",
+        "components\\contracts\\ContractSignedSuccess.tsx",
+        "components\\CounterProposalResponseModal.tsx",
+        "components\\IssueModal.tsx",
+        "components\\mobile\\BookingConfirmedSheet.tsx",
+        "components\\mobile\\BookingNegotiationSheet.tsx",
+        "components\\mobile\\ContractExecutedSheet.tsx",
+        "components\\mobile\\EnhancedBookingCard.tsx",
+        "components\\mobile\\EnhancedQuoteCard.tsx",
+        "components\\mobile\\EnhancedRequestCard.tsx",
+        "components\\mobile\\JobWonSheet.tsx",
+        "components\\mobile\\PendingContractCard.tsx",
+        "components\\mobile\\RequestSubmittedSheet.tsx",
+        "components\\ProjectTimelinePlanner.tsx",
+        "components\\QuoteComparison.tsx",
+        "components\\UnifiedDashboard.tsx",
+        "pages\\Admin.tsx",
+        "pages\\Blog.tsx",
+        "pages\\BlogPost.tsx",
+        "pages\\Briefs.tsx",
+        "pages\\BuyerDashboard.tsx",
+        "pages\\CalendarPage.tsx",
+        "pages\\ContractDetail.tsx",
+        "pages\\JobDetail.tsx",
+        "pages\\PostJob.tsx",
+        "pages\\PremiumArchive.tsx",
+        "pages\\SellerDashboard.tsx",
+        "pages\\SellerProfile.tsx",
+        "pages\\SellerQuotes.tsx",
+        "pages\\Settings.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 10496,
+      "status": "active"
+    },
+    {
+      "name": "label",
+      "importCount": 130,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookService.tsx",
+        "app\\buyer\\requests\\EditRequest.tsx",
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "app\\buyer\\reviews\\ReviewForm.tsx",
+        "app\\seller\\profile\\EditProfile.tsx",
+        "app\\seller\\quotes\\EditQuote.tsx",
+        "components\\admin\\blog-editor\\blocks\\ImageBlock.tsx",
+        "components\\admin\\blog-editor\\MarkdownImport.tsx",
+        "components\\admin\\BriefEditor.tsx",
+        "components\\admin\\BulkMarkdownUpload.tsx",
+        "components\\admin\\ContactManager.tsx",
+        "components\\admin\\EducationalContentManager.tsx",
+        "components\\admin\\IndustryReportsManager.tsx",
+        "components\\admin\\SignalManager.tsx",
+        "components\\admin\\TemplatesGuidesManager.tsx",
+        "components\\admin\\TenderManager.tsx",
+        "components\\BookingFilters.tsx",
+        "components\\EnergyEfficiencyCalculator.tsx",
+        "components\\FilterBar.tsx",
+        "components\\LeaveReviewModal.tsx",
+        "components\\mobile\\AddressManager.tsx",
+        "components\\mobile\\PhotoProofModal.tsx",
+        "components\\mobile\\Typography.tsx",
+        "components\\mobile\\WarrantyClaimModal.tsx",
+        "components\\NegotiationModal.tsx",
+        "components\\ROICalculator.tsx",
+        "components\\SellerNegotiationModal.tsx",
+        "components\\StartTrialModal.tsx",
+        "pages\\ContractDetail.tsx",
+        "pages\\Login.tsx",
+        "pages\\Settings.tsx"
+      ],
+      "category": "ui",
+      "sizeBytes": 696,
+      "status": "active"
+    },
+    {
+      "name": "GradientHeader",
+      "importCount": 99,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingDetail.tsx",
+        "app\\buyer\\bookings\\ReviewPage.tsx",
+        "app\\buyer\\explore\\BuyerExplore.tsx",
+        "app\\buyer\\explore\\VendorProfile.tsx",
+        "app\\buyer\\jobs\\BuyerJobDetail.tsx",
+        "app\\buyer\\profile\\EditProfile.tsx",
+        "app\\buyer\\profile\\History.tsx",
+        "app\\buyer\\profile\\MyContracts.tsx",
+        "app\\buyer\\profile\\SavedVendors.tsx",
+        "app\\buyer\\quotes\\QuoteDetail.tsx",
+        "app\\buyer\\requests\\EditRequest.tsx",
+        "app\\buyer\\requests\\RequestDetail.tsx",
+        "app\\buyer\\requests\\RequestsList.tsx",
+        "app\\buyer\\reviews\\ReviewForm.tsx",
+        "app\\seller\\bookings\\SellerBookingDetail.tsx",
+        "app\\seller\\calendar\\SellerCalendar.tsx",
+        "app\\seller\\jobs\\ActiveJobs.tsx",
+        "app\\seller\\jobs\\SellerJobDetail.tsx",
+        "app\\seller\\marketplace\\JobDetail.tsx",
+        "app\\seller\\profile\\Certifications.tsx",
+        "app\\seller\\profile\\EditProfile.tsx",
+        "app\\seller\\profile\\History.tsx",
+        "app\\seller\\profile\\ManageServices.tsx",
+        "app\\seller\\profile\\MyContracts.tsx",
+        "app\\seller\\profile\\PortfolioGallery.tsx",
+        "app\\seller\\profile\\ServiceAreas.tsx",
+        "app\\seller\\quotes\\EditQuote.tsx",
+        "app\\seller\\quotes\\MyQuoteDetail.tsx",
+        "app\\seller\\reviews\\SellerReviews.tsx",
+        "app\\shared\\ForgotPassword.tsx",
+        "app\\shared\\Help.tsx",
+        "app\\shared\\MessagesHub.tsx",
+        "app\\shared\\MessageThread.tsx",
+        "app\\shared\\OTPVerification.tsx",
+        "app\\shared\\ResetPassword.tsx",
+        "app\\shared\\Settings.tsx",
+        "app\\shared\\SignatureSettings.tsx",
+        "app\\shared\\Subscription.tsx",
+        "components\\contracts\\ContractAgreementScreen.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 2123,
+      "status": "active"
+    },
+    {
+      "name": "toast",
+      "importCount": 91,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingDetail.tsx",
+        "app\\buyer\\bookings\\BookService.tsx",
+        "app\\buyer\\explore\\BuyerExplore.tsx",
+        "app\\buyer\\explore\\VendorProfile.tsx",
+        "app\\buyer\\profile\\ContractDetail.tsx",
+        "app\\buyer\\profile\\EditProfile.tsx",
+        "app\\buyer\\profile\\SavedVendors.tsx",
+        "app\\buyer\\quotes\\QuoteDetail.tsx",
+        "app\\buyer\\requests\\EditRequest.tsx",
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "app\\buyer\\requests\\RequestDetail.tsx",
+        "app\\buyer\\requests\\RequestsList.tsx",
+        "app\\buyer\\reviews\\ReviewForm.tsx",
+        "app\\onboarding\\Login.tsx",
+        "app\\onboarding\\Signup.tsx",
+        "app\\seller\\jobs\\SellerJobDetail.tsx",
+        "app\\seller\\marketplace\\Marketplace.tsx",
+        "app\\seller\\marketplace\\QuoteComposer.tsx",
+        "app\\seller\\profile\\Certifications.tsx",
+        "app\\seller\\profile\\EditProfile.tsx",
+        "app\\seller\\profile\\ManageServices.tsx",
+        "app\\seller\\profile\\PortfolioGallery.tsx",
+        "app\\seller\\profile\\ServiceAreas.tsx",
+        "app\\seller\\quotes\\EditQuote.tsx",
+        "app\\shared\\ForgotPassword.tsx",
+        "app\\shared\\Help.tsx",
+        "app\\shared\\MessageThread.tsx",
+        "app\\shared\\OTPVerification.tsx",
+        "app\\shared\\PermissionCamera.tsx",
+        "app\\shared\\PermissionLocation.tsx",
+        "app\\shared\\PermissionNotifications.tsx",
+        "app\\shared\\ResetPassword.tsx",
+        "app\\shared\\Settings.tsx",
+        "app\\shared\\SignatureSettings.tsx",
+        "components\\ActionQueue.tsx",
+        "components\\admin\\blog-editor\\BulkMarkdownBlogUpload.tsx",
+        "components\\admin\\BriefEditor.tsx",
+        "components\\admin\\BulkMarkdownUpload.tsx",
+        "components\\admin\\CalendarEventsManager.tsx",
+        "components\\admin\\ContactManager.tsx",
+        "components\\admin\\EducationalContentManager.tsx",
+        "components\\admin\\IndustryReportsManager.tsx",
+        "components\\admin\\SignalManager.tsx",
+        "components\\admin\\TemplatesGuidesManager.tsx",
+        "components\\admin\\TenderManager.tsx",
+        "components\\admin\\UserManager.tsx",
+        "components\\BookingManagement.tsx",
+        "components\\BookingMessagingPanel.tsx",
+        "components\\BookingPaymentModal.tsx",
+        "components\\BuyerNegotiationModal.tsx",
+        "components\\CompletionWorkflowCard.tsx",
+        "components\\contracts\\BindingTermsDrawer.tsx",
+        "components\\contracts\\ContractAgreementScreen.tsx",
+        "components\\contracts\\ContractProgressTracker.tsx",
+        "components\\CounterProposalResponseModal.tsx",
+        "components\\EditQuoteModal.tsx",
+        "components\\Hero.tsx",
+        "components\\LeaveReviewModal.tsx",
+        "components\\MessagingPanel.tsx",
+        "components\\mobile\\AddressManager.tsx",
+        "components\\mobile\\AddressPicker.tsx",
+        "components\\mobile\\AvatarSelector.tsx",
+        "components\\mobile\\BookingNegotiationSheet.tsx",
+        "components\\mobile\\CounterProposalReviewSheet.tsx",
+        "components\\mobile\\DualResolutionHaltedJobCard.tsx",
+        "components\\mobile\\EmailVerificationBanner.tsx",
+        "components\\mobile\\EnhancedQuoteCard.tsx",
+        "components\\mobile\\HaltedJobCard.tsx",
+        "components\\mobile\\JobTrackingCard.tsx",
+        "components\\NegotiationModal.tsx",
+        "components\\PipelineCard.tsx",
+        "components\\QuoteManagement.tsx",
+        "components\\QuoteTemplateManager.tsx",
+        "components\\RevisionRequestModal.tsx",
+        "components\\SubmissionKitModal.tsx",
+        "components\\ui\\sonner.tsx",
+        "components\\ui\\use-toast.ts",
+        "hooks\\useAuth.tsx",
+        "hooks\\useCalendar.tsx",
+        "pages\\Admin.tsx",
+        "pages\\BlogPost.tsx",
+        "pages\\Briefs.tsx",
+        "pages\\BuyerDashboard.tsx",
+        "pages\\Contracts.tsx",
+        "pages\\EditRequest.tsx",
+        "pages\\Login.tsx",
+        "pages\\ManageQuotes.tsx",
+        "pages\\PostJob.tsx",
+        "pages\\PricingPage.tsx",
+        "pages\\SellerDashboard.tsx",
+        "pages\\SellerQuotes.tsx"
+      ],
+      "category": "ui",
+      "sizeBytes": 4798,
+      "status": "active"
+    },
+    {
+      "name": "ProtectedRoute",
+      "importCount": 71,
+      "importedFrom": [],
+      "files": [
+        "App.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 1399,
+      "status": "active"
+    },
+    {
+      "name": "input",
+      "importCount": 52,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookService.tsx",
+        "app\\buyer\\requests\\EditRequest.tsx",
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "app\\seller\\marketplace\\Marketplace.tsx",
+        "app\\seller\\marketplace\\QuoteComposer.tsx",
+        "app\\seller\\profile\\EditProfile.tsx",
+        "app\\seller\\quotes\\EditQuote.tsx",
+        "app\\shared\\MessageThread.tsx",
+        "components\\admin\\blog-editor\\blocks\\ImageBlock.tsx",
+        "components\\admin\\blog-editor\\BulkImportPreview.tsx",
+        "components\\admin\\blog-editor\\BulkMarkdownBlogUpload.tsx",
+        "components\\admin\\blog-editor\\MarkdownImport.tsx",
+        "components\\BookingMessagingPanel.tsx",
+        "components\\BuyerNegotiationModal.tsx",
+        "components\\contracts\\ContractAgreementScreen.tsx",
+        "components\\EnergyEfficiencyCalculator.tsx",
+        "components\\MessagingPanel.tsx",
+        "components\\mobile\\AddressManager.tsx",
+        "components\\mobile\\PhotoProofModal.tsx",
+        "components\\mobile\\PremiumInput.tsx",
+        "components\\mobile\\SearchHero.tsx",
+        "components\\mobile\\WarrantyClaimModal.tsx",
+        "components\\ROICalculator.tsx",
+        "components\\StartTrialModal.tsx",
+        "components\\SubscribeModal.tsx",
+        "components\\ui\\input.tsx",
+        "pages\\EducationalContent.tsx",
+        "pages\\Login.tsx",
+        "pages\\Resources.tsx",
+        "pages\\Settings.tsx",
+        "pages\\Support.tsx",
+        "pages\\TemplatesGuides.tsx"
+      ],
+      "category": "ui",
+      "sizeBytes": 803,
+      "status": "active"
+    },
+    {
+      "name": "form",
+      "importCount": 27,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\EditProfile.tsx",
+        "app\\onboarding\\Login.tsx",
+        "app\\onboarding\\Signup.tsx",
+        "app\\seller\\profile\\EditProfile.tsx",
+        "app\\shared\\ForgotPassword.tsx",
+        "app\\shared\\Help.tsx",
+        "app\\shared\\ResetPassword.tsx",
+        "components\\AddEventModal.tsx",
+        "components\\admin\\BriefEditor.tsx",
+        "components\\admin\\ContactManager.tsx",
+        "components\\admin\\EducationalContentManager.tsx",
+        "components\\admin\\IndustryReportsManager.tsx",
+        "components\\admin\\SignalManager.tsx",
+        "components\\admin\\TemplatesGuidesManager.tsx",
+        "components\\admin\\TenderManager.tsx",
+        "components\\BookingRequestModal.tsx",
+        "components\\EditQuoteModal.tsx",
+        "components\\mobile\\SearchHero.tsx",
+        "components\\StartTrialModal.tsx",
+        "components\\SubscribeModal.tsx",
+        "pages\\Contact.tsx",
+        "pages\\EditRequest.tsx",
+        "pages\\JobDetail.tsx",
+        "pages\\Login.tsx",
+        "pages\\PostJob.tsx",
+        "pages\\Settings.tsx",
+        "pages\\Signup.tsx"
+      ],
+      "category": "ui",
+      "sizeBytes": 4014,
+      "status": "active"
+    },
+    {
+      "name": "StatusPill",
+      "importCount": 25,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingsList.tsx",
+        "app\\buyer\\profile\\History.tsx",
+        "app\\buyer\\profile\\MyContracts.tsx",
+        "app\\buyer\\quotes\\QuotesComparison.tsx",
+        "app\\seller\\bookings\\SellerBookingsList.tsx",
+        "app\\seller\\marketplace\\JobDetail.tsx",
+        "app\\seller\\profile\\History.tsx",
+        "app\\seller\\profile\\MyContracts.tsx",
+        "components\\contracts\\ContractAgreementScreen.tsx",
+        "components\\mobile\\EnhancedBookingCard.tsx",
+        "components\\mobile\\EnhancedQuoteCard.tsx",
+        "components\\mobile\\EnhancedRequestCard.tsx",
+        "components\\mobile\\JobCard.tsx",
+        "components\\mobile\\JobTrackingCard.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1289,
+      "status": "active"
+    },
+    {
+      "name": "LoadingShimmer",
+      "importCount": 15,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\History.tsx",
+        "app\\buyer\\requests\\RequestsList.tsx",
+        "app\\seller\\profile\\History.tsx",
+        "app\\seller\\quotes\\MyQuoteDetail.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 2246,
+      "status": "active"
+    },
+    {
+      "name": "TouchCard",
+      "importCount": 15,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\requests\\EditRequest.tsx",
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "app\\onboarding\\RoleSelection.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1552,
+      "status": "active"
+    },
+    {
+      "name": "JobTrackingCard",
+      "importCount": 14,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingDetail.tsx",
+        "app\\buyer\\home\\BuyerHome.tsx",
+        "app\\buyer\\jobs\\BuyerJobDetail.tsx",
+        "app\\seller\\bookings\\SellerBookingDetail.tsx",
+        "app\\seller\\home\\SellerHome.tsx",
+        "app\\seller\\jobs\\ActiveJobs.tsx",
+        "app\\seller\\jobs\\SellerJobDetail.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 22121,
+      "status": "active"
+    },
+    {
+      "name": "CityCombobox",
+      "importCount": 12,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\explore\\BuyerExplore.tsx",
+        "app\\seller\\marketplace\\Marketplace.tsx",
+        "app\\seller\\profile\\ServiceAreas.tsx",
+        "components\\mobile\\AddressManager.tsx",
+        "components\\mobile\\AddressPicker.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 4458,
+      "status": "active"
+    },
+    {
+      "name": "EmptyState",
+      "importCount": 11,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingsList.tsx",
+        "app\\seller\\bookings\\SellerBookingsList.tsx",
+        "app\\seller\\jobs\\ActiveJobs.tsx",
+        "app\\seller\\marketplace\\Marketplace.tsx",
+        "app\\seller\\quotes\\MyQuotes.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 4671,
+      "status": "active"
+    },
+    {
+      "name": "EmptyState",
+      "importCount": 11,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingsList.tsx",
+        "app\\seller\\bookings\\SellerBookingsList.tsx",
+        "app\\seller\\jobs\\ActiveJobs.tsx",
+        "app\\seller\\marketplace\\Marketplace.tsx",
+        "app\\seller\\quotes\\MyQuotes.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1214,
+      "status": "active"
+    },
+    {
+      "name": "AuthTriggerModal",
+      "importCount": 10,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\explore\\BuyerExplore.tsx",
+        "app\\buyer\\explore\\VendorProfile.tsx",
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "App.tsx",
+        "components\\BookingRequestModal.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 5088,
+      "status": "active"
+    },
+    {
+      "name": "QuoteTemplateManager",
+      "importCount": 10,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "app\\buyer\\requests\\RequestDetail.tsx",
+        "pages\\BuyerDashboard.tsx",
+        "pages\\MyRequests.tsx",
+        "pages\\PostJob.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 13735,
+      "status": "active"
+    },
+    {
+      "name": "SEOHead",
+      "importCount": 10,
+      "importedFrom": [],
+      "files": [
+        "pages\\Blog.tsx",
+        "pages\\BlogPost.tsx",
+        "pages\\Index.tsx",
+        "pages\\PricingPage.tsx",
+        "pages\\SellerProfile.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 4363,
+      "status": "active"
+    },
+    {
+      "name": "MessagingPanel",
+      "importCount": 9,
+      "importedFrom": [],
+      "files": [
+        "components\\BuyerMessagesSection.tsx",
+        "pages\\BuyerDashboard.tsx",
+        "pages\\ManageQuotes.tsx",
+        "pages\\SellerDashboard.tsx",
+        "pages\\SellerQuotes.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 15123,
+      "status": "active"
+    },
+    {
+      "name": "BottomSheet",
+      "importCount": 9,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\explore\\BuyerExplore.tsx",
+        "app\\seller\\marketplace\\Marketplace.tsx",
+        "components\\mobile\\BookingNegotiationSheet.tsx",
+        "components\\mobile\\CounterProposalReviewSheet.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 2080,
+      "status": "active"
+    },
+    {
+      "name": "Masthead",
+      "importCount": 8,
+      "importedFrom": [],
+      "files": [
+        "pages\\Blog.tsx",
+        "pages\\BlogPost.tsx",
+        "pages\\Index.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 3526,
+      "status": "active"
+    },
+    {
+      "name": "AddressPicker",
+      "importCount": 8,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookService.tsx",
+        "app\\buyer\\requests\\EditRequest.tsx",
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "components\\BookingRequestModal.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 14677,
+      "status": "active"
+    },
+    {
+      "name": "SignatureModal",
+      "importCount": 8,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\ContractDetail.tsx",
+        "app\\shared\\SignatureSettings.tsx",
+        "pages\\ContractDetail.tsx",
+        "pages\\Settings.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 6613,
+      "status": "active"
+    },
+    {
+      "name": "BlockRenderer",
+      "importCount": 6,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\LivePreview.tsx",
+        "components\\admin\\blog-editor\\MarkdownImport.tsx",
+        "pages\\BlogPost.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 5557,
+      "status": "active"
+    },
+    {
+      "name": "BookingManagement",
+      "importCount": 6,
+      "importedFrom": [],
+      "files": [
+        "pages\\BuyerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 11330,
+      "status": "active"
+    },
+    {
+      "name": "BookingRequestModal",
+      "importCount": 6,
+      "importedFrom": [],
+      "files": [
+        "components\\BookingHistoryArchive.tsx",
+        "pages\\Explore.tsx",
+        "pages\\SellerProfile.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 16890,
+      "status": "active"
+    },
+    {
+      "name": "GeneralTerms",
+      "importCount": 6,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\ContractDetail.tsx",
+        "app\\seller\\profile\\ContractDetail.tsx",
+        "components\\contracts\\ContractAgreementScreen.tsx"
+      ],
+      "category": "contracts",
+      "sizeBytes": 10614,
+      "status": "active"
+    },
+    {
+      "name": "Footer",
+      "importCount": 6,
+      "importedFrom": [],
+      "files": [
+        "pages\\Blog.tsx",
+        "pages\\BlogPost.tsx",
+        "pages\\Index.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 6214,
+      "status": "active"
+    },
+    {
+      "name": "EnhancedBookingCard",
+      "importCount": 6,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\requests\\RequestsList.tsx",
+        "app\\seller\\quotes\\MyQuotes.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 11412,
+      "status": "active"
+    },
+    {
+      "name": "FloatingNav",
+      "importCount": 6,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\reviews\\SellerReviews.tsx",
+        "app\\shared\\Notifications.tsx",
+        "App.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 6672,
+      "status": "active"
+    },
+    {
+      "name": "LanguageToggle",
+      "importCount": 6,
+      "importedFrom": [],
+      "files": [
+        "app\\onboarding\\AlphaSellerWelcome.tsx",
+        "app\\onboarding\\RoleSelection.tsx",
+        "app\\onboarding\\Signup.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 406,
+      "status": "active"
+    },
+    {
+      "name": "MenuGroup",
+      "importCount": 5,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\BuyerProfile.tsx",
+        "app\\seller\\profile\\SellerProfile.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 2127,
+      "status": "active"
+    },
+    {
+      "name": "WarrantyCard",
+      "importCount": 5,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingDetail.tsx",
+        "app\\seller\\bookings\\SellerBookingDetail.tsx",
+        "components\\mobile\\JobTrackingCard.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 6702,
+      "status": "active"
+    },
+    {
+      "name": "PlanSelection",
+      "importCount": 5,
+      "importedFrom": [],
+      "files": [
+        "App.tsx",
+        "pages\\Signup.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 13682,
+      "status": "active"
+    },
+    {
+      "name": "BookingMessagingPanel",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "components\\BookingManagement.tsx",
+        "pages\\SellerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 11775,
+      "status": "active"
+    },
+    {
+      "name": "ContractAgreementScreen",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\ContractSign.tsx",
+        "app\\seller\\contracts\\ContractReview.tsx"
+      ],
+      "category": "contracts",
+      "sizeBytes": 51844,
+      "status": "active"
+    },
+    {
+      "name": "BuyerPricing",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "components\\landing\\PricingSection.tsx",
+        "pages\\PricingPage.tsx"
+      ],
+      "category": "landing",
+      "sizeBytes": 8479,
+      "status": "active"
+    },
+    {
+      "name": "SellerPricing",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "components\\landing\\PricingSection.tsx",
+        "pages\\PricingPage.tsx"
+      ],
+      "category": "landing",
+      "sizeBytes": 8693,
+      "status": "active"
+    },
+    {
+      "name": "LeaveReviewModal",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\ReviewPage.tsx",
+        "pages\\BuyerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 6878,
+      "status": "active"
+    },
+    {
+      "name": "LockedContent",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "components\\AccessGate.tsx",
+        "pages\\Briefs.tsx",
+        "pages\\EducationalContent.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 1681,
+      "status": "active"
+    },
+    {
+      "name": "AvatarBadge",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\shared\\MessagesHub.tsx",
+        "components\\mobile\\EnhancedBookingCard.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1844,
+      "status": "active"
+    },
+    {
+      "name": "AvatarSelector",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\BuyerProfile.tsx",
+        "app\\seller\\profile\\SellerProfile.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 5111,
+      "status": "active"
+    },
+    {
+      "name": "CashSafetyBanner",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\home\\SellerHome.tsx",
+        "app\\shared\\MessageThread.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 6768,
+      "status": "active"
+    },
+    {
+      "name": "ContractDownloadButton",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\ContractDetail.tsx",
+        "app\\seller\\profile\\ContractDetail.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 5423,
+      "status": "active"
+    },
+    {
+      "name": "EmailVerificationBanner",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\BuyerProfile.tsx",
+        "app\\seller\\profile\\SellerProfile.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 3136,
+      "status": "active"
+    },
+    {
+      "name": "JobFOMOTicker",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\shared\\OnboardingSlides.tsx",
+        "components\\PlanSelection.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 4586,
+      "status": "active"
+    },
+    {
+      "name": "ProgressBar",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\requests\\PostRequest.tsx",
+        "app\\onboarding\\Signup.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1520,
+      "status": "active"
+    },
+    {
+      "name": "SearchHero",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\explore\\BuyerExplore.tsx",
+        "app\\buyer\\home\\BuyerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 2639,
+      "status": "active"
+    },
+    {
+      "name": "OpportunityMap",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "components\\ProgressROI.tsx",
+        "pages\\SellerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 6147,
+      "status": "active"
+    },
+    {
+      "name": "ReviewSchema",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx",
+        "pages\\SellerProfile.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 1854,
+      "status": "active"
+    },
+    {
+      "name": "SignatureCanvas",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "components\\contracts\\ContractAgreementScreen.tsx",
+        "components\\SignatureModal.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 3395,
+      "status": "active"
+    },
+    {
+      "name": "table",
+      "importCount": 4,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockRenderer.tsx",
+        "components\\admin\\blog-editor\\blocks\\TableBlock.tsx",
+        "components\\ui\\table.tsx",
+        "components\\WeeklyBoard.tsx"
+      ],
+      "category": "ui",
+      "sizeBytes": 2694,
+      "status": "active"
+    },
+    {
+      "name": "ActivityLog",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 4084,
+      "status": "active"
+    },
+    {
+      "name": "BlogEditor",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "App.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 15521,
+      "status": "active"
+    },
+    {
+      "name": "SystemStats",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 4719,
+      "status": "active"
+    },
+    {
+      "name": "CompletionWorkflowCard",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "pages\\BuyerDashboard.tsx",
+        "pages\\ContractDetail.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 11614,
+      "status": "active"
+    },
+    {
+      "name": "SignatureDisplay",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "pages\\ContractDetail.tsx"
+      ],
+      "category": "contracts",
+      "sizeBytes": 2722,
+      "status": "active"
+    },
+    {
+      "name": "AppHeader",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "app\\shared\\Notifications.tsx",
+        "App.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 6669,
+      "status": "active"
+    },
+    {
+      "name": "EnhancedQuoteCard",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\quotes\\MyQuotes.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 12967,
+      "status": "active"
+    },
+    {
+      "name": "EnhancedRequestCard",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\requests\\RequestsList.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 8238,
+      "status": "active"
+    },
+    {
+      "name": "StatsCard",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\profile\\SellerProfile.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1392,
+      "status": "active"
+    },
+    {
+      "name": "NotificationBell",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "components\\StickyTopBar.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 13556,
+      "status": "active"
+    },
+    {
+      "name": "textarea",
+      "importCount": 3,
+      "importedFrom": [],
+      "files": [
+        "components\\BuyerNegotiationModal.tsx",
+        "components\\contracts\\ContractPreview.tsx",
+        "components\\ui\\textarea.tsx"
+      ],
+      "category": "ui",
+      "sizeBytes": 769,
+      "status": "active"
+    },
+    {
+      "name": "ActionQueue",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\SellerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 19346,
+      "status": "low-usage"
+    },
+    {
+      "name": "AddEventModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\Calendar.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 5696,
+      "status": "low-usage"
+    },
+    {
+      "name": "BlockEditor",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\BlogEditor.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 5621,
+      "status": "low-usage"
+    },
+    {
+      "name": "CalloutBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 2388,
+      "status": "low-usage"
+    },
+    {
+      "name": "ChecklistBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 2060,
+      "status": "low-usage"
+    },
+    {
+      "name": "DividerBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 169,
+      "status": "low-usage"
+    },
+    {
+      "name": "ImageBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 4147,
+      "status": "low-usage"
+    },
+    {
+      "name": "ListBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 2439,
+      "status": "low-usage"
+    },
+    {
+      "name": "QuoteBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 1047,
+      "status": "low-usage"
+    },
+    {
+      "name": "StatsBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 1063,
+      "status": "low-usage"
+    },
+    {
+      "name": "TableBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 4107,
+      "status": "low-usage"
+    },
+    {
+      "name": "TextBlock",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blocks",
+      "sizeBytes": 2324,
+      "status": "low-usage"
+    },
+    {
+      "name": "BlockToolbar",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BlockEditor.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 2570,
+      "status": "low-usage"
+    },
+    {
+      "name": "BulkImportPreview",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\blog-editor\\BulkMarkdownBlogUpload.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 13451,
+      "status": "low-usage"
+    },
+    {
+      "name": "BulkMarkdownBlogUpload",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\BlogManager.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 18618,
+      "status": "low-usage"
+    },
+    {
+      "name": "LivePreview",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\BlogEditor.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 3076,
+      "status": "low-usage"
+    },
+    {
+      "name": "MarkdownImport",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\BlogEditor.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 4722,
+      "status": "low-usage"
+    },
+    {
+      "name": "SEOPanel",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\BlogEditor.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 6656,
+      "status": "low-usage"
+    },
+    {
+      "name": "TranslationHelper",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\admin\\BlogEditor.tsx"
+      ],
+      "category": "blog-editor",
+      "sizeBytes": 9627,
+      "status": "low-usage"
+    },
+    {
+      "name": "BlogManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 11020,
+      "status": "low-usage"
+    },
+    {
+      "name": "BriefEditor",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 15019,
+      "status": "low-usage"
+    },
+    {
+      "name": "BulkMarkdownUpload",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 27697,
+      "status": "low-usage"
+    },
+    {
+      "name": "CalendarEventsManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 8212,
+      "status": "low-usage"
+    },
+    {
+      "name": "ContactManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 7900,
+      "status": "low-usage"
+    },
+    {
+      "name": "ContactSubmissionsManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 9620,
+      "status": "low-usage"
+    },
+    {
+      "name": "EducationalContentManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 10533,
+      "status": "low-usage"
+    },
+    {
+      "name": "IndustryReportsManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 9765,
+      "status": "low-usage"
+    },
+    {
+      "name": "SignalManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 21567,
+      "status": "low-usage"
+    },
+    {
+      "name": "SupportChatManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 8731,
+      "status": "low-usage"
+    },
+    {
+      "name": "TemplatesGuidesManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 9518,
+      "status": "low-usage"
+    },
+    {
+      "name": "TenderManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 22640,
+      "status": "low-usage"
+    },
+    {
+      "name": "UserManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Admin.tsx"
+      ],
+      "category": "admin",
+      "sizeBytes": 6424,
+      "status": "low-usage"
+    },
+    {
+      "name": "BookingFilters",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\BuyerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 8589,
+      "status": "low-usage"
+    },
+    {
+      "name": "BookingHistoryArchive",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\BuyerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 8942,
+      "status": "low-usage"
+    },
+    {
+      "name": "BookingPaymentModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\BookingManagement.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 8086,
+      "status": "low-usage"
+    },
+    {
+      "name": "BookingResponseModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\SellerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 18677,
+      "status": "low-usage"
+    },
+    {
+      "name": "BuyerMessagesSection",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\BuyerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 10973,
+      "status": "low-usage"
+    },
+    {
+      "name": "BuyerNegotiationModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\ManageQuotes.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 13189,
+      "status": "low-usage"
+    },
+    {
+      "name": "BindingTermsDrawer",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\ContractDetail.tsx"
+      ],
+      "category": "contracts",
+      "sizeBytes": 8317,
+      "status": "low-usage"
+    },
+    {
+      "name": "ContractProgressTracker",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\ContractDetail.tsx"
+      ],
+      "category": "contracts",
+      "sizeBytes": 20586,
+      "status": "low-usage"
+    },
+    {
+      "name": "ContractSignedSuccess",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\contracts\\ContractAgreementScreen.tsx"
+      ],
+      "category": "contracts",
+      "sizeBytes": 6436,
+      "status": "low-usage"
+    },
+    {
+      "name": "CounterProposalResponseModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\BookingManagement.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 12261,
+      "status": "low-usage"
+    },
+    {
+      "name": "CurrencySwitcher",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\StickyTopBar.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 1091,
+      "status": "low-usage"
+    },
+    {
+      "name": "EditQuoteModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\SellerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 8195,
+      "status": "low-usage"
+    },
+    {
+      "name": "EnergyEfficiencyCalculator",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Resources.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 11151,
+      "status": "low-usage"
+    },
+    {
+      "name": "ErrorBoundary",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "App.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 3121,
+      "status": "low-usage"
+    },
+    {
+      "name": "FAQ",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 2587,
+      "status": "low-usage"
+    },
+    {
+      "name": "Hero",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 18457,
+      "status": "low-usage"
+    },
+    {
+      "name": "IndustryReportPreview",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Resources.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 9272,
+      "status": "low-usage"
+    },
+    {
+      "name": "CategoryGrid",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "landing",
+      "sizeBytes": 4074,
+      "status": "low-usage"
+    },
+    {
+      "name": "FinalCTA",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "landing",
+      "sizeBytes": 3430,
+      "status": "low-usage"
+    },
+    {
+      "name": "HowItWorks",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "landing",
+      "sizeBytes": 5903,
+      "status": "low-usage"
+    },
+    {
+      "name": "PricingSection",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "landing",
+      "sizeBytes": 6303,
+      "status": "low-usage"
+    },
+    {
+      "name": "TestimonialsSection",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "landing",
+      "sizeBytes": 3840,
+      "status": "low-usage"
+    },
+    {
+      "name": "WhyMaintMENA",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "landing",
+      "sizeBytes": 3839,
+      "status": "low-usage"
+    },
+    {
+      "name": "PageTransition",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\layout\\AnimatedRoutes.tsx"
+      ],
+      "category": "layout",
+      "sizeBytes": 1598,
+      "status": "low-usage"
+    },
+    {
+      "name": "LiveChat",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Support.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 10777,
+      "status": "low-usage"
+    },
+    {
+      "name": "MaintenanceCostEstimator",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Resources.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 7556,
+      "status": "low-usage"
+    },
+    {
+      "name": "ActiveRequestCard",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\home\\BuyerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 4583,
+      "status": "low-usage"
+    },
+    {
+      "name": "AddressManager",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\profile\\EditProfile.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 12571,
+      "status": "low-usage"
+    },
+    {
+      "name": "BookingConfirmedSheet",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\quotes\\QuoteDetail.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 12820,
+      "status": "low-usage"
+    },
+    {
+      "name": "BookingNegotiationSheet",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\bookings\\SellerBookingDetail.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 18451,
+      "status": "low-usage"
+    },
+    {
+      "name": "CategoryCircle",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\home\\BuyerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1521,
+      "status": "low-usage"
+    },
+    {
+      "name": "ConciergeCard",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\explore\\BuyerExplore.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 2533,
+      "status": "low-usage"
+    },
+    {
+      "name": "ContractExecutedSheet",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\contracts\\ContractAgreementScreen.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 12002,
+      "status": "low-usage"
+    },
+    {
+      "name": "DualResolutionHaltedJobCard",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\home\\BuyerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 8456,
+      "status": "low-usage"
+    },
+    {
+      "name": "HaltedJobCard",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\home\\SellerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 4675,
+      "status": "low-usage"
+    },
+    {
+      "name": "JobCard",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\marketplace\\Marketplace.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 4550,
+      "status": "low-usage"
+    },
+    {
+      "name": "JobCompletionSheet",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\mobile\\JobTrackingCard.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 11424,
+      "status": "low-usage"
+    },
+    {
+      "name": "JobWonSheet",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\contracts\\ContractAgreementScreen.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 10052,
+      "status": "low-usage"
+    },
+    {
+      "name": "JourneyTimeline",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\mobile\\JourneyTimelineOverlay.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 5373,
+      "status": "low-usage"
+    },
+    {
+      "name": "PendingContractCard",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\home\\SellerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 4685,
+      "status": "low-usage"
+    },
+    {
+      "name": "PhotoProofModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\mobile\\JobTrackingCard.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 10465,
+      "status": "low-usage"
+    },
+    {
+      "name": "ProfileCompletionCard",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\profile\\SellerProfile.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 3176,
+      "status": "low-usage"
+    },
+    {
+      "name": "PromoBanner",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\home\\BuyerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 4040,
+      "status": "low-usage"
+    },
+    {
+      "name": "QuoteCompetitionIndicator",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\mobile\\EnhancedQuoteCard.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1943,
+      "status": "low-usage"
+    },
+    {
+      "name": "RequestSubmittedSheet",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookService.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 12163,
+      "status": "low-usage"
+    },
+    {
+      "name": "TimelineTracker",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\mobile\\JobTrackingCard.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 2489,
+      "status": "low-usage"
+    },
+    {
+      "name": "TrustBanner",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\explore\\BuyerExplore.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 1455,
+      "status": "low-usage"
+    },
+    {
+      "name": "NegotiationModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\SellerQuotes.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 5620,
+      "status": "low-usage"
+    },
+    {
+      "name": "ProjectTimelinePlanner",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Resources.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 9695,
+      "status": "low-usage"
+    },
+    {
+      "name": "PullToRefreshIndicator",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\bookings\\BookingsList.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 1644,
+      "status": "low-usage"
+    },
+    {
+      "name": "QuoteDetailModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "components\\QuoteManagement.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 8967,
+      "status": "low-usage"
+    },
+    {
+      "name": "QuoteManagement",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\BuyerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 14142,
+      "status": "low-usage"
+    },
+    {
+      "name": "RevisionRequestModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\buyer\\quotes\\QuoteDetail.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 5922,
+      "status": "low-usage"
+    },
+    {
+      "name": "ROICalculator",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Resources.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 9550,
+      "status": "low-usage"
+    },
+    {
+      "name": "SamplePdfModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 4476,
+      "status": "low-usage"
+    },
+    {
+      "name": "SearchBarHook",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Index.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 6354,
+      "status": "low-usage"
+    },
+    {
+      "name": "SellerNegotiationModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\SellerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 6541,
+      "status": "low-usage"
+    },
+    {
+      "name": "StickyTopBar",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "App.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 19403,
+      "status": "low-usage"
+    },
+    {
+      "name": "SubscriptionManagementModal",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "pages\\Settings.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 22688,
+      "status": "low-usage"
+    },
+    {
+      "name": "TrialCountdownBanner",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "App.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 2649,
+      "status": "low-usage"
+    },
+    {
+      "name": "select",
+      "importCount": 2,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\profile\\EditProfile.tsx",
+        "app\\seller\\profile\\ManageServices.tsx"
+      ],
+      "category": "ui",
+      "sizeBytes": 5575,
+      "status": "low-usage"
+    },
+    {
+      "name": "AnimatedRoutes",
+      "importCount": 1,
+      "importedFrom": [],
+      "files": [
+        "components\\layout\\AnimatedRoutes.tsx"
+      ],
+      "category": "layout",
+      "sizeBytes": 1078,
+      "status": "low-usage"
+    },
+    {
+      "name": "EliteBadge",
+      "importCount": 1,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\home\\SellerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 2527,
+      "status": "low-usage"
+    },
+    {
+      "name": "PriceProposalBubble",
+      "importCount": 1,
+      "importedFrom": [],
+      "files": [
+        "app\\shared\\MessageThread.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 4991,
+      "status": "low-usage"
+    },
+    {
+      "name": "PriceProposalModal",
+      "importCount": 1,
+      "importedFrom": [],
+      "files": [
+        "app\\shared\\MessageThread.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 5553,
+      "status": "low-usage"
+    },
+    {
+      "name": "ReviewProgressCard",
+      "importCount": 1,
+      "importedFrom": [],
+      "files": [
+        "app\\seller\\home\\SellerHome.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 6340,
+      "status": "low-usage"
+    },
+    {
+      "name": "WhatsAppEscapeWarning",
+      "importCount": 1,
+      "importedFrom": [],
+      "files": [
+        "app\\shared\\MessageThread.tsx"
+      ],
+      "category": "mobile",
+      "sizeBytes": 3501,
+      "status": "low-usage"
+    },
+    {
+      "name": "ProgressROI",
+      "importCount": 1,
+      "importedFrom": [],
+      "files": [
+        "pages\\SellerDashboard.tsx"
+      ],
+      "category": "root",
+      "sizeBytes": 18769,
+      "status": "low-usage"
+    },
+    {
+      "name": "AccessGate",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 1147,
+      "status": "dead"
+    },
+    {
+      "name": "ContractPreview",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "contracts",
+      "sizeBytes": 7123,
+      "status": "dead"
+    },
+    {
+      "name": "DueDatesTicker",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 3446,
+      "status": "dead"
+    },
+    {
+      "name": "FilterBar",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 12535,
+      "status": "dead"
+    },
+    {
+      "name": "IssueModal",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 5930,
+      "status": "dead"
+    },
+    {
+      "name": "Advantage",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "landing",
+      "sizeBytes": 3615,
+      "status": "dead"
+    },
+    {
+      "name": "BuyerVendorSplit",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "landing",
+      "sizeBytes": 5537,
+      "status": "dead"
+    },
+    {
+      "name": "MarketplaceSnapshot",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "landing",
+      "sizeBytes": 5636,
+      "status": "dead"
+    },
+    {
+      "name": "ProblemSolution",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "landing",
+      "sizeBytes": 5699,
+      "status": "dead"
+    },
+    {
+      "name": "TrustSection",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "landing",
+      "sizeBytes": 4782,
+      "status": "dead"
+    },
+    {
+      "name": "TwoPillarValue",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "landing",
+      "sizeBytes": 6665,
+      "status": "dead"
+    },
+    {
+      "name": "ScreenTransition",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "layout",
+      "sizeBytes": 2493,
+      "status": "dead"
+    },
+    {
+      "name": "SheetScreen",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "layout",
+      "sizeBytes": 1416,
+      "status": "dead"
+    },
+    {
+      "name": "LoadingSkeleton",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 2788,
+      "status": "dead"
+    },
+    {
+      "name": "AnimatedIcon",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 923,
+      "status": "dead"
+    },
+    {
+      "name": "AnimatedPage",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 1727,
+      "status": "dead"
+    },
+    {
+      "name": "BottomNav",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 4101,
+      "status": "dead"
+    },
+    {
+      "name": "CounterProposalReviewSheet",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 13303,
+      "status": "dead"
+    },
+    {
+      "name": "EarningsSheet",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 8145,
+      "status": "dead"
+    },
+    {
+      "name": "GlassCard",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 786,
+      "status": "dead"
+    },
+    {
+      "name": "JourneyTimelineOverlay",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 7436,
+      "status": "dead"
+    },
+    {
+      "name": "PremiumInput",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 1127,
+      "status": "dead"
+    },
+    {
+      "name": "PremiumTabs",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 2614,
+      "status": "dead"
+    },
+    {
+      "name": "ProviderCard",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 2787,
+      "status": "dead"
+    },
+    {
+      "name": "SwipeableItem",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 3452,
+      "status": "dead"
+    },
+    {
+      "name": "Typography",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 2727,
+      "status": "dead"
+    },
+    {
+      "name": "WarrantyClaimModal",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "mobile",
+      "sizeBytes": 10762,
+      "status": "dead"
+    },
+    {
+      "name": "OnboardingFlow",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 16096,
+      "status": "dead"
+    },
+    {
+      "name": "PipelineCard",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 7027,
+      "status": "dead"
+    },
+    {
+      "name": "Pricing",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 11550,
+      "status": "dead"
+    },
+    {
+      "name": "QuoteComparison",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 9254,
+      "status": "dead"
+    },
+    {
+      "name": "SignalsAndMoves",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 4525,
+      "status": "dead"
+    },
+    {
+      "name": "StartTrialModal",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 8310,
+      "status": "dead"
+    },
+    {
+      "name": "SubmissionKitModal",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 4636,
+      "status": "dead"
+    },
+    {
+      "name": "SubscribeModal",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 6088,
+      "status": "dead"
+    },
+    {
+      "name": "Testimonials",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 3631,
+      "status": "dead"
+    },
+    {
+      "name": "TheBrief",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 3696,
+      "status": "dead"
+    },
+    {
+      "name": "Toolbox",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 3924,
+      "status": "dead"
+    },
+    {
+      "name": "accordion",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1976,
+      "status": "dead"
+    },
+    {
+      "name": "alert-dialog",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 4313,
+      "status": "dead"
+    },
+    {
+      "name": "alert",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1546,
+      "status": "dead"
+    },
+    {
+      "name": "aspect-ratio",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 143,
+      "status": "dead"
+    },
+    {
+      "name": "avatar",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1365,
+      "status": "dead"
+    },
+    {
+      "name": "badge",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1089,
+      "status": "dead"
+    },
+    {
+      "name": "breadcrumb",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 2687,
+      "status": "dead"
+    },
+    {
+      "name": "calendar",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 2568,
+      "status": "dead"
+    },
+    {
+      "name": "card",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1797,
+      "status": "dead"
+    },
+    {
+      "name": "carousel",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 6249,
+      "status": "dead"
+    },
+    {
+      "name": "chart",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 9987,
+      "status": "dead"
+    },
+    {
+      "name": "checkbox",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1053,
+      "status": "dead"
+    },
+    {
+      "name": "collapsible",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 320,
+      "status": "dead"
+    },
+    {
+      "name": "command",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 4821,
+      "status": "dead"
+    },
+    {
+      "name": "context-menu",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 7191,
+      "status": "dead"
+    },
+    {
+      "name": "dialog",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 3761,
+      "status": "dead"
+    },
+    {
+      "name": "drawer",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 2941,
+      "status": "dead"
+    },
+    {
+      "name": "dropdown-menu",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 7260,
+      "status": "dead"
+    },
+    {
+      "name": "hover-card",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1193,
+      "status": "dead"
+    },
+    {
+      "name": "input-otp",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 2166,
+      "status": "dead"
+    },
+    {
+      "name": "menubar",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 7863,
+      "status": "dead"
+    },
+    {
+      "name": "navigation-menu",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 5030,
+      "status": "dead"
+    },
+    {
+      "name": "pagination",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 2683,
+      "status": "dead"
+    },
+    {
+      "name": "popover",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1239,
+      "status": "dead"
+    },
+    {
+      "name": "progress",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 765,
+      "status": "dead"
+    },
+    {
+      "name": "radio-group",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1447,
+      "status": "dead"
+    },
+    {
+      "name": "resizable",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1696,
+      "status": "dead"
+    },
+    {
+      "name": "scroll-area",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1608,
+      "status": "dead"
+    },
+    {
+      "name": "separator",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 698,
+      "status": "dead"
+    },
+    {
+      "name": "sheet",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 4197,
+      "status": "dead"
+    },
+    {
+      "name": "sidebar",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 22837,
+      "status": "dead"
+    },
+    {
+      "name": "skeleton",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 234,
+      "status": "dead"
+    },
+    {
+      "name": "slider",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1065,
+      "status": "dead"
+    },
+    {
+      "name": "sonner",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 901,
+      "status": "dead"
+    },
+    {
+      "name": "switch",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1187,
+      "status": "dead"
+    },
+    {
+      "name": "tabs",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1897,
+      "status": "dead"
+    },
+    {
+      "name": "toaster",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 730,
+      "status": "dead"
+    },
+    {
+      "name": "toggle-group",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1714,
+      "status": "dead"
+    },
+    {
+      "name": "toggle",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1416,
+      "status": "dead"
+    },
+    {
+      "name": "tooltip",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "ui",
+      "sizeBytes": 1155,
+      "status": "dead"
+    },
+    {
+      "name": "UnifiedDashboard",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 11630,
+      "status": "dead"
+    },
+    {
+      "name": "UpgradeModal",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 6739,
+      "status": "dead"
+    },
+    {
+      "name": "WeeklyBoard",
+      "importCount": 0,
+      "importedFrom": [],
+      "files": [],
+      "category": "root",
+      "sizeBytes": 5673,
+      "status": "dead"
+    }
+  ],
+  "consolidationOpportunities": [
+    "Multiple Modal components (24): AddEventModal, BookingPaymentModal, BookingRequestModal, BookingResponseModal, BuyerNegotiationModal...",
+    "Multiple Section components (4): BuyerMessagesSection, PricingSection, TestimonialsSection, TrustSection",
+    "Multiple Card components (20): CompletionWorkflowCard, ActiveRequestCard, ConciergeCard, DualResolutionHaltedJobCard, EnhancedBookingCard..."
+  ],
+  "recommendations": [
+    "🗑️ DEAD CODE: 81 components have zero usage. Consider deleting: AccessGate, ContractPreview, DueDatesTicker, FilterBar, IssueModal",
+    "⚠️ LOW USAGE: 100 components used only 1-2 times. Review if they should be inlined: ActionQueue, AddEventModal, BlockEditor, CalloutBlock, ChecklistBlock",
+    "📦 LARGE COMPONENTS: 20 components are >15KB. Consider splitting: ContractAgreementScreen (50.6KB), BulkMarkdownUpload (27.0KB), sidebar (22.3KB)"
+  ]
+}

@@ -1,0 +1,15 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Disallow admin and user-specific pages
+Disallow: /admin
+Disallow: /settings
+Disallow: /dashboard
+Disallow: /my-*
+
+# Sitemap location
+Sitemap: https://maintmena.com/sitemap.xml

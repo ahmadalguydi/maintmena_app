@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -rn \"assigned_seller_id\\\\|seller_marked_complete\\\\|buyer_marked_complete\" C:UsersahmadDesktopmaintmenaMaintmena-New-Claudesrc --include=*.tsx --include=*.ts)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(python3 -c \"import sys,json; lines=[l for l in sys.stdin if ''''type:result'''' in l]; print\\(lines[-1][:3000] if lines else ''''No result''''\\)\")"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "claude-flow"
+  ]
+}

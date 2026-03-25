@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Service Request Overview - MaintMENA</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89430d", 
+                        "primary-hover": "#6d350a", 
+                        "primary-light": "#fdf6f0", 
+                        "background-light": "#fcfbf9", 
+                        "background-dark": "#211811",
+                        "card-light": "#ffffff",
+                        "card-dark": "#2c2219",
+                        "text-main": "#2d1b0e", 
+                        "text-main-dark": "#f0e6dd",
+                        "text-muted": "#8a7e75",
+                        "text-muted-dark": "#b0a69e",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "1.5rem", "xl": "2rem", "2xl": "2.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark">
+<header class="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm p-4 pb-2 justify-between border-b border-gray-100 dark:border-gray-800">
+<button class="text-text-main dark:text-text-main-dark flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h2 class="text-text-main dark:text-text-main-dark text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">
+                Request #4092
+            </h2>
+<div class="size-10"></div>
+</header>
+<div class="px-4 py-6 w-full">
+<div class="flex items-center justify-between w-full relative">
+<div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 dark:bg-gray-700 -z-10 -translate-y-1/2 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/2 rounded-full"></div>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="size-8 rounded-full bg-primary flex items-center justify-center text-white ring-4 ring-background-light dark:ring-background-dark">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="text-xs font-semibold text-primary">Posted</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="size-8 rounded-full bg-primary flex items-center justify-center text-white ring-4 ring-background-light dark:ring-background-dark shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined text-[18px] animate-pulse">sync</span>
+</div>
+<span class="text-xs font-bold text-primary">Quoting</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="size-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 ring-4 ring-background-light dark:ring-background-dark">
+<span class="material-symbols-outlined text-[16px]">calendar_clock</span>
+</div>
+<span class="text-xs font-medium text-gray-400">Fixed</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="size-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 ring-4 ring-background-light dark:ring-background-dark">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+</div>
+<span class="text-xs font-medium text-gray-400">Done</span>
+</div>
+</div>
+</div>
+<div class="px-4 pb-6">
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50">
+<div class="flex justify-between items-start mb-3">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="bg-[#f0f4ff] dark:bg-[#1e3a8a]/30 text-[#3b82f6] dark:text-blue-300 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">AC Services</span>
+</div>
+<h2 class="text-text-main dark:text-text-main-dark text-xl font-bold leading-tight">AC Repair - Leaking Water</h2>
+</div>
+</div>
+<p class="text-text-main dark:text-text-main-dark text-sm font-normal leading-relaxed opacity-80 mb-4">
+                    My Split AC unit is leaking water heavily onto the floor. I need someone to check the drainage pipe and servicing.
+                </p>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-4">
+<div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden relative group cursor-pointer">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110" data-alt="Close up of an air conditioning unit" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBbvryeR6k5sAretnIuEYVsOztj9ly9yMZIKsPQ3xL4zfoAUvKxInQYsAXgfJuu23h3RL3jptwZSv-Q7s_9DG2Mk6P1M4q3-TYxxcJXPmSookx9R4OLC7dgvHqhtzyCKfLuo_BK7dfiGnvsxfkQ93QpvvL9eRtQUaKIMghvVvLUtEH3jbj-1-SDtD00h0gnoUDcrxysBnypcE5b-MRWrsamPApIxeUU75qzn6cfon6DK29N4GPFqtKtX5eNgZZ1n5R_QhlD22LqfA");'></div>
+</div>
+<div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden relative group cursor-pointer">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110" data-alt="Technician tools on the floor" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAF9EagwvCt-ImufRR-H2SgMW2y3brpqqf6C_GlpkaLqTc98LPuFQ1sHfmr8FBjuQfVFWMco93LWtkpch4nJ-ML2UEADSDzFxwdx5VJ2lLSiLfmFQ-URHZfabXVThNnJx3yl34b22KnQfTP-ZJsMmBV1MxD5huf4JBr-eF5QBC-AFsID--X4t3uT3RuO8TdYEq4lT_UwVO1QSZXcNJeI9y1y1kKXD4cfxT1YCW-5bkzW7Gfdki9KZwGQnWwSTa2QTbkHOvzWXsXBw");'></div>
+</div>
+<div class="flex-shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-gray-400">add_a_photo</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-1 text-text-muted dark:text-text-muted-dark text-xs font-medium">
+<span class="material-symbols-outlined text-[14px]">location_on</span> Location
+                    </div>
+<span class="text-sm font-bold text-text-main dark:text-text-main-dark truncate">Al Olaya, Riyadh</span>
+</div>
+<div class="flex flex-col gap-1 border-l border-gray-100 dark:border-gray-800 pl-3">
+<div class="flex items-center gap-1 text-text-muted dark:text-text-muted-dark text-xs font-medium">
+<span class="material-symbols-outlined text-[14px]">event</span> Date
+                    </div>
+<span class="text-sm font-bold text-text-main dark:text-text-main-dark">ASAP</span>
+</div>
+<div class="flex flex-col gap-1 border-l border-gray-100 dark:border-gray-800 pl-3">
+<div class="flex items-center gap-1 text-text-muted dark:text-text-muted-dark text-xs font-medium">
+<span class="material-symbols-outlined text-[14px]">payments</span> Budget
+                    </div>
+<span class="text-sm font-bold text-text-main dark:text-text-main-dark">SAR 150-250</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-1 bg-white dark:bg-[#1a120b] rounded-t-[2.5rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none p-6 pb-28">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-text-main dark:text-text-main-dark font-bold text-lg">3 Quotes Received</h3>
+<span class="text-xs font-semibold text-primary bg-primary-light dark:bg-orange-900/20 px-3 py-1 rounded-full">Active</span>
+</div>
+<div class="flex flex-col gap-4">
+<div class="relative group bg-background-light dark:bg-card-dark rounded-2xl p-4 border border-primary/20 shadow-lg shadow-orange-100/50 dark:shadow-none transition-all hover:scale-[1.01]">
+<div class="absolute top-3 right-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">bolt</span> Fast Response
+                    </div>
+<div class="flex items-start gap-3 mb-4">
+<div class="relative">
+<div class="size-12 rounded-full bg-gray-200 bg-cover bg-center" data-alt="Portrait of a male maintenance worker" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB7ibrDao548Kg5-ytYqKPAtq9GlvvUZO86-nOVcE1xCT27Hh3oOeBaJ3hy6asPkF5LT0qCjSQPAhuQmtGCoxr6SFr6Bpj3EbPDe1j5sQ9DM_H061vHqjmQr7N74KOu1oWbJzi8uKp-XCgkDZs6oc5Lo_EhSwMucykW4XsNK9KlELMvxI3BAFdnrHZIbeWV6EhjHoclPM0-sc7wnIenhvBVgktIMex1dQbIUmST4cLIaOlDjfeTmcGircOA4AEH9gSFc_qMCm-8Qg");'></div>
+<div class="absolute -bottom-1 -right-1 bg-blue-500 text-white p-0.5 rounded-full border-2 border-white dark:border-card-dark flex items-center justify-center" title="Verified">
+<span class="material-symbols-outlined text-[10px]">check</span>
+</div>
+</div>
+<div>
+<h4 class="text-text-main dark:text-text-main-dark font-bold text-sm">Al-Fares Maintenance</h4>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-primary text-[14px] fill-current">star</span>
+<span class="text-xs font-bold text-text-main dark:text-text-main-dark">4.9</span>
+<span class="text-xs text-text-muted dark:text-text-muted-dark">(124 jobs)</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-end mb-4 bg-white dark:bg-white/5 p-3 rounded-xl">
+<div>
+<p class="text-xs text-text-muted dark:text-text-muted-dark mb-1">Estimated Cost</p>
+<p class="text-xl font-extrabold text-primary font-display">SAR 150</p>
+</div>
+<div class="text-right">
+<p class="text-xs text-text-muted dark:text-text-muted-dark mb-1">Availability</p>
+<p class="text-xs font-bold text-text-main dark:text-text-main-dark flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> Today, 4:00 PM
+                             </p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 h-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span> View Detail
+                        </button>
+<button class="flex-1 h-10 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-bold flex items-center justify-center shadow-md shadow-primary/20 transition-colors">
+                            Accept Offer
+                        </button>
+</div>
+</div>
+<div class="bg-background-light dark:bg-card-dark rounded-2xl p-4 border border-gray-100 dark:border-gray-800 transition-all hover:scale-[1.01]">
+<div class="flex items-start gap-3 mb-4">
+<div class="relative">
+<div class="size-12 rounded-full bg-gray-200 bg-cover bg-center" data-alt="Portrait of a smiling service provider" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCEneuAvVThYq187WRV_WJwxGYQMhN1OI8FPbAm1U7C-P0hg7hwkVRZrrBXaE3s0pAtcOz6NlDYtRXO-BUenkZOj6EwemLKjb-6Q3rKsDo-J3oiKhiusLTNMVGM-TY4AEzNffFrJID66W5WkQhVMNK2iz6eYWyzTsSU1gvPlfq5F3p4hJHiYsM13EeZjTM1ja3n_cvqRNPPu5uF1bbFq1konklCbaOwSfY4hL8UYb6S1r4rEwkB4woRK9MH-JSbx6uR-n4N22W3UQ");'></div>
+</div>
+<div>
+<h4 class="text-text-main dark:text-text-main-dark font-bold text-sm">Quick Fix Pros</h4>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-primary text-[14px] fill-current">star</span>
+<span class="text-xs font-bold text-text-main dark:text-text-main-dark">4.6</span>
+<span class="text-xs text-text-muted dark:text-text-muted-dark">(85 jobs)</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-end mb-4 pl-1">
+<div>
+<p class="text-xs text-text-muted dark:text-text-muted-dark mb-1">Estimated Cost</p>
+<p class="text-xl font-extrabold text-black dark:text-text-main-dark font-display">SAR 185</p>
+</div>
+<div class="text-right">
+<p class="text-xs text-text-muted dark:text-text-muted-dark mb-1">Availability</p>
+<p class="text-xs font-bold text-text-main dark:text-text-main-dark flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> Tomorrow, 9:00 AM
+                             </p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 h-10 rounded-full bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-text-main dark:text-text-main-dark text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span> View Detail
+                        </button>
+<button class="flex-1 h-10 rounded-full border border-primary text-primary hover:bg-primary hover:text-white text-sm font-bold flex items-center justify-center transition-colors">
+                            Accept Offer
+                        </button>
+</div>
+</div>
+<div class="bg-background-light dark:bg-card-dark rounded-2xl p-4 border border-gray-100 dark:border-gray-800 transition-all hover:scale-[1.01] opacity-90">
+<div class="flex items-start gap-3 mb-4">
+<div class="relative">
+<div class="size-12 rounded-full bg-gray-200 bg-cover bg-center" data-alt="Portrait of a young technician" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCjCDdBOvTVIhwt_ArWsHmGhHTTL8H3Lu5JBZMMy6JRWng7Qzx7QKon7ZNxU4YOZRpoxfPQcedGbxxMqnSgY-DQZgO2wvQDHlqdI5CvxNYUl6nRgJZwfYWmz2A7Yv0UbDE-Gw2oO-EpSFUrp6o8EZyJ8iN8BlrXJUvQSe6yiYx91_rFBW9CLISyn5NU0JcFdgWGNZ2N19N-_pAItKWFPlAZrdbu81FPMm6c-POHlwbu5edfa1RFhstNp_kyJkUWJS_bfWsDG8q7Zw");'></div>
+</div>
+<div>
+<h4 class="text-text-main dark:text-text-main-dark font-bold text-sm">Saleh Repairs</h4>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-yellow-400 text-[14px] fill-current">star</span>
+<span class="text-xs font-bold text-text-main dark:text-text-main-dark">4.2</span>
+<span class="text-xs text-text-muted dark:text-text-muted-dark">(12 jobs)</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-end mb-4 pl-1">
+<div>
+<p class="text-xs text-text-muted dark:text-text-muted-dark mb-1">Estimated Cost</p>
+<p class="text-xl font-extrabold text-black dark:text-text-main-dark font-display">SAR 130</p>
+</div>
+<div class="text-right">
+<p class="text-xs text-text-muted dark:text-text-muted-dark mb-1">Availability</p>
+<p class="text-xs font-bold text-text-main dark:text-text-main-dark flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> Sat, 10:00 AM
+                             </p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 h-10 rounded-full bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-text-main dark:text-text-main-dark text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span> View Detail
+                        </button>
+<button class="flex-1 h-10 rounded-full border border-primary text-primary hover:bg-primary hover:text-white text-sm font-bold flex items-center justify-center transition-colors">
+                            Accept Offer
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 w-full flex justify-center p-4 bg-white/95 dark:bg-[#1a120b]/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-800">
+<div class="w-full max-w-md flex gap-3">
+<button class="flex-1 h-12 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+                Delete Request
+            </button>
+<button class="flex-1 h-12 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit_square</span>
+                Edit Request
+            </button>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,207 @@
+[
+  {
+    "name": "AccessGate",
+    "category": "root",
+    "size": "1.1KB"
+  },
+  {
+    "name": "ContractPreview",
+    "category": "contracts",
+    "size": "7.0KB"
+  },
+  {
+    "name": "DueDatesTicker",
+    "category": "root",
+    "size": "3.4KB"
+  },
+  {
+    "name": "FilterBar",
+    "category": "root",
+    "size": "12.2KB"
+  },
+  {
+    "name": "IssueModal",
+    "category": "root",
+    "size": "5.8KB"
+  },
+  {
+    "name": "Advantage",
+    "category": "landing",
+    "size": "3.5KB"
+  },
+  {
+    "name": "BuyerVendorSplit",
+    "category": "landing",
+    "size": "5.4KB"
+  },
+  {
+    "name": "MarketplaceSnapshot",
+    "category": "landing",
+    "size": "5.5KB"
+  },
+  {
+    "name": "ProblemSolution",
+    "category": "landing",
+    "size": "5.6KB"
+  },
+  {
+    "name": "TrustSection",
+    "category": "landing",
+    "size": "4.7KB"
+  },
+  {
+    "name": "TwoPillarValue",
+    "category": "landing",
+    "size": "6.5KB"
+  },
+  {
+    "name": "ScreenTransition",
+    "category": "layout",
+    "size": "2.4KB"
+  },
+  {
+    "name": "SheetScreen",
+    "category": "layout",
+    "size": "1.4KB"
+  },
+  {
+    "name": "LoadingSkeleton",
+    "category": "root",
+    "size": "2.7KB"
+  },
+  {
+    "name": "AnimatedIcon",
+    "category": "mobile",
+    "size": "0.9KB"
+  },
+  {
+    "name": "AnimatedPage",
+    "category": "mobile",
+    "size": "1.7KB"
+  },
+  {
+    "name": "BottomNav",
+    "category": "mobile",
+    "size": "4.0KB"
+  },
+  {
+    "name": "CounterProposalReviewSheet",
+    "category": "mobile",
+    "size": "13.0KB"
+  },
+  {
+    "name": "EarningsSheet",
+    "category": "mobile",
+    "size": "8.0KB"
+  },
+  {
+    "name": "GlassCard",
+    "category": "mobile",
+    "size": "0.8KB"
+  },
+  {
+    "name": "JourneyTimelineOverlay",
+    "category": "mobile",
+    "size": "7.3KB"
+  },
+  {
+    "name": "PremiumInput",
+    "category": "mobile",
+    "size": "1.1KB"
+  },
+  {
+    "name": "PremiumTabs",
+    "category": "mobile",
+    "size": "2.6KB"
+  },
+  {
+    "name": "ProviderCard",
+    "category": "mobile",
+    "size": "2.7KB"
+  },
+  {
+    "name": "SwipeableItem",
+    "category": "mobile",
+    "size": "3.4KB"
+  },
+  {
+    "name": "Typography",
+    "category": "mobile",
+    "size": "2.7KB"
+  },
+  {
+    "name": "WarrantyClaimModal",
+    "category": "mobile",
+    "size": "10.5KB"
+  },
+  {
+    "name": "OnboardingFlow",
+    "category": "root",
+    "size": "15.7KB"
+  },
+  {
+    "name": "PipelineCard",
+    "category": "root",
+    "size": "6.9KB"
+  },
+  {
+    "name": "Pricing",
+    "category": "root",
+    "size": "11.3KB"
+  },
+  {
+    "name": "QuoteComparison",
+    "category": "root",
+    "size": "9.0KB"
+  },
+  {
+    "name": "SignalsAndMoves",
+    "category": "root",
+    "size": "4.4KB"
+  },
+  {
+    "name": "StartTrialModal",
+    "category": "root",
+    "size": "8.1KB"
+  },
+  {
+    "name": "SubmissionKitModal",
+    "category": "root",
+    "size": "4.5KB"
+  },
+  {
+    "name": "SubscribeModal",
+    "category": "root",
+    "size": "5.9KB"
+  },
+  {
+    "name": "Testimonials",
+    "category": "root",
+    "size": "3.5KB"
+  },
+  {
+    "name": "TheBrief",
+    "category": "root",
+    "size": "3.6KB"
+  },
+  {
+    "name": "Toolbox",
+    "category": "root",
+    "size": "3.8KB"
+  },
+  {
+    "name": "UnifiedDashboard",
+    "category": "root",
+    "size": "11.4KB"
+  },
+  {
+    "name": "UpgradeModal",
+    "category": "root",
+    "size": "6.6KB"
+  },
+  {
+    "name": "WeeklyBoard",
+    "category": "root",
+    "size": "5.5KB"
+  }
+]

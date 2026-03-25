@@ -1,0 +1,128 @@
+{
+  "swarms": {
+    "swarm-1774382496858-ht1cpk": {
+      "swarmId": "swarm-1774382496858-ht1cpk",
+      "topology": "hierarchical",
+      "maxAgents": 8,
+      "status": "ready",
+      "agents": [
+        {
+          "id": "agent-1774370926894-00nary",
+          "agentId": "agent-1774370926894-00nary",
+          "type": "reviewer",
+          "agentType": "reviewer",
+          "status": "idle",
+          "health": 1,
+          "taskCount": 0,
+          "tasksCompleted": 0,
+          "currentTask": null,
+          "createdAt": "2026-03-24T16:48:46.894Z",
+          "model": "sonnet"
+        },
+        {
+          "id": "agent-1774379295244-jhjkkz",
+          "agentId": "agent-1774379295244-jhjkkz",
+          "type": "coordinator",
+          "agentType": "coordinator",
+          "status": "idle",
+          "health": 1,
+          "taskCount": 0,
+          "tasksCompleted": 0,
+          "currentTask": null,
+          "createdAt": "2026-03-24T19:08:15.244Z",
+          "model": "sonnet"
+        },
+        {
+          "id": "agent-1774379297011-0lk1xe",
+          "agentId": "agent-1774379297011-0lk1xe",
+          "type": "architect",
+          "agentType": "architect",
+          "status": "idle",
+          "health": 1,
+          "taskCount": 0,
+          "tasksCompleted": 0,
+          "currentTask": null,
+          "createdAt": "2026-03-24T19:08:17.012Z",
+          "model": "opus"
+        },
+        {
+          "id": "agent-1774379298846-zpb513",
+          "agentId": "agent-1774379298846-zpb513",
+          "type": "coder",
+          "agentType": "coder",
+          "status": "idle",
+          "health": 1,
+          "taskCount": 0,
+          "tasksCompleted": 0,
+          "currentTask": null,
+          "createdAt": "2026-03-24T19:08:18.846Z",
+          "model": "sonnet"
+        },
+        {
+          "id": "agent-1774379300678-s6ee06",
+          "agentId": "agent-1774379300678-s6ee06",
+          "type": "coder",
+          "agentType": "coder",
+          "status": "idle",
+          "health": 1,
+          "taskCount": 0,
+          "tasksCompleted": 0,
+          "currentTask": null,
+          "createdAt": "2026-03-24T19:08:20.678Z",
+          "model": "sonnet"
+        },
+        {
+          "id": "agent-1774379302389-gcv4ir",
+          "agentId": "agent-1774379302389-gcv4ir",
+          "type": "coder",
+          "agentType": "coder",
+          "status": "idle",
+          "health": 1,
+          "taskCount": 0,
+          "tasksCompleted": 0,
+          "currentTask": null,
+          "createdAt": "2026-03-24T19:08:22.389Z",
+          "model": "sonnet"
+        },
+        {
+          "id": "agent-1774379304145-v164jn",
+          "agentId": "agent-1774379304145-v164jn",
+          "type": "tester",
+          "agentType": "tester",
+          "status": "idle",
+          "health": 1,
+          "taskCount": 0,
+          "tasksCompleted": 0,
+          "currentTask": null,
+          "createdAt": "2026-03-24T19:08:24.146Z",
+          "model": "sonnet"
+        },
+        {
+          "id": "agent-1774379305910-59zwlj",
+          "agentId": "agent-1774379305910-59zwlj",
+          "type": "tester",
+          "agentType": "tester",
+          "status": "idle",
+          "health": 1,
+          "taskCount": 0,
+          "tasksCompleted": 0,
+          "currentTask": null,
+          "createdAt": "2026-03-24T19:08:25.910Z",
+          "model": "sonnet"
+        }
+      ],
+      "tasks": [],
+      "config": {
+        "topology": "hierarchical",
+        "maxAgents": 8,
+        "strategy": "specialized",
+        "communicationProtocol": "message-bus",
+        "autoScaling": false,
+        "consensusMechanism": "raft"
+      },
+      "createdAt": "2026-03-24T20:01:36.858Z",
+      "updatedAt": "2026-03-24T20:11:02.671Z"
+    }
+  },
+  "version": "3.0.0"
+}
