@@ -45,8 +45,8 @@ export default function Notifications() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="px-4 pt-4 pb-6">
+    <div className="min-h-app bg-background pb-24" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="flex min-h-app flex-col px-4 pt-safe pb-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <Heading2 lang={currentLanguage} className="text-foreground">
@@ -74,7 +74,7 @@ export default function Notifications() {
           )}
         </div>
 
-        <ScrollArea className="h-[calc(100vh-200px)]">
+        <ScrollArea className="min-h-0 flex-1">
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((index) => (

@@ -15,7 +15,8 @@ export type RequestStatus =
   | 'in_progress'
   | 'awaiting_approval'
   | 'completed'
-  | 'confirmed';
+  | 'confirmed'
+  | 'cancelled';
 
 export interface ActiveRequest {
   id: string;
@@ -77,6 +78,7 @@ const content = {
     awaiting_approval: { title: 'Final amount waiting for you', sub: 'Review the final amount to close the request' },
     completed: { title: 'Work completed', sub: 'You can review the request or rate the experience' },
     confirmed: { title: 'Confirmed', sub: 'The request was closed successfully' },
+    cancelled: { title: 'Request cancelled', sub: 'This request is no longer active' },
     eta: 'Expected arrival',
     viewDetails: 'View full details',
     actionNeeded: 'Review and approve the final amount to close this request',
@@ -93,6 +95,7 @@ const statusColors: Record<RequestStatus, string> = {
   awaiting_approval: 'bg-orange-500',
   completed: 'bg-teal-500',
   confirmed: 'bg-slate-500',
+  cancelled: 'bg-slate-400',
 };
 
 const getTimelineSteps = (status: RequestStatus, t: (typeof content)['en']): TimelineStep[] => {
@@ -126,6 +129,7 @@ const getTimelineSteps = (status: RequestStatus, t: (typeof content)['en']): Tim
       break;
     case 'completed':
     case 'confirmed':
+    case 'cancelled':
       steps[1].status = 'completed';
       steps[2].status = 'completed';
       steps[3].status = 'completed';
@@ -141,12 +145,13 @@ export const ActiveRequestCard = ({
   onTrack,
 }: ActiveRequestCardProps) => {
   const t = content[currentLanguage];
-  const statusInfo = t[request.status];
-  const statusColor = statusColors[request.status] || 'bg-primary';
+  const safeStatus = (request.status in statusColors ? request.status : 'matching') as RequestStatus;
+  const statusInfo = (t as Record<string, { title: string; sub: string }>)[safeStatus] ?? t.matching;
+  const statusColor = statusColors[safeStatus] || 'bg-primary';
   const timeLabel = request.timeMode === 'asap' ? t.asap : request.scheduledTime || t.scheduled;
   const coordinates = getRequestCoordinates(request);
-  const isProviderAssigned = request.status !== 'matching';
-  const steps = getTimelineSteps(request.status, t as (typeof content)['en']);
+  const isProviderAssigned = safeStatus !== 'matching';
+  const steps = getTimelineSteps(safeStatus, t as (typeof content)['en']);
   const providerDisplayName = request.providerCompany || request.providerName;
 
   const statusUpdate = useMemo(
@@ -156,12 +161,12 @@ export const ActiveRequestCard = ({
   const [showStatusUpdate, setShowStatusUpdate] = useState(false);
 
   useEffect(() => {
-    if (!statusUpdate || request.status === 'matching') {
+    if (!statusUpdate || safeStatus === 'matching') {
       setShowStatusUpdate(false);
       return;
     }
 
-    const storageKey = `maintmena:buyer-status-update:${request.id}:${request.status}`;
+    const storageKey = `maintmena:buyer-status-update:${request.id}:${safeStatus}`;
     let hasSeen = false;
 
     try {
@@ -182,7 +187,7 @@ export const ActiveRequestCard = ({
     const timeout = window.setTimeout(() => setShowStatusUpdate(false), 4200);
 
     return () => window.clearTimeout(timeout);
-  }, [request.id, request.status, statusUpdate]);
+  }, [request.id, safeStatus, statusUpdate]);
 
   return (
     <RequestSummaryCard
@@ -198,7 +203,7 @@ export const ActiveRequestCard = ({
       statusTitle={statusInfo.title}
       statusSubtitle={statusInfo.sub}
       statusColor={statusColor}
-      isPulse={request.status === 'matching' || request.status === 'on_the_way'}
+      isPulse={safeStatus === 'matching' || safeStatus === 'on_the_way'}
       providerAvatar={request.providerAvatar}
       providerName={providerDisplayName}
       providerStatusMeta={request.providerName && request.providerCompany && request.providerCompany !== request.providerName ? request.providerName : undefined}
@@ -236,7 +241,7 @@ export const ActiveRequestCard = ({
             finalAmount={request.finalAmount}
           />
 
-          {(request.status === 'accepted' || request.status === 'on_the_way') ? (
+          {(safeStatus === 'accepted' || safeStatus === 'on_the_way') ? (
             <div className="w-max rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700 shadow-sm">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80">
@@ -252,7 +257,7 @@ export const ActiveRequestCard = ({
             </div>
           ) : null}
 
-          {request.sellerMarkedComplete && request.status !== 'completed' ? (
+          {request.sellerMarkedComplete && safeStatus !== 'completed' ? (
             <div className="flex items-start gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 shadow-sm">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
               <span className="text-sm font-semibold text-orange-800">{t.actionNeeded}</span>

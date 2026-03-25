@@ -136,6 +136,7 @@ export async function fetchBuyerRequests(buyerId: string): Promise<CanonicalRequ
         .order('created_at', { ascending: false }),
     'job-service-fetch-buyer-requests',
     [],
+    [REQUEST_SELECT_FIELDS_COMPAT, REQUEST_SELECT_FIELDS_FULL, REQUEST_SELECT_FIELDS_MINIMAL],
   );
 
   return mapRowsToCanonicalRequests(rows as CanonicalRequestRow[]);

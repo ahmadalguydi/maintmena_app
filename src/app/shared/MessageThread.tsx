@@ -398,7 +398,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background pb-safe" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex h-app min-h-app flex-col bg-background" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
       <GradientHeader
         title={ct.title}
         showBack={true}
@@ -437,7 +437,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       />
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-4 space-y-4">
         {messages?.map((message, index) => {
           const isOwn = message.sender_id === user?.id;
           const showTimestamp = index === 0 ||
@@ -502,7 +502,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       </div>
 
       {/* Input */}
-      <div className="px-6 py-4 pb-6 bg-background border-t border-border/30">
+      <div className="border-t border-border/30 bg-background px-6 py-4 pb-safe-or-4">
         <div className="flex gap-2 items-center">
           {/* Attachment buttons */}
           <div className="flex gap-1">

@@ -12,6 +12,12 @@ describe('buyerCompletionFlow', () => {
     expect(shouldShowBuyerRequestOnHome({ buyer_marked_complete: true })).toBe(false);
   });
 
+  it('hides terminal requests from buyer home', () => {
+    expect(shouldShowBuyerRequestOnHome({ lifecycle: 'cancelled', buyer_marked_complete: false })).toBe(false);
+    expect(shouldShowBuyerRequestOnHome({ status: 'closed', buyer_marked_complete: false })).toBe(false);
+    expect(shouldShowBuyerRequestOnHome({ lifecycle: 'seller_assigned', buyer_marked_complete: false })).toBe(true);
+  });
+
   it('prompts for a review only after buyer completion and before a review exists', () => {
     expect(
       shouldPromptBuyerForReview({ buyerMarkedComplete: true, hasExistingReview: false }),

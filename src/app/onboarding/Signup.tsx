@@ -223,7 +223,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col p-6" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-app bg-background flex flex-col p-6 pb-safe-or-4 pt-safe" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header with Back Button and Language Toggle */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={handleBack} className="flex items-center gap-2 text-muted-foreground">

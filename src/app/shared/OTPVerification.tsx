@@ -35,7 +35,7 @@ export const OTPVerification = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-app bg-background pb-safe-or-4" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
       <GradientHeader
         title={currentLanguage === 'ar' ? 'التحقق من البريد' : 'Email Verification'}
         subtitle={currentLanguage === 'ar' ? `أرسلنا رمزاً إلى ${email}` : `We sent a code to ${email}`}

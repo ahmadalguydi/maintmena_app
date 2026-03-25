@@ -137,6 +137,18 @@
   body {
     @apply bg-paper text-ink font-body antialiased;
     font-feature-settings: "kern" 1, "liga" 1;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  html,
+  #root {
+    min-height: 100%;
+  }
+
+  #root {
+    min-height: 100dvh;
   }
 
   /* Newspaper typography */
@@ -171,6 +183,34 @@
 
   .rule-v {
     @apply border-r border-rule;
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  }
+
+  .pt-safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pb-safe-or-4 {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+
+  .min-h-app {
+    min-height: 100dvh;
+    min-height: 100svh;
+  }
+
+  .h-app {
+    height: 100dvh;
+    height: 100svh;
   }
 }
 
