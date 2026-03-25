@@ -10,10 +10,56 @@ export interface BuyerHomeVisibilityInput {
 export interface BuyerReviewPromptInput {
   buyerMarkedComplete?: boolean | null;
   hasExistingReview?: boolean;
+  promptCount?: number;
+  hasLocalReviewSubmission?: boolean;
 }
+
+type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
 
 export const getBuyerReviewPromptStorageKey = (requestId: string) =>
   `buyer-review-prompt-seen:${requestId}`;
+
+export const getBuyerReviewSubmittedStorageKey = (requestId: string) =>
+  `buyer-review-submitted:${requestId}`;
+
+export const getBuyerReviewPromptCount = (
+  storage: StorageLike | null | undefined,
+  requestId: string,
+) => {
+  const rawValue = storage?.getItem(getBuyerReviewPromptStorageKey(requestId));
+  if (!rawValue) return 0;
+
+  const isCountValue = /^\d+$/.test(rawValue);
+  const parsedCount = isCountValue ? Number.parseInt(rawValue, 10) : Number.NaN;
+  if (Number.isFinite(parsedCount) && parsedCount >= 0) {
+    return parsedCount;
+  }
+
+  // Backward compatibility: older builds stored an ISO timestamp instead of a count.
+  return 1;
+};
+
+export const incrementBuyerReviewPromptCount = (
+  storage: StorageLike | null | undefined,
+  requestId: string,
+) => {
+  const nextCount = Math.min(getBuyerReviewPromptCount(storage, requestId) + 1, 2);
+  storage?.setItem(getBuyerReviewPromptStorageKey(requestId), String(nextCount));
+  return nextCount;
+};
+
+export const hasBuyerReviewBeenSubmittedLocally = (
+  storage: StorageLike | null | undefined,
+  requestId: string,
+) => Boolean(storage?.getItem(getBuyerReviewSubmittedStorageKey(requestId)));
+
+export const markBuyerReviewSubmitted = (
+  storage: StorageLike | null | undefined,
+  requestId: string,
+) => {
+  storage?.setItem(getBuyerReviewSubmittedStorageKey(requestId), '1');
+  storage?.setItem(getBuyerReviewPromptStorageKey(requestId), '2');
+};
 
 export const shouldShowBuyerRequestOnHome = (
   request: BuyerHomeVisibilityInput,
@@ -29,4 +75,10 @@ export const shouldShowBuyerRequestOnHome = (
 export const shouldPromptBuyerForReview = ({
   buyerMarkedComplete,
   hasExistingReview = false,
-}: BuyerReviewPromptInput) => Boolean(buyerMarkedComplete) && !hasExistingReview;
+  promptCount = 0,
+  hasLocalReviewSubmission = false,
+}: BuyerReviewPromptInput) =>
+  Boolean(buyerMarkedComplete) &&
+  !hasExistingReview &&
+  !hasLocalReviewSubmission &&
+  promptCount < 2;

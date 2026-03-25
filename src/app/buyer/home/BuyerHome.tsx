@@ -30,7 +30,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  getBuyerReviewPromptCount,
   getBuyerReviewPromptStorageKey,
+  hasBuyerReviewBeenSubmittedLocally,
+  incrementBuyerReviewPromptCount,
+  markBuyerReviewSubmitted,
   shouldPromptBuyerForReview,
   shouldShowBuyerRequestOnHome,
 } from '@/lib/buyerCompletionFlow';
@@ -54,6 +58,7 @@ interface PendingReviewPrompt {
   id: string;
   category: string | null;
   location: string | null;
+  promptCount: number;
   sellerId: string;
   sellerName: string;
   title: string | null;
@@ -78,6 +83,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
   const [hoveredReviewRating, setHoveredReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const searchHeroRef = useRef<HTMLDivElement>(null);
+  const countedReviewPromptKeyRef = useRef<string | null>(null);
   const currentLanguage = propLanguage || (localStorage.getItem('preferredLanguage') as 'en' | 'ar') || 'ar';
 
   // Fetch buyer's open/accepted/in_progress requests for the ActiveRequestCards
@@ -263,19 +269,25 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
 
       const nextPromptRequest = completedRequests.find((request: any) => {
         const hasExistingReview = reviewedRequestIds.has(request.id);
-        const hasSeenPrompt = Boolean(
-          window.localStorage.getItem(getBuyerReviewPromptStorageKey(request.id)),
+        const promptCount = getBuyerReviewPromptCount(window.localStorage, request.id);
+        const hasLocalReviewSubmission = hasBuyerReviewBeenSubmittedLocally(
+          window.localStorage,
+          request.id,
         );
 
         return shouldPromptBuyerForReview({
           buyerMarkedComplete: request.buyer_marked_complete,
           hasExistingReview,
-        }) && !hasSeenPrompt;
+          promptCount,
+          hasLocalReviewSubmission,
+        });
       });
 
       if (!nextPromptRequest) {
         return null;
       }
+
+      const promptCount = getBuyerReviewPromptCount(window.localStorage, nextPromptRequest.id);
 
       const seller = await executeSupabaseQuery<any | null>(
         () => supabase
@@ -294,6 +306,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
         id: nextPromptRequest.id,
         category: nextPromptRequest.category,
         location: nextPromptRequest.location,
+        promptCount,
         sellerId: nextPromptRequest.assigned_seller_id,
         sellerName:
           seller?.company_name ||
@@ -309,18 +322,26 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
   });
 
   useEffect(() => {
-    if (pendingReviewPrompt?.id) {
+    if (!pendingReviewPrompt?.id) {
+      countedReviewPromptKeyRef.current = null;
+      return;
+    }
+
+    const promptInstanceKey = `${pendingReviewPrompt.id}:${pendingReviewPrompt.promptCount}`;
+    if (!showCompletedReviewPrompt && countedReviewPromptKeyRef.current !== promptInstanceKey) {
+      incrementBuyerReviewPromptCount(window.localStorage, pendingReviewPrompt.id);
+      countedReviewPromptKeyRef.current = promptInstanceKey;
       setShowCompletedReviewPrompt(true);
       setReviewRating(0);
       setHoveredReviewRating(0);
       setReviewText('');
     }
-  }, [pendingReviewPrompt?.id]);
+  }, [pendingReviewPrompt?.id, pendingReviewPrompt?.promptCount, showCompletedReviewPrompt]);
 
   const markReviewPromptSeen = useCallback((requestId: string) => {
     window.localStorage.setItem(
       getBuyerReviewPromptStorageKey(requestId),
-      new Date().toISOString(),
+      String(Math.max(getBuyerReviewPromptCount(window.localStorage, requestId), 1)),
     );
   }, []);
 
@@ -348,7 +369,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
     },
     onSuccess: ({ mode }) => {
       if (pendingReviewPrompt?.id) {
-        markReviewPromptSeen(pendingReviewPrompt.id);
+        markBuyerReviewSubmitted(window.localStorage, pendingReviewPrompt.id);
       }
 
       setShowCompletedReviewPrompt(false);

@@ -399,6 +399,31 @@
         "fixes"
       ],
       "timestamp": "2026-03-25T22:14:09.167Z"
+    },
+    {
+      "task": "Cap buyer review reminder modal to two impressions per request and suppress it completely after a review already exists or has been submitted locally.",
+      "agent": "coder",
+      "success": true,
+      "quality": 0.95,
+      "keywords": [
+        "cap",
+        "buyer",
+        "review",
+        "reminder",
+        "modal",
+        "two",
+        "impressions",
+        "per",
+        "request",
+        "suppress",
+        "completely",
+        "review",
+        "already",
+        "exists",
+        "submitted",
+        "locally"
+      ],
+      "timestamp": "2026-03-25T22:57:46.168Z"
     }
   ]
 }
