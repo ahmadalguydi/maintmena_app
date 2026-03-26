@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { JobProgressStepper } from './JobProgressStepper';
 import { JobPhotosUploader } from './JobPhotosUploader';
-import { ServiceLocationMap } from '@/components/maps/ServiceLocationMap';
+import { LazyServiceLocationMap } from '@/components/maps/LazyServiceLocationMap';
 
 type MissionStatus =
   | 'accepted'
@@ -238,7 +238,7 @@ export function MissionHeroCard({
         transition={{ type: 'spring', stiffness: 400, damping: 35 }}
         onClick={handleMapToggle}
       >
-        <ServiceLocationMap
+        <LazyServiceLocationMap
           currentLanguage={currentLanguage}
           lat={lat}
           lng={lng}

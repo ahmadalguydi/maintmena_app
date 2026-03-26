@@ -1,8 +1,9 @@
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { loadHapticsPlugin } from '@/lib/nativePlugins';
 
 export const useHaptics = () => {
   const vibrate = async (type: 'light' | 'medium' | 'heavy' = 'medium') => {
     try {
+      const { Haptics, ImpactStyle } = await loadHapticsPlugin();
       const style = type === 'light'
         ? ImpactStyle.Light
         : type === 'heavy'
@@ -17,6 +18,7 @@ export const useHaptics = () => {
 
   const notificationSuccess = async () => {
     try {
+      const { Haptics, NotificationType } = await loadHapticsPlugin();
       await Haptics.notification({ type: NotificationType.Success });
     } catch (error) {
       // Haptics not available
@@ -25,6 +27,7 @@ export const useHaptics = () => {
 
   const notificationWarning = async () => {
     try {
+      const { Haptics, NotificationType } = await loadHapticsPlugin();
       await Haptics.notification({ type: NotificationType.Warning });
     } catch (error) {
       // Haptics not available
@@ -33,6 +36,7 @@ export const useHaptics = () => {
 
   const notificationError = async () => {
     try {
+      const { Haptics, NotificationType } = await loadHapticsPlugin();
       await Haptics.notification({ type: NotificationType.Error });
     } catch (error) {
       // Haptics not available

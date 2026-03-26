@@ -1,16 +1,19 @@
+import { Suspense } from 'react';
 import { Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { BuyerHome } from '@/app/buyer/home/BuyerHome';
-import { BuyerActivity } from '@/app/buyer/activity/BuyerActivity';
-import { RequestDetail } from '@/app/buyer/requests/RequestDetail';
-import { BuyerProfile } from '@/app/buyer/profile/BuyerProfile';
-import { EditProfile as BuyerEditProfile } from '@/app/buyer/profile/EditProfile';
-import { History as BuyerHistory } from '@/app/buyer/profile/History';
-import MessagesHub from '@/app/shared/MessagesHub';
+import { RouteLoader, lazyNamedRoute, lazyRoute } from './routeLoader';
 
 export interface RouteProps {
     currentLanguage: 'en' | 'ar';
 }
+
+const BuyerHome = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/home/BuyerHome'), 'BuyerHome');
+const BuyerActivity = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/activity/BuyerActivity'), 'BuyerActivity');
+const RequestDetail = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/requests/RequestDetail'), 'RequestDetail');
+const BuyerProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/profile/BuyerProfile'), 'BuyerProfile');
+const BuyerEditProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/profile/EditProfile'), 'EditProfile');
+const BuyerHistory = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/profile/History'), 'History');
+const MessagesHub = lazyRoute<RouteProps>(() => import('@/app/shared/MessagesHub'));
 
 export function buyerRoutes({ currentLanguage }: RouteProps) {
     return (
@@ -25,37 +28,51 @@ export function buyerRoutes({ currentLanguage }: RouteProps) {
             {/* Protected Buyer Routes */}
             <Route path="/app/buyer/home" element={
                 <ProtectedRoute allowedRoles={['buyer']}>
-                    <BuyerHome currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <BuyerHome currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/buyer/activity" element={
                 <ProtectedRoute allowedRoles={['buyer']}>
-                    <BuyerActivity currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <BuyerActivity currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/buyer/request/:id" element={
                 <ProtectedRoute allowedRoles={['buyer']}>
-                    <RequestDetail currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <RequestDetail currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/buyer/profile" element={
                 <ProtectedRoute allowedRoles={['buyer']}>
-                    <BuyerProfile currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <BuyerProfile currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/buyer/profile/edit" element={
                 <ProtectedRoute allowedRoles={['buyer']}>
-                    <BuyerEditProfile currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <BuyerEditProfile currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/buyer/history" element={
                 <ProtectedRoute allowedRoles={['buyer']}>
-                    <BuyerHistory currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <BuyerHistory currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/buyer/messages" element={
                 <ProtectedRoute allowedRoles={['buyer']}>
-                    <MessagesHub currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <MessagesHub currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
         </>

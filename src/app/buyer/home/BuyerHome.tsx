@@ -1,6 +1,6 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { Suspense, lazy, type ComponentType, useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Zap, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Plus, Zap, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,9 +19,9 @@ import { cn } from '@/lib/utils';
 import { useJobIssuesMap, IssueStatus } from '@/hooks/useJobIssues';
 import { SearchHero } from '@/components/mobile/SearchHero';
 import { StickySearchBar } from '@/components/mobile/StickySearchBar';
-import { ServiceFlowScreen } from '@/components/mobile/ServiceFlowScreen';
 import { ActiveRequestCard, RequestStatus, ActiveRequest } from '@/components/mobile/ActiveRequestCard';
 import { ReviewComposer } from '@/components/reviews/ReviewComposer';
+import type { ServiceFlowScreenProps } from '@/components/mobile/ServiceFlowScreen';
 import {
   Dialog,
   DialogContent,
@@ -63,6 +63,22 @@ interface PendingReviewPrompt {
   sellerName: string;
   title: string | null;
 }
+
+const ServiceFlowScreen = lazy(async () => {
+  const module = await import('@/components/mobile/ServiceFlowScreen');
+  return { default: module.ServiceFlowScreen };
+}) as ComponentType<ServiceFlowScreenProps>;
+
+const ServiceFlowFallback = ({ currentLanguage }: { currentLanguage: 'en' | 'ar' }) => (
+  <div className="fixed inset-0 z-50 bg-background/98 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    </div>
+    <p className={cn('text-sm font-semibold text-muted-foreground', currentLanguage === 'ar' ? 'font-ar-body' : 'font-body')}>
+      {currentLanguage === 'ar' ? 'جاري تجهيز الطلب...' : 'Preparing request flow...'}
+    </p>
+  </div>
+);
 
 const CATEGORY_LOOKUP = new Map(getAllCategories().map((category) => [category.key, category]));
 
@@ -695,15 +711,19 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
         </div>
 
         {/* Service Flow Overlay */}
-        <ServiceFlowScreen
-          currentLanguage={currentLanguage}
-          isOpen={isServiceFlowOpen}
-          initialCategory={prefilledCategory}
-          onClose={() => {
-            setIsServiceFlowOpen(false);
-            setPrefilledCategory(null);
-          }}
-        />
+        {isServiceFlowOpen ? (
+          <Suspense fallback={<ServiceFlowFallback currentLanguage={currentLanguage} />}>
+            <ServiceFlowScreen
+              currentLanguage={currentLanguage}
+              isOpen={isServiceFlowOpen}
+              initialCategory={prefilledCategory}
+              onClose={() => {
+                setIsServiceFlowOpen(false);
+                setPrefilledCategory(null);
+              }}
+            />
+          </Suspense>
+        ) : null}
       </div>
 
       <Dialog

@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
-import { Geolocation } from '@capacitor/geolocation';
 import { toast } from 'sonner';
+import { loadGeolocationPlugin } from '@/lib/nativePlugins';
 
 export const PermissionLocation = () => {
   const [isRequesting, setIsRequesting] = useState(false);
@@ -14,6 +14,7 @@ export const PermissionLocation = () => {
   const handleAllow = async () => {
     setIsRequesting(true);
     try {
+      const { Geolocation } = await loadGeolocationPlugin();
       await Geolocation.requestPermissions();
       localStorage.setItem('locationPermission', 'granted');
       toast.success(currentLanguage === 'ar' ? 'تم منح الإذن' : 'Permission granted');

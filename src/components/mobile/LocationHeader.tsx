@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, ChevronDown, Loader2 } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import { useHaptics } from '@/hooks/useHaptics';
-import { LocationPickerMap } from './LocationPickerMap';
+import { LazyLocationPickerMap } from './LazyLocationPickerMap';
 
 interface LocationHeaderProps {
     currentLanguage: 'en' | 'ar';
@@ -99,7 +98,7 @@ export const LocationHeader = ({
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                         className="fixed inset-0 z-50 bg-background"
                     >
-                        <LocationPickerMap
+                        <LazyLocationPickerMap
                             currentLanguage={currentLanguage}
                             initialLocation={location.lat && location.lng ? { lat: location.lat, lng: location.lng } : null}
                             onConfirm={handleLocationSelect}

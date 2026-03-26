@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Camera, Upload, Loader2, X, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
 import { validateFile, ALLOWED_IMAGE_TYPES } from '@/lib/fileValidation';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isNativePlatform, loadCameraPlugin } from '@/lib/nativePlugins';
 
 interface JobPhotosUploaderProps {
     currentLanguage: 'en' | 'ar';
@@ -25,6 +25,21 @@ export function JobPhotosUploader({
     const { toast } = useToast();
     const [uploadingBefore, setUploadingBefore] = useState(false);
     const [uploadingAfter, setUploadingAfter] = useState(false);
+    const [canUseNativeCamera, setCanUseNativeCamera] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        void isNativePlatform().then((value) => {
+            if (isMounted) {
+                setCanUseNativeCamera(value);
+            }
+        });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const handleUpload = async (file: File, type: 'before' | 'after') => {
         const validation = validateFile(file, { allowedTypes: ALLOWED_IMAGE_TYPES });
@@ -82,10 +97,10 @@ export function JobPhotosUploader({
     };
 
     const handleCameraCapture = async (type: 'before' | 'after') => {
-        if (!Capacitor.isNativePlatform()) return;
+        if (!canUseNativeCamera) return;
 
         try {
-            const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+            const { Camera, CameraResultType, CameraSource } = await loadCameraPlugin();
             const image = await Camera.getPhoto({
                 quality: 80,
                 allowEditing: false,
@@ -137,7 +152,7 @@ export function JobPhotosUploader({
                 ) : (
                     <>
                         <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            {Capacitor.isNativePlatform() ? (
+                            {canUseNativeCamera ? (
                                 <Camera className="h-5 w-5 text-primary/70" onClick={(e) => { e.preventDefault(); handleCameraCapture(type); }} />
                             ) : (
                                 <Upload className="h-5 w-5 text-primary/70" />

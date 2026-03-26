@@ -1,16 +1,22 @@
+import { Suspense } from 'react';
 import { Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { Settings as MobileSettings } from '@/app/shared/Settings';
-import { Help } from '@/app/shared/Help';
-import Notifications from '@/app/shared/Notifications';
-import { MessageThread } from '@/app/shared/MessageThread';
 import { OfflineMode } from '@/app/shared/OfflineMode';
-import { AppNotFound } from '@/app/shared/AppNotFound';
+import { RouteLoader, lazyNamedRoute, lazyRoute } from './routeLoader';
 
 export interface SharedRouteProps {
     currentLanguage: 'en' | 'ar';
     setCurrentLanguage: (lang: 'en' | 'ar') => void;
 }
+
+const MobileSettings = lazyNamedRoute<{
+    currentLanguage: 'en' | 'ar';
+    onLanguageChange: (lang: 'en' | 'ar') => void;
+}>(() => import('@/app/shared/Settings'), 'Settings');
+const Help = lazyNamedRoute<{ currentLanguage: 'en' | 'ar' }>(() => import('@/app/shared/Help'), 'Help');
+const Notifications = lazyRoute(() => import('@/app/shared/Notifications'));
+const MessageThread = lazyNamedRoute<{ currentLanguage: 'en' | 'ar' }>(() => import('@/app/shared/MessageThread'), 'MessageThread');
+const AppNotFound = lazyNamedRoute<{ currentLanguage: 'en' | 'ar' }>(() => import('@/app/shared/AppNotFound'), 'AppNotFound');
 
 export function sharedRoutes({ currentLanguage, setCurrentLanguage }: SharedRouteProps) {
     return (
@@ -18,33 +24,47 @@ export function sharedRoutes({ currentLanguage, setCurrentLanguage }: SharedRout
             {/* Shared Message Routes */}
             <Route path="/app/messages/thread" element={
                 <ProtectedRoute requireAuth>
-                    <MessageThread currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <MessageThread currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
 
             {/* Shared Settings and Help Routes */}
             <Route path="/app/settings" element={
                 <ProtectedRoute requireAuth>
-                    <MobileSettings currentLanguage={currentLanguage} onLanguageChange={setCurrentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <MobileSettings currentLanguage={currentLanguage} onLanguageChange={setCurrentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/help" element={
                 <ProtectedRoute requireAuth>
-                    <Help currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <Help currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/support" element={
                 <ProtectedRoute requireAuth>
-                    <Help currentLanguage={currentLanguage} />
+                    <Suspense fallback={<RouteLoader />}>
+                        <Help currentLanguage={currentLanguage} />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/notifications" element={
                 <ProtectedRoute requireAuth>
-                    <Notifications />
+                    <Suspense fallback={<RouteLoader />}>
+                        <Notifications />
+                    </Suspense>
                 </ProtectedRoute>
             } />
             <Route path="/app/offline" element={<OfflineMode />} />
-            <Route path="/app/*" element={<AppNotFound currentLanguage={currentLanguage} />} />
+            <Route path="/app/*" element={
+                <Suspense fallback={<RouteLoader />}>
+                    <AppNotFound currentLanguage={currentLanguage} />
+                </Suspense>
+            } />
         </>
     );
 }

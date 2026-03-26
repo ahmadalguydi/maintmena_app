@@ -5,7 +5,7 @@ import { MapPin, Move, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MAPBOX_STREET_STYLE, MAPBOX_TOKEN } from '@/lib/mapbox';
 
-interface ServiceLocationMapProps {
+export interface ServiceLocationMapProps {
   currentLanguage: 'en' | 'ar';
   lat?: number;
   lng?: number;

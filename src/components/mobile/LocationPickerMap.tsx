@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { MAPBOX_STREET_STYLE, MAPBOX_TOKEN } from '@/lib/mapbox';
 
-interface LocationPickerMapProps {
+export interface LocationPickerMapProps {
     currentLanguage: 'en' | 'ar';
     initialLocation: { lat: number; lng: number } | null;
     onConfirm: (location: { lat: number; lng: number; address?: string }) => void;

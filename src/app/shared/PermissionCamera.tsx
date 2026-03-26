@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Camera } from 'lucide-react';
-import { Camera as CapacitorCamera } from '@capacitor/camera';
 import { toast } from 'sonner';
+import { loadCameraPlugin } from '@/lib/nativePlugins';
 
 export const PermissionCamera = () => {
   const [isRequesting, setIsRequesting] = useState(false);
@@ -14,6 +14,7 @@ export const PermissionCamera = () => {
   const handleAllow = async () => {
     setIsRequesting(true);
     try {
+      const { Camera: CapacitorCamera } = await loadCameraPlugin();
       await CapacitorCamera.requestPermissions({ permissions: ['camera', 'photos'] });
       localStorage.setItem('cameraPermission', 'granted');
       toast.success(currentLanguage === 'ar' ? 'تم منح الإذن' : 'Permission granted');

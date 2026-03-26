@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Camera, Upload, X, CheckCircle2, Loader2, Star, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Capacitor } from '@capacitor/core';
+import { isNativePlatform, loadCameraPlugin } from '@/lib/nativePlugins';
 
 interface PhotoProofModalProps {
   isOpen: boolean;
@@ -31,8 +31,23 @@ export function PhotoProofModal({
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [canUseNativeCamera, setCanUseNativeCamera] = useState(false);
 
   const isRtl = currentLanguage === 'ar';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void isNativePlatform().then((value) => {
+      if (isMounted) {
+        setCanUseNativeCamera(value);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Different content for seller vs buyer
   const content = {
@@ -95,10 +110,9 @@ export function PhotoProofModal({
   };
 
   const handleCameraCapture = async () => {
-    if (Capacitor.isNativePlatform()) {
+    if (canUseNativeCamera) {
       try {
-        const { Camera } = await import('@capacitor/camera');
-        const { CameraResultType, CameraSource } = await import('@capacitor/camera');
+        const { Camera, CameraResultType, CameraSource } = await loadCameraPlugin();
 
         const image = await Camera.getPhoto({
           quality: 80,
@@ -223,7 +237,7 @@ export function PhotoProofModal({
                   )}
                 </label>
 
-                {Capacitor.isNativePlatform() && (
+                {canUseNativeCamera && (
                   <button
                     onClick={handleCameraCapture}
                     disabled={isUploading}

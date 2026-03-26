@@ -10,8 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { loadCameraPlugin } from '@/lib/nativePlugins';
 
 interface PortfolioGalleryProps {
   currentLanguage: 'en' | 'ar';
@@ -81,13 +81,14 @@ export const PortfolioGallery = ({ currentLanguage }: PortfolioGalleryProps) => 
     setLoading(false);
   };
 
-  const handleAddPhoto = async (source: CameraSource) => {
+  const handleAddPhoto = async (source: 'camera' | 'photos') => {
     try {
+      const { Camera: CapacitorCamera, CameraResultType, CameraSource } = await loadCameraPlugin();
       const image = await CapacitorCamera.getPhoto({
         quality: 90,
         allowEditing: true,
         resultType: CameraResultType.DataUrl,
-        source: source
+        source: source === 'camera' ? CameraSource.Camera : CameraSource.Photos
       });
 
       if (image.dataUrl) {
@@ -212,7 +213,7 @@ export const PortfolioGallery = ({ currentLanguage }: PortfolioGalleryProps) => 
         {/* Add Photos Buttons */}
         <div className="grid grid-cols-2 gap-3">
           <Button
-            onClick={() => handleAddPhoto(CameraSource.Camera)}
+            onClick={() => handleAddPhoto('camera')}
             variant="outline"
             size="lg"
             className="h-auto py-4"
@@ -229,7 +230,7 @@ export const PortfolioGallery = ({ currentLanguage }: PortfolioGalleryProps) => 
           </Button>
           
           <Button
-            onClick={() => handleAddPhoto(CameraSource.Photos)}
+            onClick={() => handleAddPhoto('photos')}
             variant="outline"
             size="lg"
             className="h-auto py-4"

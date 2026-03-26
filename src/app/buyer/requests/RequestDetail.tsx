@@ -14,7 +14,7 @@ import { SAUDI_CITIES_BILINGUAL } from '@/lib/saudiCities';
 import { TimelineTracker, TimelineStep } from '@/components/mobile/TimelineTracker';
 import { PriceApprovalSheet } from '@/components/mobile/PriceApprovalSheet';
 import { ReviewComposer } from '@/components/reviews/ReviewComposer';
-import { ServiceLocationMap } from '@/components/maps/ServiceLocationMap';
+import { LazyServiceLocationMap } from '@/components/maps/LazyServiceLocationMap';
 import { ProviderSnapshot } from '@/components/buyer/ProviderSnapshot';
 import { RequestPriceCard } from '@/components/buyer/RequestPriceCard';
 import { findExistingSellerReview, submitSellerReview } from '@/lib/reviewFlow';
@@ -606,7 +606,7 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
         <div className="min-h-screen bg-background pb-32 relative" dir={isArabic ? 'rtl' : 'ltr'}>
             
             <div className="relative h-[320px] w-full overflow-hidden bg-muted">
-                <ServiceLocationMap
+                <LazyServiceLocationMap
                     currentLanguage={currentLanguage}
                     lat={coordinates?.lat}
                     lng={coordinates?.lng}

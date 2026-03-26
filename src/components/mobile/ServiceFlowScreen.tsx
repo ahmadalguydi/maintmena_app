@@ -271,7 +271,7 @@ const ConfirmationView = ({
     );
 };
 
-interface ServiceFlowScreenProps {
+export interface ServiceFlowScreenProps {
     currentLanguage: 'en' | 'ar';
     isOpen: boolean;
     initialCategory?: string | null;

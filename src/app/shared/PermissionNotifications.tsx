@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
-import { PushNotifications } from '@capacitor/push-notifications';
 import { toast } from 'sonner';
+import { loadPushNotificationsPlugin } from '@/lib/nativePlugins';
 
 export const PermissionNotifications = () => {
   const [isRequesting, setIsRequesting] = useState(false);
@@ -14,6 +14,7 @@ export const PermissionNotifications = () => {
   const handleAllow = async () => {
     setIsRequesting(true);
     try {
+      const { PushNotifications } = await loadPushNotificationsPlugin();
       const result = await PushNotifications.requestPermissions();
       if (result.receive === 'granted') {
         await PushNotifications.register();

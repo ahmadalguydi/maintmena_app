@@ -20,6 +20,7 @@ import { AppHeader } from "./components/mobile/AppHeader";
 import { AuthTriggerModal } from './components/mobile/AuthTriggerModal';
 import { OfflineMode } from "./app/shared/OfflineMode";
 import { NetworkStatus } from "./components/mobile/NetworkStatus";
+import { RoutePrefetcher } from './components/RoutePrefetcher';
 
 // Route modules
 import {
@@ -185,6 +186,7 @@ const App = () => {
                     <PageViewTracker />
                     <ScrollToTop />
                     <RealtimeHub />
+                    <RoutePrefetcher />
                     <OfflineMode />
                     <div className="min-h-screen flex flex-col bg-paper">
                       <Chrome

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BellRing, Clock, MapPin, Pencil, Star, UserCheck, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ServiceLocationMap } from '@/components/maps/ServiceLocationMap';
+import { LazyServiceLocationMap } from '@/components/maps/LazyServiceLocationMap';
 
 interface RequestSummaryCardProps {
   currentLanguage: 'en' | 'ar';
@@ -105,7 +105,7 @@ export const RequestSummaryCard = ({
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div onClick={(event) => event.stopPropagation()}>
-        <ServiceLocationMap
+        <LazyServiceLocationMap
           currentLanguage={currentLanguage}
           lat={lat}
           lng={lng}
