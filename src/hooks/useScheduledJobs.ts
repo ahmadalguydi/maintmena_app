@@ -6,6 +6,7 @@ import { GC_TIME, REFETCH_INTERVAL } from '@/lib/queryConfig';
 import {
   getRequestLocationLabel,
   toCanonicalRequest,
+  CanonicalRequestRow,
 } from '@/lib/maintenanceRequest';
 
 export interface ScheduledJob {
@@ -24,13 +25,13 @@ export interface ScheduledJob {
   buyer_id: string;
   buyer_name?: string;
   buyer_avatar?: string;
-  sellerPricing?: any;
+  sellerPricing?: unknown;
 }
 
 export async function fetchSellerScheduledJobs(
   sellerId: string,
 ): Promise<ScheduledJob[]> {
-  const requests = await executeSupabaseQuery<any[]>(
+  const requests = await executeSupabaseQuery<CanonicalRequestRow[]>(
     () =>
       (supabase as any)
         .from('maintenance_requests')
@@ -38,6 +39,7 @@ export async function fetchSellerScheduledJobs(
           'id, category, title, description, location, city, latitude, longitude, status, urgency, preferred_start_date, created_at, buyer_id, seller_pricing, seller_marked_complete, buyer_marked_complete, buyer_price_approved',
         )
         .eq('assigned_seller_id', sellerId)
+        .in('status', ['accepted', 'open'])
         .order('preferred_start_date', { ascending: true, nullsFirst: true }),
     {
       context: 'seller-scheduled-jobs',
@@ -47,7 +49,7 @@ export async function fetchSellerScheduledJobs(
   );
 
   const validRequests = requests
-    .map((request: any) => toCanonicalRequest(request))
+    .map((request) => toCanonicalRequest(request))
     .filter((request): request is NonNullable<typeof request> => Boolean(request))
     .filter((request) => request.lifecycle === 'scheduled_confirmed');
 
@@ -55,14 +57,14 @@ export async function fetchSellerScheduledJobs(
     return [];
   }
 
-  const buyerIds = [...new Set(validRequests.map((request: any) => request.buyer_id))];
+  const buyerIds = [...new Set(validRequests.map((request) => request.buyer_id))];
   const buyerProfiles = buyerIds.length
     ? await executeSupabaseQuery<any[]>(
         () =>
-          supabase
+          (supabase as any)
             .from('profiles')
             .select('id, full_name, avatar_url')
-            .in('id', buyerIds),
+            .in('id', buyerIds) as any,
         {
           context: 'seller-scheduled-jobs-buyers',
           fallbackData: [],
@@ -75,7 +77,7 @@ export async function fetchSellerScheduledJobs(
     buyerProfiles.map((profile) => [profile.id, profile]),
   );
 
-  return validRequests.map((request: any) => ({
+  return validRequests.map((request) => ({
     id: request.id,
     category: request.category || 'General',
     title: request.title,

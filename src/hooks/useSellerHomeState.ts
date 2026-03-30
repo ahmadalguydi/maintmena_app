@@ -7,9 +7,21 @@ import { REFETCH_INTERVAL, GC_TIME } from '@/lib/queryConfig';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
 import { fetchSellerScheduledJobs } from '@/hooks/useScheduledJobs';
 import {
+  getRequestCoordinates,
   getRequestLocationLabel,
   toCanonicalRequest,
+  CanonicalRequestRow,
 } from '@/lib/maintenanceRequest';
+
+interface OnlineStatusRow { is_online: boolean | null; went_online_at: string | null; }
+interface ProfileDataRow {
+  full_name?: string | null;
+  phone?: string | null;
+  service_categories?: string[] | null;
+  location_city?: string | null;
+  service_radius_km?: number | null;
+}
+interface BuyerProfileBasic { full_name?: string | null; phone?: string | null; }
 
 export type SellerHomeState = 'A' | 'B' | 'B0' | 'C' | 'D';
 
@@ -39,7 +51,6 @@ interface ActiveJob {
   seller_marked_complete?: boolean;
   buyer_marked_complete?: boolean;
   buyer_price_approved?: boolean;
-  job_completion_code?: string;
   budget?: number;
 }
 
@@ -51,6 +62,8 @@ interface ScheduledJob {
   scheduled_start_at: string;
   buyer_name?: string;
   location?: string;
+  lat?: number;
+  lng?: number;
   commitment_type: 'soft' | 'hard';
 }
 
@@ -103,7 +116,7 @@ export function useSellerHomeState(): SellerHomeStateResult {
     queryFn: async () => {
       if (!user?.id) return { is_online: false, went_online_at: null };
 
-      const data = await executeSupabaseQuery<any | null>(
+      const data = await executeSupabaseQuery<OnlineStatusRow | null>(
         () =>
           supabase
             .from('profiles')
@@ -117,11 +130,10 @@ export function useSellerHomeState(): SellerHomeStateResult {
         },
       );
 
-      const profileData = data as any;
       return {
-        is_online: profileData?.is_online ?? false,
-        went_online_at: profileData?.went_online_at
-          ? new Date(profileData.went_online_at)
+        is_online: data?.is_online ?? false,
+        went_online_at: data?.went_online_at
+          ? new Date(data.went_online_at)
           : null,
       };
     },
@@ -145,7 +157,7 @@ export function useSellerHomeState(): SellerHomeStateResult {
     queryKey: ['seller-profile-completeness', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const data = await executeSupabaseQuery<any | null>(
+      const data = await executeSupabaseQuery<ProfileDataRow | null>(
         () =>
           supabase
             .from('profiles')
@@ -158,7 +170,7 @@ export function useSellerHomeState(): SellerHomeStateResult {
           relationName: 'profiles',
         },
       );
-      return data as any;
+      return data;
     },
     enabled: !!user?.id,
     staleTime: 30_000,
@@ -254,12 +266,12 @@ export function useSellerHomeState(): SellerHomeStateResult {
     queryFn: async (): Promise<ActiveJob | null> => {
       if (!user?.id) return null;
 
-      const data = await executeSupabaseQuery<any[]>(
+      const data = await executeSupabaseQuery<CanonicalRequestRow[]>(
         () =>
           (supabase as any)
             .from('maintenance_requests')
             .select(
-              'id, status, description, preferred_start_date, category, location, city, latitude, longitude, budget, buyer_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved, job_completion_code',
+              'id, status, description, preferred_start_date, category, location, city, latitude, longitude, budget, buyer_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved',
             )
             .eq('assigned_seller_id', user.id)
             .in('status', ['accepted', 'in_progress', 'en_route', 'arrived'])
@@ -273,7 +285,7 @@ export function useSellerHomeState(): SellerHomeStateResult {
 
       if (data.length === 0) return null;
 
-      let activeJobRaw = data.find((job: any) => {
+      let activeJobRaw = data.find((job) => {
         const canonical = toCanonicalRequest(job);
         return canonical?.lifecycle === 'seller_assigned'
           || canonical?.lifecycle === 'in_route'
@@ -285,10 +297,11 @@ export function useSellerHomeState(): SellerHomeStateResult {
 
       const canonicalActiveJob = toCanonicalRequest(activeJobRaw);
       if (!canonicalActiveJob) return null;
+      const activeJobCoordinates = getRequestCoordinates(activeJobRaw);
 
-      let buyerProfile: { full_name?: string | null; phone?: string | null } | null = null;
+      let buyerProfile: BuyerProfileBasic | null = null;
       if (activeJobRaw.buyer_id) {
-        const buyerData = await executeSupabaseQuery<any | null>(
+        buyerProfile = await executeSupabaseQuery<BuyerProfileBasic | null>(
           () =>
             supabase
               .from('profiles')
@@ -301,7 +314,6 @@ export function useSellerHomeState(): SellerHomeStateResult {
             relationName: 'profiles',
           },
         );
-        buyerProfile = buyerData as any;
       }
 
       return {
@@ -316,12 +328,11 @@ export function useSellerHomeState(): SellerHomeStateResult {
         buyer_name: buyerProfile?.full_name,
         buyer_phone: buyerProfile?.phone,
         location: getRequestLocationLabel(activeJobRaw, 'Location pending'),
-        location_lat: activeJobRaw.latitude,
-        location_lng: activeJobRaw.longitude,
+        location_lat: activeJobCoordinates?.lat,
+        location_lng: activeJobCoordinates?.lng,
         seller_marked_complete: activeJobRaw.seller_marked_complete,
         buyer_marked_complete: activeJobRaw.buyer_marked_complete,
         buyer_price_approved: activeJobRaw.buyer_price_approved,
-        job_completion_code: activeJobRaw.job_completion_code,
         budget: activeJobRaw.budget || 0,
       };
     },
@@ -346,7 +357,9 @@ export function useSellerHomeState(): SellerHomeStateResult {
         scheduled_start_at: job.scheduled_for || job.created_at,
         buyer_name: job.buyer_name,
         location: job.location,
-        commitment_type: 'hard',
+        lat: job.lat,
+        lng: job.lng,
+        commitment_type: 'hard' as const,
       }));
     },
     enabled: !!user?.id,

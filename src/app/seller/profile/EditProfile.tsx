@@ -157,7 +157,18 @@ export const EditProfile = ({ currentLanguage }: EditProfileProps) => {
       }
 
       if (data) {
-        const d = data as any;
+        const d = data as typeof data & {
+          buyer_type?: string;
+          company_name?: string | null;
+          company_description?: string | null;
+          years_of_experience?: number | null;
+          website_url?: string | null;
+          linkedin_url?: string | null;
+          crew_size_range?: string | null;
+          company_address?: string | null;
+          cr_number?: string | null;
+          vat_number?: string | null;
+        };
         const isCompany = d.buyer_type === 'company' || !!d.company_name;
         setAccountType(isCompany ? 'company' : 'individual');
         setFormData({
@@ -190,12 +201,12 @@ export const EditProfile = ({ currentLanguage }: EditProfileProps) => {
     if (!showTypeConfirm || !user) return;
     setAccountType(showTypeConfirm);
     // Persist buyer_type which is how the schema tracks individual vs company
-    await supabase
+    await (supabase as any)
       .from('profiles')
       .update({
         buyer_type: showTypeConfirm,
         updated_at: new Date().toISOString(),
-      } as any)
+      })
       .eq('id', user.id);
     toast.success(
       isAr
@@ -226,7 +237,7 @@ export const EditProfile = ({ currentLanguage }: EditProfileProps) => {
     if (!user) return;
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('profiles')
         .update({
           full_name: formData.full_name || null,
@@ -245,7 +256,7 @@ export const EditProfile = ({ currentLanguage }: EditProfileProps) => {
             vat_number: formData.vat_number || null,
           }),
           updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq('id', user.id);
 
       if (error) throw error;
@@ -336,7 +347,7 @@ export const EditProfile = ({ currentLanguage }: EditProfileProps) => {
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t.accountType}</p>
             <span className={cn(
               'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
-              accountType === 'company' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+              accountType === 'company' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-200' : 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-200',
             )}>
               {t.currentType} {accountType === 'company' ? t.company : t.individual}
             </span>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +19,20 @@ import { cn } from '@/lib/utils';
 
 interface AdminSupportProps {
     currentLanguage: 'en' | 'ar';
+}
+
+interface SupportChatUser {
+    full_name: string | null;
+    email: string | null;
+    avatar_url: string | null;
+}
+
+interface SupportChat {
+    id: string;
+    status: string;
+    subject: string | null;
+    created_at: string;
+    user: SupportChatUser | null;
 }
 
 export const AdminSupport = ({ currentLanguage }: AdminSupportProps) => {
@@ -45,7 +59,7 @@ export const AdminSupport = ({ currentLanguage }: AdminSupportProps) => {
 
                 const { data, error } = await query;
                 if (error) throw error;
-                return data || [];
+                return (data || []) as SupportChat[];
             } catch (e) {
                 console.warn('support_chats table may not exist:', e);
                 return [];
@@ -122,7 +136,7 @@ export const AdminSupport = ({ currentLanguage }: AdminSupportProps) => {
                     </div>
                 ) : chats && chats.length > 0 ? (
                     <div className="space-y-3">
-                        {chats.map((chat: any) => (
+                        {chats.map((chat) => (
                             <SoftCard
                                 key={chat.id}
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"

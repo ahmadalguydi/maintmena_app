@@ -51,7 +51,7 @@ export function CompletionWorkflowCard({
   const [loading, setLoading] = useState(false);
 
   const isBuyer = userRole === 'buyer';
-  const canBuyerMarkComplete = isBuyer && status === 'assigned' && !buyerMarkedComplete && contractFullyExecuted;
+  const canBuyerMarkComplete = isBuyer && ['seller_assigned', 'in_progress', 'in_route', 'arrived', 'accepted', 'assigned'].includes(status) && !buyerMarkedComplete && contractFullyExecuted;
   const canSellerConfirmPayment = !isBuyer && buyerMarkedComplete && !sellerMarkedComplete;
 
   const getProgress = () => {
@@ -76,16 +76,16 @@ export function CompletionWorkflowCard({
         .update({
           buyer_marked_complete: true,
           buyer_completion_date: new Date().toISOString()
-        } as any)
+        } as Record<string, unknown>)
         .eq(idField, id);
 
       if (error) throw error;
 
       toast.success('Work marked as complete! Waiting for seller to confirm payment receipt.');
       onRefresh?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error marking complete:', error);
-      toast.error('Failed to mark as complete: ' + error.message);
+      toast.error('Failed to mark as complete: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }
@@ -105,7 +105,7 @@ export function CompletionWorkflowCard({
         .update({
           seller_marked_complete: true,
           seller_completion_date: new Date().toISOString()
-        } as any)
+        } as Record<string, unknown>)
         .eq(idField, id);
 
       if (error) throw error;
@@ -114,9 +114,9 @@ export function CompletionWorkflowCard({
         icon: <CheckCircle className="w-5 h-5 text-green-600" />
       });
       onRefresh?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error confirming payment:', error);
-      toast.error('Failed to confirm payment: ' + error.message);
+      toast.error('Failed to confirm payment: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }

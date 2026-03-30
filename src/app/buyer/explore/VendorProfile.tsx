@@ -84,7 +84,7 @@ const copy = {
     providerFallback: 'مقدم الخدمة',
     customerFallback: 'عميل',
   },
-} satisfies Record<string, any>;
+} satisfies Record<string, unknown>;
 
 export const VendorProfile = ({ currentLanguage }: VendorProfileProps) => {
   const { id } = useParams();
@@ -386,7 +386,7 @@ export const VendorProfile = ({ currentLanguage }: VendorProfileProps) => {
                 className="h-full w-full object-cover"
               />
               <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-                {portfolioItems.map((_: any, index: number) => (
+                {portfolioItems.map((_: unknown, index: number) => (
                   <button
                     key={index}
                     type="button"
@@ -421,7 +421,7 @@ export const VendorProfile = ({ currentLanguage }: VendorProfileProps) => {
               {t.services}
             </Heading3>
             <div className="space-y-3">
-              {vendor.services_pricing.map((service: any, index: number) => {
+              {(vendor.services_pricing as { category: string; price?: number | null; duration?: string | null }[]).map((service, index) => {
                 const category = categories.find((item) => item.key === service.category);
                 return (
                   <div key={`${service.category}-${index}`} className="flex items-center justify-between rounded-xl bg-muted/30 p-3">
@@ -456,7 +456,7 @@ export const VendorProfile = ({ currentLanguage }: VendorProfileProps) => {
             <div className="flex flex-wrap gap-2">
               {vendor.service_cities.map((city: string, index: number) => {
                 const bilingualCity = SAUDI_CITIES_BILINGUAL?.find(
-                  (item: any) => item.value === city || item.en === city || item.ar === city,
+                  (item) => item.value === city || item.en === city || item.ar === city,
                 );
                 const displayCity = isArabic ? bilingualCity?.ar || city : bilingualCity?.en || city;
 
@@ -501,7 +501,7 @@ export const VendorProfile = ({ currentLanguage }: VendorProfileProps) => {
 
           {reviewList.length > 0 ? (
             <div className="space-y-4">
-              {reviewList.slice(0, 3).map((review: any) => {
+              {(reviewList as { id: string; buyer_id: string; rating: number; review_text: string | null; created_at: string; buyer: { full_name?: string | null; company_name?: string | null } | null }[]).slice(0, 3).map((review) => {
                 const buyerName =
                   review.buyer?.company_name ||
                   review.buyer?.full_name ||

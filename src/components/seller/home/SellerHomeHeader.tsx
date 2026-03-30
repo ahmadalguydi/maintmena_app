@@ -95,8 +95,8 @@ export function SellerHomeHeader({ currentLanguage }: SellerHomeHeaderProps) {
                     <span className={cn(
                         'inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mt-0.5 w-fit',
                         isCompany
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                            : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-200'
+                            : 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-200',
                     )}>
                         {isCompany
                             ? <><Building2 className="w-3 h-3" />{currentLanguage === 'ar' ? 'شركة' : 'Company'}</>

@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +33,17 @@ import { SellerHomeScheduled } from '@/components/seller/home/SellerHomeSchedule
 import { AcceptJobSheet } from '@/components/mobile/AcceptJobSheet';
 import { DeclineReasonModal, DeclineReason } from '@/components/mobile/DeclineReasonModal';
 import { ReachOutPromptModal } from '@/components/mobile/ReachOutPromptModal';
-import { getRequestLocationLabel, toCanonicalRequest } from '@/lib/maintenanceRequest';
+import { getRequestCoordinates, getRequestLocationLabel, toCanonicalRequest } from '@/lib/maintenanceRequest';
+
+interface ScheduledJobEntry {
+    id: string;
+    type?: string;
+    service_type?: string;
+    description?: string;
+    scheduled_start_at?: string;
+    commitment_type?: string;
+    [key: string]: unknown;
+}
 
 interface SellerHomeProps {
     currentLanguage: 'en' | 'ar';
@@ -60,6 +70,39 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
     // Local UI state
     const [serviceRadius, setServiceRadius] = useState(5);
     const [isConnecting, setIsConnecting] = useState(false);
+
+    // Load actual service radius from seller profile
+    const { data: profileRadius } = useQuery({
+        queryKey: ['seller-service-radius', user?.id],
+    queryFn: async () => {
+            if (!user?.id) return null;
+            const { data } = await supabase
+                .from('profiles')
+                .select('service_radius_km')
+                .eq('id', user.id)
+                .maybeSingle();
+            return (data as { service_radius_km?: number | null } | null)?.service_radius_km ?? null;
+        },
+        enabled: !!user?.id,
+        staleTime: 60_000,
+    });
+
+    useEffect(() => {
+        if (profileRadius != null) setServiceRadius(profileRadius);
+    }, [profileRadius]);
+
+    // On mount: if seller is already online (e.g. refreshed page or just logged in),
+    // run catch-up dispatch so they don't miss requests posted while they were away.
+    useEffect(() => {
+        if (!isOnline || !user?.id) return;
+        catchUpDispatch().then(({ dispatched }) => {
+            if (dispatched > 0) {
+                queryClient.invalidateQueries({ queryKey: ['seller-opportunities', user.id] });
+            }
+        }).catch(() => {/* ignore catch-up errors silently */});
+        // Only run once on mount / when transitioning to online
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOnline, user?.id]);
     const [showAcceptSheet, setShowAcceptSheet] = useState(false);
     const [showDeclineModal, setShowDeclineModal] = useState(false);
     const [showReachOutPrompt, setShowReachOutPrompt] = useState(false);
@@ -71,7 +114,7 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
     const todayEarnings = earnings.thisMonth;
 
     // Dispatch actions
-    const { acceptOffer, declineOffer } = useDispatchActions();
+    const { acceptOffer, declineOffer, catchUpDispatch } = useDispatchActions();
     const { opportunities, refetch: refetchOpportunities } = useOpportunities();
 
     const primeAcceptedJobState = async (
@@ -82,7 +125,7 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
 
         const { data: jobData } = await (supabase as any)
             .from('maintenance_requests')
-            .select('id, status, description, preferred_start_date, category, location, city, latitude, longitude, budget, buyer_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved, job_completion_code')
+            .select('id, status, description, preferred_start_date, category, location, city, latitude, longitude, budget, buyer_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved')
             .eq('id', jobId)
             .maybeSingle();
 
@@ -90,6 +133,7 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
 
         const canonicalJob = toCanonicalRequest(jobData);
         if (!canonicalJob) return;
+        const jobCoordinates = getRequestCoordinates(jobData);
 
         let buyerProfile: { full_name?: string | null; phone?: string | null } | null = null;
         if (jobData.buyer_id) {
@@ -98,7 +142,7 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
                 .select('full_name, phone')
                 .eq('id', jobData.buyer_id)
                 .maybeSingle();
-            buyerProfile = buyerData as any;
+            buyerProfile = buyerData as { full_name?: string | null; phone?: string | null } | null;
         }
 
         if (
@@ -119,23 +163,22 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
                 buyer_name: buyerProfile?.full_name,
                 buyer_phone: buyerProfile?.phone,
                 location: getRequestLocationLabel(jobData, currentLanguage === 'ar' ? 'الموقع قيد التحديث' : 'Location pending'),
-                location_lat: jobData.latitude,
-                location_lng: jobData.longitude,
+                location_lat: jobCoordinates?.lat,
+                location_lng: jobCoordinates?.lng,
                 seller_marked_complete: jobData.seller_marked_complete,
                 buyer_marked_complete: jobData.buyer_marked_complete,
                 buyer_price_approved: jobData.buyer_price_approved,
-                job_completion_code: jobData.job_completion_code,
                 budget: jobData.budget || 0,
             });
-            queryClient.setQueryData(['seller-scheduled-jobs', user.id], (old: any[] = []) =>
-                old.filter((job: any) => job.id !== jobId),
+            queryClient.setQueryData(['seller-scheduled-jobs', user.id], (old: ScheduledJobEntry[] = []) =>
+                old.filter((job) => job.id !== jobId),
             );
             return;
         }
 
         queryClient.setQueryData(['seller-active-job', user.id], null);
-        queryClient.setQueryData(['seller-scheduled-jobs', user.id], (old: any[] = []) => [
-            ...old.filter((job: any) => job.id !== jobId),
+        queryClient.setQueryData(['seller-scheduled-jobs', user.id], (old: ScheduledJobEntry[] = []) => [
+            ...old.filter((job) => job.id !== jobId),
             {
                 id: jobData.id,
                 type: 'request',
@@ -155,6 +198,12 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
 
         if (result === 'ok') {
             toast.success(currentLanguage === 'ar' ? 'أنت الآن متصل!' : 'You are now online!');
+            // Catch up on any open requests posted while this seller was offline
+            catchUpDispatch().then(({ dispatched }) => {
+                if (dispatched > 0) {
+                    queryClient.invalidateQueries({ queryKey: ['seller-opportunities', user?.id] });
+                }
+            }).catch(() => {/* ignore catch-up errors silently */});
         } else if (result === 'profile_incomplete') {
             toast.error(
                 currentLanguage === 'ar'
@@ -185,27 +234,46 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
         setShowDeclineModal(true);
     };
 
-    const handleJoinWaitlist = (id: string) => {
-        toast.success(currentLanguage === 'ar' ? 'تمت إضافتك للقائمة' : 'Added to waitlist');
+    const handleJoinWaitlist = async (id: string) => {
+        const opp = opportunities.find(o => o.id === id);
+        if (!opp?.offerId) {
+            toast.info(currentLanguage === 'ar' ? 'لا يمكن الإضافة للقائمة حالياً' : 'Unable to join waitlist right now');
+            return;
+        }
+        try {
+            const { error } = await (supabase as unknown as { from: (t: string) => { update: (d: Record<string, unknown>) => { eq: (c: string, v: string) => Promise<{ error: unknown }> } } })
+                .from('job_dispatch_offers')
+                .update({ offer_status: 'waitlisted' })
+                .eq('id', opp.offerId);
+            if (error) throw error;
+            toast.success(currentLanguage === 'ar' ? 'تمت إضافتك للقائمة — سنخبرك إذا تفرّغ المكان' : 'You\'re on the waitlist — we\'ll notify you if a slot opens');
+            queryClient.invalidateQueries({ queryKey: ['seller-opportunities'] });
+        } catch {
+            toast.error(currentLanguage === 'ar' ? 'فشل الانضمام للقائمة' : 'Failed to join waitlist');
+        }
     };
 
-    const handleAcceptWithPricing = async (pricing: any) => {
+    const handleAcceptWithPricing = async (pricing: Record<string, unknown>) => {
         if (!selectedOpportunityId) return;
         setShowAcceptSheet(false);
 
         const opp = opportunities.find(o => o.id === selectedOpportunityId);
 
         const onSuccess = async () => {
-            toast.success(currentLanguage === 'ar' ? 'تم قبول الطلب بنجاح!' : 'Job accepted successfully!');
-
-            await primeAcceptedJobState(selectedOpportunityId, opp);
-
-            // Then fire real refetches in the background
-            queryClient.invalidateQueries({ queryKey: ['seller-opportunities'] });
-            queryClient.invalidateQueries({ queryKey: ['seller-scheduled-jobs'] });
-            queryClient.invalidateQueries({ queryKey: ['seller-active-job'] });
-            await refetchOpportunities();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            try {
+                await primeAcceptedJobState(selectedOpportunityId, opp);
+                toast.success(currentLanguage === 'ar' ? 'تم قبول الطلب بنجاح!' : 'Job accepted successfully!');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) {
+                if (import.meta.env.DEV) console.error('[SellerHome] Failed to prime accepted job state:', err);
+                toast.error(currentLanguage === 'ar' ? 'حدث خطأ أثناء تحميل بيانات الطلب' : 'Failed to load job data, please refresh');
+            } finally {
+                // Always resync queries regardless of priming outcome
+                queryClient.invalidateQueries({ queryKey: ['seller-opportunities'] });
+                queryClient.invalidateQueries({ queryKey: ['seller-scheduled-jobs'] });
+                queryClient.invalidateQueries({ queryKey: ['seller-active-job'] });
+                await refetchOpportunities();
+            }
         };
 
         if (!opp?.offerId) {
@@ -239,14 +307,14 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
         toast.info(currentLanguage === 'ar' ? 'تم رفض الطلب' : 'Job declined');
     };
 
-    const handleEditPrice = async (jobId: string, pricing: any) => {
+    const handleEditPrice = async (jobId: string, pricing: Record<string, unknown>) => {
         const { error } = await (supabase as any)
             .from('maintenance_requests')
             .update({ seller_pricing: pricing })
             .eq('id', jobId);
 
         if (error) {
-            console.error('[SellerHome] Error updating price:', error);
+            if (import.meta.env.DEV) console.error('[SellerHome] Error updating price:', error);
             toast.error(currentLanguage === 'ar' ? 'حدث خطأ أثناء التحديث' : 'Failed to update price');
             return;
         }
@@ -298,7 +366,16 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
                         onAcceptOpportunity={handleAcceptOpportunity}
                         onJoinWaitlist={handleJoinWaitlist}
                         onEditPrice={handleEditPrice}
-                        onExpandRadius={() => setServiceRadius(prev => Math.min(prev + 3, 15))}
+                        onExpandRadius={async () => {
+                            const newRadius = Math.min(serviceRadius + 3, 15);
+                            setServiceRadius(newRadius);
+                            if (user?.id) {
+                                await supabase
+                                    .from('profiles')
+                                    .update({ service_radius_km: newRadius })
+                                    .eq('id', user.id);
+                            }
+                        }}
                     />
                 );
 

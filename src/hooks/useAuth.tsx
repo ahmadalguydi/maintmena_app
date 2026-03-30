@@ -51,12 +51,12 @@ interface AuthContextType {
     companyName?: string,
     buyerType?: "company" | "individual",
     language?: "en" | "ar",
-  ) => Promise<{ error: any }>;
+  ) => Promise<{ error: Error | null }>;
   signIn: (
     email: string,
     password: string,
     language?: "en" | "ar",
-  ) => Promise<{ error: any }>;
+  ) => Promise<{ error: Error | null }>;
   signOut: (language?: "en" | "ar") => Promise<void>;
   refreshUserType: () => Promise<void>;
 }
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .order("role", { ascending: true }); // Orders: admin, buyer, buyer_individual, seller
 
       if (error) {
-        console.warn("fetchUserType:", error.message);
+        if (import.meta.env.DEV) console.warn("fetchUserType:", error.message);
         return null;
       }
 
@@ -147,11 +147,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (session?.user) {
         void resolveAndSetUserType(session.user.id);
-        void supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
       } else {
         authResolutionRef.current += 1;
         setUserType(null);
@@ -167,6 +162,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         void resolveAndSetUserType(session.user.id);
       }
+      setLoading(false);
+    }).catch(() => {
       setLoading(false);
     });
 
@@ -221,7 +218,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           })
           .then(({ error: emailError }) => {
             if (emailError) {
-              console.error("Failed to send verification email:", emailError);
+              if (import.meta.env.DEV) console.error("Failed to send verification email:", emailError);
               // Don't block signup, just log the error
             }
           });
@@ -250,9 +247,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       return { error: null };
-    } catch (error: any) {
+    } catch (error) {
       toast.error(t.unexpectedError);
-      return { error };
+      return { error: error instanceof Error ? error : new Error(String(error)) };
     }
   };
 
@@ -293,6 +290,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               ? "البريد الإلكتروني غير مفعل. يرجى التحقق من صندوق الوارد."
               : "Email not confirmed. Please check your inbox.",
           );
+        } else if (error.message.toLowerCase().includes('rate limit') || error.message.toLowerCase().includes('too many')) {
+          toast.error(t.tooManyAttempts);
         } else {
           toast.error(error.message);
         }
@@ -302,7 +301,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Fetch user type on sign in and get the actual type
       if (data.user) {
         const actualUserType = await fetchUserType(data.user.id);
-        void supabase.from("profiles").select("*").eq("id", data.user.id).single();
 
         // Track login and identify user in Brevo with the fetched user type
         if (data.user.email && actualUserType) {
@@ -316,9 +314,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       toast.success(t.signedIn);
       return { error: null };
-    } catch (error: any) {
+    } catch (error) {
       toast.error(t.unexpectedError);
-      return { error };
+      return { error: error instanceof Error ? error : new Error(String(error)) };
     }
   };
 

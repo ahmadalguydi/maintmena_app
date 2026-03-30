@@ -61,15 +61,15 @@ export const useProfile = (userId?: string) => {
             if (!userId) return null;
 
             const selectCandidates = [PROFILE_SELECT_FULL, PROFILE_SELECT_COMPAT];
-            let data: any = null;
-            let lastError: any = null;
+            let data: Profile | null = null;
+            let lastError: unknown = null;
 
             for (let index = 0; index < selectCandidates.length; index += 1) {
                 const selectFields = selectCandidates[index];
                 const context = index === 0 ? 'profile-fetch' : `profile-fetch-fallback-${index}`;
 
                 try {
-                    data = await executeSupabaseQuery<any>(
+                    data = await executeSupabaseQuery<Profile | null>(
                         () => supabase
                             .from('profiles')
                             .select(selectFields)
@@ -84,10 +84,11 @@ export const useProfile = (userId?: string) => {
                     );
                     lastError = null;
                     break;
-                } catch (error: any) {
+                } catch (error: unknown) {
                     lastError = error;
-                    if (error?.code !== '42703' || index === selectCandidates.length - 1) {
-                        console.error('[useProfile] Error fetching profile:', error);
+                    const code = (error as { code?: string })?.code;
+                    if (code !== '42703' || index === selectCandidates.length - 1) {
+                        if (import.meta.env.DEV) console.error('[useProfile] Error fetching profile:', error);
                         return null;
                     }
                 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, QrCode, ArrowRight, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { X, ArrowRight, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Heading3, BodySmall, Caption } from "@/components/mobile/Typography";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ export function JobCompletionCodeModal({
     const content = {
         ar: {
             title: "تأكيد الإنجاز",
-            subtitle: "أدخل الرمز المكون من 6 أرقام من شاشة العميل أو امسح رمز QR.",
+            subtitle: "أدخل الرمز المكون من 6 أرقام من شاشة العميل.",
             submit: "تأكيد الرمز",
             cancel: "إلغاء",
             scanQr: "مسح رمز QR",
@@ -39,7 +39,7 @@ export function JobCompletionCodeModal({
         },
         en: {
             title: "Confirm Completion",
-            subtitle: "Enter the 6-digit code from the customer's screen or scan their QR code.",
+            subtitle: "Enter the 6-digit completion code shown on the customer's screen.",
             submit: "Verify Code",
             cancel: "Cancel",
             scanQr: "Scan QR Code",
@@ -156,20 +156,6 @@ export function JobCompletionCodeModal({
                                         )}
                                     </Button>
 
-                                    {/* Will implement QR scanner later, but show button for UI */}
-                                    <Button
-                                        variant="outline"
-                                        className="w-full h-12 rounded-2xl border-2 text-foreground"
-                                        onClick={() => {
-                                            // Handle QR Scan in the future
-                                            // TODO: Capacitor barcode scanner
-                                            toast.info(currentLanguage === 'ar' ? 'المسح غير متوفر في المتصفح بعد' : 'Scanning not available in browser yet');
-                                        }}
-                                        disabled={isSubmitting}
-                                    >
-                                        <QrCode size={18} className={rtl ? "ml-2" : "mr-2"} />
-                                        {t.scanQr}
-                                    </Button>
                                 </div>
                             </div>
                         </motion.div>

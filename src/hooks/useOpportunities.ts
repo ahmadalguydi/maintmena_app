@@ -77,7 +77,6 @@ export function useOpportunities(): UseOpportunitiesResult {
             .from('job_dispatch_offers')
             .select('id, job_id, job_type, offer_status, sent_at, expires_at')
             .eq('seller_id', user.id)
-            .eq('job_type', 'request')
             .in('offer_status', ['sent', 'delivered', 'seen'])
             .order('sent_at', { ascending: false }),
         {
@@ -98,7 +97,7 @@ export function useOpportunities(): UseOpportunitiesResult {
           (supabase as any)
             .from('maintenance_requests')
             .select(
-              'id, category, title, description, budget, urgency, preferred_start_date, created_at, status, location, city, photos, estimated_budget_min, estimated_budget_max, latitude, longitude',
+              'id, category, title, description, budget, urgency, preferred_start_date, created_at, status, location, city, photos, estimated_budget_min, estimated_budget_max, latitude, longitude, assigned_seller_id',
             )
             .in('id', requestIds),
         {
@@ -117,6 +116,8 @@ export function useOpportunities(): UseOpportunitiesResult {
           const request = requestsMap.get(offer.job_id);
           if (!request) return null;
           if (!isRequestOpportunityVisible(request.status)) return null;
+          // Don't show opportunities the seller is already assigned to
+          if (request.assigned_seller_id === user?.id) return null;
 
           const serviceType = request.category || 'general';
           const categoryKey = serviceType.toLowerCase().replace(/[\s-]+/g, '_');
@@ -181,12 +182,31 @@ export function useOpportunities(): UseOpportunitiesResult {
     [data?.opportunities, declinedIds],
   );
 
+  const declineOpportunity = (id: string) => {
+    // Optimistically hide from UI immediately
+    setDeclinedIds((previous) => [...previous, id]);
+
+    // Persist the decline to the DB so the offer is marked and dispatch engine skips this seller
+    const opportunity = data?.opportunities.find((o) => o.id === id);
+    if (opportunity?.offerId) {
+      void (supabase as any)
+        .from('job_dispatch_offers')
+        .update({
+          offer_status: 'declined',
+          responded_at: new Date().toISOString(),
+          response_type: 'decline',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', opportunity.offerId);
+    }
+  };
+
   return {
     opportunities,
     waitlistedOpportunities: data?.waitlisted || [],
     isLoading,
     refetch,
-    declineOpportunity: (id: string) => setDeclinedIds((previous) => [...previous, id]),
+    declineOpportunity,
     lastFetchedAt: dataUpdatedAt ? new Date(dataUpdatedAt) : null,
   };
 }

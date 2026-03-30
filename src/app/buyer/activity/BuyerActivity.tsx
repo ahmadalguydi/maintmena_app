@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -10,7 +9,9 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Plus,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -21,9 +22,11 @@ import {
   getBuyerRequestPresentationStatus,
   getRequestLocationLabel,
   isRequestTerminal,
+  type CanonicalRequest,
 } from '@/lib/maintenanceRequest';
 import { GC_TIME, REFETCH_INTERVAL, STALE_TIME } from '@/lib/queryConfig';
 import { RequestSummaryCard } from '@/components/mobile/RequestSummaryCard';
+import { GradientHeader } from '@/components/mobile/GradientHeader';
 import * as jobService from '@/services/jobService';
 
 interface BuyerActivityProps {
@@ -109,7 +112,7 @@ export const BuyerActivity = ({ currentLanguage }: BuyerActivityProps) => {
   const isRTL = currentLanguage === 'ar';
   const categories = getAllCategories();
 
-  const { data: requests, isLoading } = useQuery({
+  const { data: requests, isLoading, isError: isRequestsError } = useQuery({
     queryKey: ['buyer-activity', user?.id],
     enabled: !!user?.id,
     queryFn: () => jobService.fetchBuyerActivityRequests(user!.id),
@@ -149,16 +152,16 @@ export const BuyerActivity = ({ currentLanguage }: BuyerActivityProps) => {
     });
   };
 
-  const getRequestLocation = (request: any) =>
+  const getRequestLocation = (request: CanonicalRequest) =>
     getRequestLocationLabel(
       request,
       currentLanguage === 'ar' ? 'الموقع قيد التحديث' : 'Location pending',
     );
 
-  const getDisplayStatus = (request: any): string =>
+  const getDisplayStatus = (request: CanonicalRequest): string =>
     getBuyerRequestPresentationStatus(request);
 
-  const getStatusInfo = (request: any) => {
+  const getStatusInfo = (request: CanonicalRequest) => {
     const displayStatus = getDisplayStatus(request);
     return statusConfig[displayStatus] || statusConfig.open;
   };
@@ -180,12 +183,14 @@ export const BuyerActivity = ({ currentLanguage }: BuyerActivityProps) => {
       past: 'طلباتك السابقة',
       noActivity: 'لا يوجد نشاط بعد',
       noActivitySub: 'أول ما تطلب خدمة بيظهر سجل طلباتك هنا',
+      noActivityCta: 'اطلب خدمة الآن',
       rebook: 'اطلب مرة ثانية',
     },
     en: {
       past: 'Past',
       noActivity: 'No activity yet',
       noActivitySub: 'Your request history will appear here',
+      noActivityCta: 'Book a service now',
       rebook: 'Rebook',
     },
   };
@@ -200,22 +205,27 @@ export const BuyerActivity = ({ currentLanguage }: BuyerActivityProps) => {
     );
   }
 
+  if (isRequestsError && resolvedRequests.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className={cn('text-sm font-semibold text-destructive', isRTL ? 'font-ar-body' : 'font-body')}>
+          {isRTL ? 'تعذّر تحميل السجل. حاول مرة أخرى.' : 'Could not load your history. Please try again.'}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="min-h-app bg-background pb-32"
+      className="min-h-app bg-background pb-[calc(7rem+env(safe-area-inset-bottom,0px))]"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <div className="px-4 pt-safe">
-        <div className="flex items-center justify-between py-4">
-          <h2
-            className={cn(
-              'text-lg font-semibold text-foreground',
-              isRTL ? 'font-ar-heading' : 'font-heading',
-            )}
-          >
-            {t.past}
-          </h2>
-        </div>
+      <GradientHeader
+        title={t.past}
+        showBack
+        onBack={() => navigate(-1)}
+      />
+      <div className="px-4 pt-2">
 
         {resolvedRequests.length === 0 ? (
           <motion.div
@@ -242,6 +252,13 @@ export const BuyerActivity = ({ currentLanguage }: BuyerActivityProps) => {
             >
               {t.noActivitySub}
             </p>
+            <Button
+              className="mt-6 gap-2 rounded-2xl px-6"
+              onClick={() => navigate('/app/buyer/home')}
+            >
+              <Plus size={16} />
+              {t.noActivityCta}
+            </Button>
           </motion.div>
         ) : (
           <div className="space-y-3">
@@ -249,8 +266,8 @@ export const BuyerActivity = ({ currentLanguage }: BuyerActivityProps) => {
               <RequestSummaryCard
                 currentLanguage={currentLanguage}
                 time={formatDate(featured.scheduledFor || featured.created_at)}
-                lat={(featured as any).latitude}
-                lng={(featured as any).longitude}
+                lat={featured.latitude}
+                lng={featured.longitude}
                 location={getRequestLocation(featured)}
                 category={getCategoryInfo(featured.category).name}
                 categoryIcon={getCategoryInfo(featured.category).icon}
@@ -306,15 +323,19 @@ export const BuyerActivity = ({ currentLanguage }: BuyerActivityProps) => {
                   <div className="min-w-0 flex-1">
                     <p
                       className={cn(
-                        'truncate font-medium text-foreground',
+                        'truncate font-semibold text-foreground',
                         isRTL ? 'font-ar-body' : 'font-body',
                       )}
                     >
-                      {getRequestLocation(request)}
+                      {categoryInfo.name}
                     </p>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{formatDate(request.created_at)}</span>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <MapPin size={11} className="shrink-0" />
+                      <span className="truncate">{getRequestLocation(request)}</span>
                     </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground/70">
+                      {formatDate(request.created_at)}
+                    </p>
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2">

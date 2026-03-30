@@ -263,6 +263,9 @@ export function OnlineStatusBar({
                     {/* Online mode: toggle switch */}
                     {!isMissionMode ? (
                         <button
+                            role="switch"
+                            aria-checked={isOnline}
+                            aria-label={currentLanguage === 'ar' ? (isOnline ? 'إيقاف تشغيل الوضع المتاح' : 'تشغيل الوضع المتاح') : (isOnline ? 'Go offline' : 'Go online')}
                             onClick={handleToggle}
                             disabled={isAnimating}
                             className={cn(

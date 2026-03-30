@@ -59,7 +59,7 @@ export function SellerHomeOnline({
     };
 
     const handleContactBuyer = (jobId: string) => {
-        navigate(`/app/seller/messages/${jobId}`);
+        navigate(`/app/messages/thread?request=${jobId}`);
     };
 
     return (
@@ -100,7 +100,7 @@ export function SellerHomeOnline({
                                 id={job.id}
                                 serviceType={job.category}
                                 description={job.description}
-                                scheduledAt={job.preferred_start_date || job.created_at}
+                                scheduledAt={job.scheduled_for || job.created_at}
                                 location={job.location}
                                 lat={job.lat}
                                 lng={job.lng}
@@ -108,6 +108,8 @@ export function SellerHomeOnline({
                                 commitmentType="hard"
                                 onEnterFocusMode={() => handleEnterFocusMode(job.id)}
                                 onMessage={() => handleContactBuyer(job.id)}
+                                onReschedule={() => navigate(`/app/seller/job/${job.id}/reschedule`)}
+                                onCancel={() => navigate(`/app/seller/job/${job.id}/cancel`)}
                                 onClick={() => navigate(`/app/seller/job/${job.id}?type=request`)}
                             />
                         ))}

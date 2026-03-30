@@ -53,7 +53,7 @@ export const BuyerExplore = ({ currentLanguage }: BuyerExploreProps) => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const fromHome = location.state?.fromHome || false;
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<any>(null);
+  const [pendingAction, setPendingAction] = useState<Record<string, unknown> | null>(null);
   const [showCityModal, setShowCityModal] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
 
@@ -87,7 +87,7 @@ export const BuyerExplore = ({ currentLanguage }: BuyerExploreProps) => {
     enabled: !!user,
   });
 
-  const { data: vendors, isLoading } = useQuery({
+  const { data: vendors, isLoading, isError: isVendorsError } = useQuery({
     queryKey: ["vendors", selectedCategory],
     queryFn: async () => {
       let query = supabase
@@ -118,10 +118,11 @@ export const BuyerExplore = ({ currentLanguage }: BuyerExploreProps) => {
 
       const enrichedReviews = await attachReviewBuyerProfiles(supabase as any, allReviews || []);
 
+      type EnrichedReview = { seller_id: string; buyer_id: string; rating: number; review_text: string | null; created_at: string; buyer: Record<string, unknown> | null };
       // Group reviews by seller
-      const reviewsByVendor = new Map<string, any[]>();
+      const reviewsByVendor = new Map<string, EnrichedReview[]>();
       const reviewCountByVendor = new Map<string, number>();
-      enrichedReviews.forEach(review => {
+      (enrichedReviews as EnrichedReview[]).forEach(review => {
         reviewCountByVendor.set(review.seller_id, (reviewCountByVendor.get(review.seller_id) || 0) + 1);
         const existing = reviewsByVendor.get(review.seller_id) || [];
         if (existing.length < 3) { // Max 3 reviews per vendor
@@ -189,11 +190,11 @@ export const BuyerExplore = ({ currentLanguage }: BuyerExploreProps) => {
     saveMutation.mutate({ vendorId, isSaved: !!isSaved });
   };
 
-  const handleRequestBooking = (vendor: any) => {
+  const handleRequestBooking = (vendor: { id: string }) => {
     navigate(`/app/buyer/vendor/${vendor.id}`);
   };
 
-  const getTranslatedField = (vendor: any, field: string) => {
+  const getTranslatedField = (vendor: Record<string, unknown>, field: string) => {
     const langField = currentLanguage === "ar" ? `${field}_ar` : `${field}_en`;
     return vendor[langField] || vendor[field];
   };
@@ -336,6 +337,12 @@ export const BuyerExplore = ({ currentLanguage }: BuyerExploreProps) => {
               <Skeleton className="h-64 w-full rounded-3xl" />
               <Skeleton className="h-64 w-full rounded-3xl" />
             </>
+          ) : isVendorsError ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+              <p className={cn('text-sm font-semibold text-destructive', currentLanguage === 'ar' ? 'font-ar-body' : 'font-body')}>
+                {currentLanguage === 'ar' ? 'تعذّر تحميل مقدمي الخدمة. حاول مرة أخرى.' : 'Could not load providers. Please try again.'}
+              </p>
+            </div>
           ) : filteredVendors && filteredVendors.length > 0 ? (
             filteredVendors.map((vendor, index) => (
               <motion.div
@@ -446,25 +453,8 @@ export const BuyerExplore = ({ currentLanguage }: BuyerExploreProps) => {
               {/* Use My Location Option */}
               <button
                 onClick={() => {
-                  if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                      (position) => {
-                        // For now, default to Jeddah when location is detected
-                        // In production, you'd reverse geocode this
-                        const detectedCity = "Jeddah";
-                        setSelectedCity(detectedCity);
-                        localStorage.setItem('buyerPreferredCity', detectedCity);
-                        localStorage.setItem('buyerCityPreferenceSet', 'true');
-                        setShowCityModal(false);
-                        toast.success(currentLanguage === "ar" ? "تم تحديد الموقع" : "Location detected");
-                      },
-                      () => {
-                        toast.error(currentLanguage === "ar" ? "تعذر تحديد الموقع" : "Could not detect location");
-                      }
-                    );
-                  } else {
-                    toast.error(currentLanguage === "ar" ? "الموقع غير مدعوم" : "Location not supported");
-                  }
+                  setShowCityModal(false);
+                  setShowCityPicker(true);
                 }}
                 className="w-full flex items-center gap-4 p-4 rounded-2xl border border-border hover:border-primary/50 transition-all"
               >
@@ -473,10 +463,10 @@ export const BuyerExplore = ({ currentLanguage }: BuyerExploreProps) => {
                 </div>
                 <div className={`flex-1 text-${currentLanguage === "ar" ? "right" : "left"}`}>
                   <Heading3 lang={currentLanguage} className="text-base">
-                    {currentLanguage === "ar" ? "استخدم موقعي" : "Use My Location"}
+                    {currentLanguage === "ar" ? "اختر مدينتك" : "Select Your City"}
                   </Heading3>
                   <Caption lang={currentLanguage} className="text-muted-foreground">
-                    {currentLanguage === "ar" ? "اكتشف مدينتك تلقائياً" : "Automatically detect your city"}
+                    {currentLanguage === "ar" ? "اختر من قائمة المدن السعودية" : "Choose from Saudi cities"}
                   </Caption>
                 </div>
                 <ChevronRight className={`w-5 h-5 text-muted-foreground ${currentLanguage === "ar" ? "rotate-180" : ""}`} />

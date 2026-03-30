@@ -19,7 +19,7 @@ interface ScheduledJob {
     location?: string;
     lat?: number;
     lng?: number;
-    sellerPricing?: any;
+    sellerPricing?: unknown;
     commitment_type: 'soft' | 'hard';
 }
 
@@ -100,7 +100,7 @@ export function SellerHomeScheduled({
                         </div>
                         {scheduledJobs.length > 2 && (
                             <button
-                                onClick={() => navigate('/app/seller/calendar')}
+                                onClick={() => navigate('/app/seller/active-jobs')}
                                 className="text-xs text-primary font-semibold hover:text-primary/80 transition-colors"
                             >
                                 {t.moreScheduled}
@@ -131,15 +131,17 @@ export function SellerHomeScheduled({
                                         buyerName={job.buyer_name}
                                         buyerPhone={job.buyer_phone}
                                         commitmentType={job.commitment_type}
-                                        onEnterFocusMode={() => navigate(`/app/seller/job/${job.id}/focus?type=${job.type}`)}
-                                        onMessage={() => navigate(`/app/seller/messages/${job.id}`)}
+                                        onEnterFocusMode={() => navigate(`/app/seller/job/${job.id}`)}
+                                        onMessage={() => navigate(`/app/messages/thread?request=${job.id}`)}
+                                        onReschedule={() => navigate(`/app/seller/job/${job.id}/reschedule`)}
+                                        onCancel={() => navigate(`/app/seller/job/${job.id}/cancel`)}
                                         onEditPrice={onEditPrice}
                                         onCall={() => {
                                             if (job.buyer_phone) {
                                                 window.open(`tel:${job.buyer_phone}`);
                                             }
                                         }}
-                                        onClick={() => navigate(`/app/seller/job/${job.id}?type=${job.type}`)}
+                                        onClick={() => navigate(`/app/seller/job/${job.id}`)}
                                     />
                                 </motion.div>
                             ))}

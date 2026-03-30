@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { MouseEventHandler, ReactNode } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MapPin, Move, Navigation } from 'lucide-react';
@@ -15,10 +16,10 @@ export interface ServiceLocationMapProps {
   showInteractionHint?: boolean;
   className?: string;
   heightClassName?: string;
-  statusBadge?: React.ReactNode;
-  actionButton?: React.ReactNode;
-  footerOverlay?: React.ReactNode;
-  onMapClick?: React.MouseEventHandler<HTMLDivElement>;
+  statusBadge?: ReactNode;
+  actionButton?: ReactNode;
+  footerOverlay?: ReactNode;
+  onMapClick?: MouseEventHandler<HTMLDivElement>;
 }
 
 const markerAccent = {
@@ -40,6 +41,11 @@ const INTERACTIVE_CAMERA = {
   pitch: 22,
   bearing: -10,
 };
+
+const STATIC_MAP_STYLE_PATH = MAPBOX_STREET_STYLE.replace('mapbox://styles/', '');
+
+const buildStaticMapUrl = (lng: number, lat: number) =>
+  `https://api.mapbox.com/styles/v1/${STATIC_MAP_STYLE_PATH}/static/${lng},${lat},14,0/1200x600@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`;
 
 const buildMarkerElement = () => {
   const wrapper = document.createElement('div');
@@ -94,6 +100,45 @@ const buildMarkerElement = () => {
   return wrapper;
 };
 
+const StaticMarkerOverlay = () => (
+  <div className="pointer-events-none absolute inset-0">
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+      <div
+        className="absolute left-1/2 top-1/2 rounded-full"
+        style={{
+          width: '54px',
+          height: '54px',
+          background: markerAccent.brand.ring,
+          border: `1px solid ${markerAccent.brand.border}`,
+          transform: 'translate(-50%, -50%)',
+          animation: 'mm-static-map-pulse 2.2s ease-out infinite',
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 rounded-full"
+        style={{
+          width: '34px',
+          height: '34px',
+          background: 'rgba(209, 115, 40, 0.1)',
+          border: '1px solid rgba(167, 84, 34, 0.18)',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 rounded-full"
+        style={{
+          width: '18px',
+          height: '18px',
+          background: markerAccent.brand.pin,
+          border: '3px solid rgba(255,255,255,0.96)',
+          boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+    </div>
+  </div>
+);
+
 export const ServiceLocationMap = ({
   currentLanguage,
   lat,
@@ -112,161 +157,158 @@ export const ServiceLocationMap = ({
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const staticMarkerSourceIdRef = useRef(`mm-static-marker-source-${Math.random().toString(36).slice(2)}`);
-  const staticMarkerOuterLayerIdRef = useRef(`mm-static-marker-outer-${Math.random().toString(36).slice(2)}`);
-  const staticMarkerInnerLayerIdRef = useRef(`mm-static-marker-inner-${Math.random().toString(36).slice(2)}`);
-  const staticMarkerPinLayerIdRef = useRef(`mm-static-marker-pin-${Math.random().toString(36).slice(2)}`);
+  const [staticMapFailed, setStaticMapFailed] = useState(false);
   const hasCoordinates = typeof lat === 'number' && typeof lng === 'number';
 
-  const interactionHint = currentLanguage === 'ar' ? 'حرك وكبر الخريطة' : 'Drag and zoom the map';
+  const interactionHint = currentLanguage === 'ar' ? 'حرّك وكبّر الخريطة' : 'Drag and zoom the map';
   const pendingLabel = currentLanguage === 'ar' ? 'الموقع قيد التحديث' : 'Location pending';
   const directionsLabel = currentLanguage === 'ar' ? 'الاتجاهات' : 'Directions';
   const camera = interactive ? INTERACTIVE_CAMERA : STATIC_CAMERA;
-
   const shouldShowInteractionHint = showInteractionHint ?? interactive;
   const markerElement = useMemo(() => buildMarkerElement(), []);
-
-  const ensureStaticMarker = (map: mapboxgl.Map) => {
-    const sourceId = staticMarkerSourceIdRef.current;
-    const outerLayerId = staticMarkerOuterLayerIdRef.current;
-    const innerLayerId = staticMarkerInnerLayerIdRef.current;
-    const pinLayerId = staticMarkerPinLayerIdRef.current;
-
-    const sourceData = {
-      type: 'FeatureCollection' as const,
-      features: [
-        {
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point' as const,
-            coordinates: [lng, lat],
-          },
-          properties: {},
-        },
-      ],
-    };
-
-    const existingSource = map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined;
-    if (existingSource) {
-      existingSource.setData(sourceData);
-    } else {
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: sourceData,
-      });
-    }
-
-    if (!map.getLayer(outerLayerId)) {
-      map.addLayer({
-        id: outerLayerId,
-        type: 'circle',
-        source: sourceId,
-        paint: {
-          'circle-radius': 24,
-          'circle-color': markerAccent.brand.ring,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': markerAccent.brand.border,
-        },
-      });
-    }
-
-    if (!map.getLayer(innerLayerId)) {
-      map.addLayer({
-        id: innerLayerId,
-        type: 'circle',
-        source: sourceId,
-        paint: {
-          'circle-radius': 15,
-          'circle-color': 'rgba(209, 115, 40, 0.1)',
-          'circle-stroke-width': 1,
-          'circle-stroke-color': 'rgba(167, 84, 34, 0.18)',
-        },
-      });
-    }
-
-    if (!map.getLayer(pinLayerId)) {
-      map.addLayer({
-        id: pinLayerId,
-        type: 'circle',
-        source: sourceId,
-        paint: {
-          'circle-radius': 7,
-          'circle-color': markerAccent.brand.pin,
-          'circle-stroke-width': 3,
-          'circle-stroke-color': 'rgba(255,255,255,0.96)',
-        },
-      });
-    }
-  };
+  const staticMapUrl = useMemo(
+    () => (!interactive && hasCoordinates && MAPBOX_TOKEN ? buildStaticMapUrl(lng, lat) : null),
+    [hasCoordinates, interactive, lat, lng],
+  );
 
   useEffect(() => {
-    if (!hasCoordinates || !mapContainerRef.current || !MAPBOX_TOKEN) {
+    setStaticMapFailed(false);
+  }, [staticMapUrl]);
+
+  useEffect(() => {
+    if (!interactive || !hasCoordinates || !mapContainerRef.current || !MAPBOX_TOKEN || mapRef.current) {
       return;
     }
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    if (!mapRef.current) {
-      mapRef.current = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: MAPBOX_STREET_STYLE,
-        center: [lng, lat],
-        zoom: camera.zoom,
-        pitch: camera.pitch,
-        bearing: camera.bearing,
-        attributionControl: false,
-        cooperativeGestures: interactive,
-        interactive,
-      });
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: MAPBOX_STREET_STYLE,
+      center: [lng, lat],
+      zoom: camera.zoom,
+      pitch: camera.pitch,
+      bearing: camera.bearing,
+      attributionControl: false,
+      interactive: true,
+    });
 
-      if (interactive) {
-        mapRef.current.addControl(
-          new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: true }),
-          'bottom-right',
-        );
-        mapRef.current.addControl(new mapboxgl.ScaleControl({ unit: 'metric' }), 'bottom-left');
-      }
+    mapRef.current = map;
+    map.addControl(
+      new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: true }),
+      'bottom-right',
+    );
+    map.addControl(new mapboxgl.ScaleControl({ unit: 'metric' }), 'bottom-left');
 
-      mapRef.current.on('style.load', () => {
-        mapRef.current?.setFog({
-          color: 'rgb(255, 250, 245)',
-          'high-color': 'rgb(255, 243, 224)',
-          'space-color': 'rgb(255, 255, 255)',
-          'horizon-blend': 0.08,
-        });
+    const resizeTimeoutIds = new Set<number>();
+    const stabilizeMapLayout = () => {
+      map.resize();
+      [220, 700].forEach((delay) => {
+        const timeoutId = window.setTimeout(() => {
+          resizeTimeoutIds.delete(timeoutId);
+          map.resize();
+        }, delay);
+        resizeTimeoutIds.add(timeoutId);
+      });
+    };
 
-        if (!interactive && mapRef.current) {
-          ensureStaticMarker(mapRef.current);
-        }
+    map.on('load', stabilizeMapLayout);
+    map.on('style.load', () => {
+      map.setFog({
+        color: 'rgb(255, 250, 245)',
+        'high-color': 'rgb(255, 243, 224)',
+        'space-color': 'rgb(255, 255, 255)',
+        'horizon-blend': 0.08,
       });
-    } else {
-      mapRef.current.jumpTo({
-        center: [lng, lat],
-        zoom: camera.zoom,
-        pitch: camera.pitch,
-        bearing: camera.bearing,
-      });
+      stabilizeMapLayout();
+    });
+    map.once('idle', stabilizeMapLayout);
+
+    map.on('error', (event) => {
+      console.error('[ServiceLocationMap] Mapbox error:', event.error);
+    });
+
+    const frameId = window.requestAnimationFrame(stabilizeMapLayout);
+    const timeoutId = window.setTimeout(stabilizeMapLayout, 250);
+
+    return () => {
+      map.off('load', stabilizeMapLayout);
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutId);
+      resizeTimeoutIds.forEach((scheduledTimeoutId) => window.clearTimeout(scheduledTimeoutId));
+    };
+  }, [camera.bearing, camera.pitch, camera.zoom, hasCoordinates, interactive, lat, lng]);
+
+  useEffect(() => {
+    if (!interactive || !hasCoordinates || !mapRef.current) {
+      return;
     }
 
-    if (interactive) {
-      if (!markerRef.current) {
-        markerRef.current = new mapboxgl.Marker({ element: markerElement, anchor: 'center' })
-          .setLngLat([lng, lat])
-          .addTo(mapRef.current);
-      } else {
-        markerRef.current.setLngLat([lng, lat]);
-      }
-    } else if (mapRef.current.isStyleLoaded()) {
-      ensureStaticMarker(mapRef.current);
+    mapRef.current.jumpTo({
+      center: [lng, lat],
+      zoom: camera.zoom,
+      pitch: camera.pitch,
+      bearing: camera.bearing,
+    });
+
+    if (!markerRef.current) {
+      markerRef.current = new mapboxgl.Marker({ element: markerElement, anchor: 'center' })
+        .setLngLat([lng, lat])
+        .addTo(mapRef.current);
+    } else {
+      markerRef.current.setLngLat([lng, lat]);
+    }
+  }, [camera.bearing, camera.pitch, camera.zoom, hasCoordinates, interactive, lat, lng, markerElement]);
+
+  useEffect(() => {
+    if (interactive && hasCoordinates) {
+      return;
+    }
+
+    markerRef.current?.remove();
+    markerRef.current = null;
+    mapRef.current?.remove();
+    mapRef.current = null;
+  }, [hasCoordinates, interactive]);
+
+  useEffect(() => () => {
+    markerRef.current?.remove();
+    markerRef.current = null;
+    mapRef.current?.remove();
+    mapRef.current = null;
+  }, []);
+
+  const resizeMap = useCallback(() => {
+    mapRef.current?.resize();
+  }, []);
+
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!interactive || !container || !hasCoordinates) return;
+
+    const frameId = window.requestAnimationFrame(resizeMap);
+    const timeoutId = window.setTimeout(resizeMap, 250);
+    const lateTimeoutId = window.setTimeout(resizeMap, 700);
+    let observer: ResizeObserver | null = null;
+    const hasResizeObserver = typeof window !== 'undefined' && 'ResizeObserver' in window;
+
+    if (hasResizeObserver) {
+      observer = new ResizeObserver(resizeMap);
+      observer.observe(container);
+    } else {
+      window.addEventListener('resize', resizeMap);
     }
 
     return () => {
-      markerRef.current?.remove();
-      markerRef.current = null;
-      mapRef.current?.remove();
-      mapRef.current = null;
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutId);
+      window.clearTimeout(lateTimeoutId);
+      observer?.disconnect();
+      if (!hasResizeObserver) {
+        window.removeEventListener('resize', resizeMap);
+      }
     };
-  }, [camera.bearing, camera.pitch, camera.zoom, hasCoordinates, interactive, lat, lng, markerElement]);
+  }, [hasCoordinates, interactive, resizeMap]);
 
   return (
     <div
@@ -283,23 +325,35 @@ export const ServiceLocationMap = ({
             70% { transform: translate(-50%, -50%) scale(1.12); opacity: 0; }
             100% { transform: translate(-50%, -50%) scale(1.12); opacity: 0; }
           }
+          @keyframes mm-static-map-pulse {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
+            70% { transform: translate(-50%, -50%) scale(1.12); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1.12); opacity: 0; }
+          }
         `}
       </style>
 
       <div className={cn('relative w-full', heightClassName)}>
-        {hasCoordinates ? (
+        {interactive && hasCoordinates ? (
           <div
             ref={mapContainerRef}
-            className={cn(
-              'absolute inset-0',
-              interactive ? 'touch-pan-x touch-pan-y' : 'pointer-events-none',
-            )}
+            className="absolute inset-0 touch-none"
+          />
+        ) : hasCoordinates && staticMapUrl && !staticMapFailed ? (
+          <img
+            src={staticMapUrl}
+            alt={locationLabel || pendingLabel}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            onError={() => setStaticMapFailed(true)}
           />
         ) : (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(209,115,40,0.16),_transparent_55%),linear-gradient(180deg,rgba(255,247,237,0.95),rgba(255,255,255,0.98))]" />
         )}
 
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.0)_30%,rgba(255,255,255,0.6))]" />
+
+        {hasCoordinates && !interactive ? <StaticMarkerOverlay /> : null}
 
         <div className="absolute left-4 top-4 z-10 flex max-w-[65%] items-start">
           {statusBadge}
@@ -336,7 +390,7 @@ export const ServiceLocationMap = ({
         </div>
 
         {footerOverlay && (
-          <div className="pointer-events-none absolute inset-x-4 bottom-4 z-20 flex justify-center">
+          <div className="absolute inset-x-4 bottom-4 z-20 flex justify-center">
             {footerOverlay}
           </div>
         )}

@@ -19,15 +19,18 @@ class HapticFeedback {
     }
 
     private getStoredPreference(): boolean {
-        if (typeof localStorage === 'undefined') return true;
-        return localStorage.getItem('hapticFeedbackEnabled') !== 'false';
+        try {
+            return localStorage.getItem('mm_haptics_enabled') !== 'false' &&
+                   localStorage.getItem('hapticFeedbackEnabled') !== 'false';
+        } catch {
+            return true;
+        }
     }
 
     setEnabled(enabled: boolean): void {
         this.isEnabled = enabled;
-        if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('hapticFeedbackEnabled', String(enabled));
-        }
+        // Use preferences so the setting is durable on native
+        import('./preferences').then(({ setHapticsEnabled }) => setHapticsEnabled(enabled)).catch(() => undefined);
     }
 
     getEnabled(): boolean {
@@ -43,67 +46,54 @@ class HapticFeedback {
         }
     }
 
-    /**
-     * Light tap - for card/button touches
-     */
+    /** Light tap - card/button touch, minimal friction */
     light(): void {
-        this.vibrate(10);
+        this.vibrate(8);
     }
 
-    /**
-     * Medium tap - for button presses and selections
-     */
+    /** Medium tap - standard button press or selection */
     medium(): void {
-        this.vibrate(25);
+        this.vibrate(22);
     }
 
-    /**
-     * Heavy tap - for important actions
-     */
+    /** Heavy tap - significant action or confirmation */
     heavy(): void {
-        this.vibrate(50);
+        this.vibrate(45);
     }
 
-    /**
-     * Success pattern - for successful operations (job complete, quote accepted)
-     */
+    /** Success - rising pattern, positive outcome */
     success(): void {
-        this.vibrate([50, 50, 100]);
+        this.vibrate([40, 30, 80]);
     }
 
-    /**
-     * Error pattern - for errors and issues
-     */
+    /** Error - urgent repeating, alert */
     error(): void {
-        this.vibrate([100, 50, 100, 50, 100]);
+        this.vibrate([80, 40, 80, 40, 80]);
     }
 
-    /**
-     * Notification pattern - for new quotes, messages, etc.
-     */
+    /** Notification - three soft pulses, new activity */
     notification(): void {
-        this.vibrate([30, 30, 30]);
+        this.vibrate([20, 20, 20]);
     }
 
-    /**
-     * Selection pattern - for toggle switches, checkboxes
-     */
+    /** Selection - minimal single tick, toggle/checkbox */
     selection(): void {
-        this.vibrate(15);
+        this.vibrate(12);
     }
 
-    /**
-     * Warning pattern - for important warnings
-     */
+    /** Warning - symmetric pulse, caution */
     warning(): void {
-        this.vibrate([50, 100, 50]);
+        this.vibrate([40, 80, 40]);
     }
 
-    /**
-     * Celebration pattern - for big wins like job completion
-     */
+    /** Celebration - escalating joy pattern, big milestone */
     celebration(): void {
-        this.vibrate([50, 30, 100, 30, 150]);
+        this.vibrate([30, 20, 60, 20, 100, 20, 60]);
+    }
+
+    /** Impact - sharp physical sensation */
+    impact(): void {
+        this.vibrate(35);
     }
 }
 
@@ -112,6 +102,8 @@ export const haptics = new HapticFeedback();
 
 // Convenience hook for React components
 import { useCallback } from 'react';
+
+type NamedPattern = 'light' | 'medium' | 'heavy' | 'success' | 'error' | 'notification' | 'selection' | 'warning' | 'celebration' | 'impact';
 
 export const useHaptics = () => {
     const light = useCallback(() => haptics.light(), []);
@@ -123,6 +115,12 @@ export const useHaptics = () => {
     const selection = useCallback(() => haptics.selection(), []);
     const warning = useCallback(() => haptics.warning(), []);
     const celebration = useCallback(() => haptics.celebration(), []);
+    const impact = useCallback(() => haptics.impact(), []);
+
+    // Named vibrate — call as: await vibrate('light')
+    const vibrate = useCallback(async (pattern: NamedPattern) => {
+        haptics[pattern]();
+    }, []);
 
     return {
         light,
@@ -134,6 +132,8 @@ export const useHaptics = () => {
         selection,
         warning,
         celebration,
+        impact,
+        vibrate,
         setEnabled: haptics.setEnabled.bind(haptics),
         getEnabled: haptics.getEnabled.bind(haptics),
     };

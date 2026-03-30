@@ -116,6 +116,42 @@
       "createdAt": "2026-03-24T19:08:25.910Z",
       "model": "sonnet",
       "modelRoutedBy": "default"
+    },
+    "admin-audit": {
+      "agentId": "admin-audit",
+      "agentType": "researcher",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {},
+      "createdAt": "2026-03-30T11:27:00.634Z",
+      "domain": "maintmena",
+      "model": "sonnet",
+      "modelRoutedBy": "router"
+    },
+    "buyer-audit": {
+      "agentId": "buyer-audit",
+      "agentType": "researcher",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {},
+      "createdAt": "2026-03-30T11:27:00.646Z",
+      "domain": "maintmena",
+      "model": "sonnet",
+      "modelRoutedBy": "router"
+    },
+    "seller-audit": {
+      "agentId": "seller-audit",
+      "agentType": "researcher",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {},
+      "createdAt": "2026-03-30T11:27:00.657Z",
+      "domain": "maintmena",
+      "model": "sonnet",
+      "modelRoutedBy": "router"
     }
   },
   "version": "3.0.0"

@@ -45,6 +45,8 @@ export interface CanonicalRequestRow {
   longitude?: number | null;
   lat?: number | null;
   lng?: number | null;
+  location_lat?: number | null;
+  location_lng?: number | null;
   budget?: number | null;
   seller_pricing?: unknown;
   final_amount?: number | null;
@@ -99,6 +101,7 @@ export interface RequestActionAvailability {
 
 export type BuyerRequestPresentationStatus =
   | 'matching'
+  | 'no_seller_found'
   | 'accepted'
   | 'on_the_way'
   | 'arrived'
@@ -226,9 +229,10 @@ export const getCanonicalLifecycle = (
 
   if (rawStatus === 'cancelled') return 'cancelled';
   if (rawStatus === 'disputed') return 'disputed';
+  // closed/completed must be checked BEFORE buyer_marked_complete to prevent stale flag override
+  if (rawStatus === 'closed' || rawStatus === 'completed' || rawStatus === 'confirmed') return 'closed';
   if (row?.buyer_marked_complete || rawStatus === 'buyer_confirmed') return 'buyer_confirmed';
   if (hasSellerCompletionArtifacts(row)) return 'seller_marked_complete';
-  if (rawStatus === 'closed' || rawStatus === 'completed' || rawStatus === 'confirmed') return 'closed';
   if (rawStatus === 'in_progress') return 'in_progress';
   if (rawStatus === 'en_route' || rawStatus === 'arrived') return 'in_route';
   if (rawStatus === 'accepted') {
@@ -408,6 +412,7 @@ export const getBuyerRequestPresentationStatus = (
   if (!request) return 'matching';
 
   if (request.lifecycle === 'cancelled') return 'cancelled';
+  if (request.lifecycle === 'no_seller_found') return 'no_seller_found';
   if (request.lifecycle === 'dispatching' || request.lifecycle === 'submitted' || request.lifecycle === 'draft') {
     return 'matching';
   }
@@ -451,12 +456,12 @@ export const isReviewEligible = (request?: CanonicalRequest | null) =>
   request?.reviewState === 'pending';
 
 export const getRequestCoordinates = (
-  request?: Pick<CanonicalRequestRow, 'latitude' | 'longitude' | 'lat' | 'lng'> | null,
+  request?: Pick<CanonicalRequestRow, 'latitude' | 'longitude' | 'lat' | 'lng' | 'location_lat' | 'location_lng'> | null,
 ) => {
   if (!request) return null;
 
-  const latitude = request.latitude ?? request.lat;
-  const longitude = request.longitude ?? request.lng;
+  const latitude = request.latitude ?? request.lat ?? request.location_lat;
+  const longitude = request.longitude ?? request.lng ?? request.location_lng;
 
   if (!isFiniteCoordinate(latitude) || !isFiniteCoordinate(longitude)) {
     return null;
@@ -466,7 +471,7 @@ export const getRequestCoordinates = (
 };
 
 export const hasRequestCoordinates = (
-  request?: Pick<CanonicalRequestRow, 'latitude' | 'longitude' | 'lat' | 'lng'> | null,
+  request?: Pick<CanonicalRequestRow, 'latitude' | 'longitude' | 'lat' | 'lng' | 'location_lat' | 'location_lng'> | null,
 ) => Boolean(getRequestCoordinates(request));
 
 export const getRequestLocationLabel = (

@@ -1,15 +1,32 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   isSupabaseRelationKnownUnavailable,
   isMissingSupabaseRelationError,
   rememberMissingSupabaseRelation,
 } from './supabaseSchema';
 
+interface ReviewRow {
+  id: string;
+  buyer_id: string;
+  seller_id: string;
+  request_id: string | null;
+  rating: number;
+  review_text: string | null;
+  created_at: string;
+}
+
+interface BuyerProfileRow {
+  id: string;
+  full_name: string | null;
+  company_name: string | null;
+}
+
 type Language = 'en' | 'ar';
 
 interface FindExistingSellerReviewArgs {
-  client: any;
+  client: SupabaseClient;
   buyerId: string;
   sellerId: string;
   requestId?: string | null;
@@ -17,7 +34,7 @@ interface FindExistingSellerReviewArgs {
 }
 
 interface SubmitSellerReviewArgs {
-  client: any;
+  client: SupabaseClient;
   buyerId: string;
   sellerId: string;
   rating: number;
@@ -130,7 +147,7 @@ export const getRelativeReviewDate = (value: string, language: Language) => {
   }
 };
 
-export const attachReviewBuyerProfiles = async (client: any, reviews: any[]) => {
+export const attachReviewBuyerProfiles = async (client: SupabaseClient, reviews: ReviewRow[]) => {
   const buyerIds = Array.from(new Set(reviews.map((review) => review.buyer_id).filter(Boolean)));
 
   if (!buyerIds.length) {
@@ -146,7 +163,7 @@ export const attachReviewBuyerProfiles = async (client: any, reviews: any[]) => 
     throw error;
   }
 
-  const buyersMap = new Map((buyers ?? []).map((buyer: any) => [buyer.id, buyer]));
+  const buyersMap = new Map((buyers ?? []).map((buyer: BuyerProfileRow) => [buyer.id, buyer]));
 
   return reviews.map((review) => ({
     ...review,
@@ -154,7 +171,7 @@ export const attachReviewBuyerProfiles = async (client: any, reviews: any[]) => 
   }));
 };
 
-export const isSellerReviewsUnavailableError = (error: any) =>
+export const isSellerReviewsUnavailableError = (error: unknown) =>
   isMissingSupabaseRelationError(error, 'seller_reviews');
 
 export const findExistingSellerReview = async ({

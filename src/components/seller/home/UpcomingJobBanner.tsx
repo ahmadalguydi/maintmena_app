@@ -207,7 +207,7 @@ export function UpcomingJobBanner({
             border: 'border-red-400/70 dark:border-red-500/50',
             ring: 'ring-2 ring-red-400/20',
             headerBg: 'from-red-500/8 via-primary/5 to-background',
-            countdownBg: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
+            countdownBg: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-200',
             alertBg: 'bg-red-50 dark:bg-red-950/30 border border-red-200/50 dark:border-red-800/30',
             alertText: 'text-red-700 dark:text-red-300',
             buttonBg: 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-red-500/25',
@@ -216,7 +216,7 @@ export function UpcomingJobBanner({
             border: 'border-amber-400/60 dark:border-amber-500/40',
             ring: 'ring-1 ring-amber-400/15',
             headerBg: 'from-amber-500/8 via-primary/5 to-background',
-            countdownBg: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+            countdownBg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200',
             alertBg: 'bg-amber-50 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-800/30',
             alertText: 'text-amber-700 dark:text-amber-300',
             buttonBg: 'bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 shadow-amber-500/25',
@@ -287,7 +287,7 @@ export function UpcomingJobBanner({
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <img src={staticMapUrl} alt="Location" className="w-full h-full object-cover" />
+                            <img src={staticMapUrl} alt="Location" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                             {/* Location pin overlay */}
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="absolute w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/25 animate-pulse" />
@@ -394,7 +394,7 @@ export function UpcomingJobBanner({
                             <span className={cn(
                                 "shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold",
                                 commitmentType === 'hard'
-                                    ? "bg-green-100/80 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                                    ? "bg-green-100/80 text-green-700 dark:bg-green-500/15 dark:text-green-200"
                                     : "bg-primary/10 text-primary"
                             )}>
                                 {commitmentType === 'hard' ? `✓ ${t.confirmed}` : t.scheduled}
@@ -524,9 +524,9 @@ export function UpcomingJobBanner({
                             {buyerPhone && onCall && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onCall(); }}
-                                    className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                                    className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-500/15 flex items-center justify-center hover:bg-green-200 dark:hover:bg-green-500/25 transition-colors"
                                 >
-                                    <Phone className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                                    <Phone className="h-3.5 w-3.5 text-green-600 dark:text-green-200" />
                                 </button>
                             )}
                         </div>
@@ -585,7 +585,7 @@ export function UpcomingJobBanner({
                                 </div>
                             )}
                             <span className={cn(
-                                "px-2.5 py-1 rounded-full text-[11px] font-medium bg-green-100/60 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                "px-2.5 py-1 rounded-full text-[11px] font-medium bg-green-100/60 dark:bg-green-500/15 text-green-700 dark:text-green-200"
                             )}>
                                 ✓ {t.confirmed}
                             </span>

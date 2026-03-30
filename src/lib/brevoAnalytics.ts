@@ -2,12 +2,12 @@
 
 declare global {
   interface Window {
-    Brevo?: any[];
+    Brevo?: unknown[];
   }
 }
 
 // Helper to safely push to Brevo
-const brevoTrack = (command: string, ...args: any[]) => {
+const brevoTrack = (command: string, ...args: unknown[]) => {
   if (typeof window !== 'undefined' && window.Brevo) {
     window.Brevo.push([command, ...args]);
   }
@@ -21,7 +21,7 @@ export const identifyUser = (email: string, attributes?: {
   companyName?: string;
   subscriptionTier?: string;
   language?: 'en' | 'ar';
-  [key: string]: any;
+  [key: string]: unknown;
 }) => {
   brevoTrack('identify', email, attributes);
 };
@@ -32,7 +32,7 @@ export const trackPageView = () => {
 };
 
 // Track custom events
-export const trackBrevoEvent = (eventName: string, properties?: Record<string, any>) => {
+export const trackBrevoEvent = (eventName: string, properties?: Record<string, unknown>) => {
   brevoTrack('track_event', eventName, properties);
 };
 

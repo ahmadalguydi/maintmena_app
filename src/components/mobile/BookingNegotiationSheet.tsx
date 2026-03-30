@@ -152,8 +152,6 @@ export const BookingNegotiationSheet = ({
         previous_time_preference: isEditMode && existingResponse ? existingResponse.time_preference : undefined,
       };
 
-      console.log('Saving seller response:', sellerResponse);
-
       // Update booking with seller's response
       const { error } = await supabase
         .from('booking_requests')

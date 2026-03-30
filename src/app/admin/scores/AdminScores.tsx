@@ -36,15 +36,69 @@ export const AdminScores = ({ currentLanguage }: AdminScoresProps) => {
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
-                .eq('user_type', 'seller')
-                .order(sortBy === 'rating' ? 'seller_rating' : sortBy === 'reviews' ? 'verified_reviews_count' : 'completed_projects', { ascending: false })
-                .limit(50);
+                .eq('user_type', 'seller');
 
             if (error) {
                 console.error('Error fetching sellers:', error);
                 return [];
             }
-            return data || [];
+            
+            const sellerIds = (data || []).map(s => s.id);
+            let jobCounts: Record<string, { completed: number; total: number }> = {};
+            let reviewData: Record<string, { count: number; avg: number }> = {};
+
+            if (sellerIds.length > 0) {
+                try {
+                    const { data: jobs } = await supabase
+                        .from('maintenance_requests')
+                        .select('assigned_seller_id, status')
+                        .in('assigned_seller_id', sellerIds);
+
+                    for (const job of jobs || []) {
+                        if (!job.assigned_seller_id) continue;
+                        if (!jobCounts[job.assigned_seller_id]) {
+                            jobCounts[job.assigned_seller_id] = { completed: 0, total: 0 };
+                        }
+                        jobCounts[job.assigned_seller_id].total++;
+                        if (job.status === 'completed' || job.status === 'closed') {
+                            jobCounts[job.assigned_seller_id].completed++;
+                        }
+                    }
+                } catch { /* ok */ }
+                
+                try {
+                    const { data: reviews } = await supabase
+                        .from('seller_reviews')
+                        .select('seller_id, rating')
+                        .in('seller_id', sellerIds);
+
+                    for (const review of reviews || []) {
+                        if (!review.seller_id) continue;
+                        if (!reviewData[review.seller_id]) {
+                            reviewData[review.seller_id] = { count: 0, avg: 0 };
+                        }
+                        reviewData[review.seller_id].count++;
+                        // Running average
+                        const rd = reviewData[review.seller_id];
+                        rd.avg = ((rd.avg * (rd.count - 1)) + review.rating) / rd.count;
+                    }
+                } catch { /* ok */ }
+            }
+
+            const processedSellers = (data || []).map(seller => ({
+                ...seller,
+                seller_rating: reviewData[seller.id]?.avg || 0,
+                verified_reviews_count: reviewData[seller.id]?.count || 0,
+                completed_projects: jobCounts[seller.id]?.completed || 0,
+            }));
+
+            return processedSellers
+                .sort((a, b) => {
+                    if (sortBy === 'rating') return (b.seller_rating || 0) - (a.seller_rating || 0);
+                    if (sortBy === 'reviews') return (b.verified_reviews_count || 0) - (a.verified_reviews_count || 0);
+                    return (b.completed_projects || 0) - (a.completed_projects || 0);
+                })
+                .slice(0, 50);
         },
     });
 
@@ -152,7 +206,7 @@ export const AdminScores = ({ currentLanguage }: AdminScoresProps) => {
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <Avatar className="w-12 h-12">
-                                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${seller.avatar_seed || seller.id}`} />
+                                            <AvatarImage src={(seller as any).avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${seller.id}`} />
                                             <AvatarFallback>
                                                 {seller.full_name?.charAt(0) || 'S'}
                                             </AvatarFallback>
@@ -184,7 +238,7 @@ export const AdminScores = ({ currentLanguage }: AdminScoresProps) => {
                                             {seller.completed_projects || 0} {t.jobs}
                                         </Badge>
                                         <Caption className="text-muted-foreground block">
-                                            {seller.response_time_hours || 0}h {t.responseRate}
+                                            {(seller as any).response_time_hours || 0}h {t.responseRate}
                                         </Caption>
                                     </div>
 

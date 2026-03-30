@@ -1,3 +1,4 @@
+import React from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from "sonner";
@@ -53,7 +54,7 @@ const TimelineStep = ({
     isLast,
     currentLanguage
 }: {
-    icon: any;
+    icon: React.ComponentType<{ size?: number }>;
     label: string;
     isActive: boolean;
     isCompleted: boolean;
@@ -124,18 +125,18 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
             // Security: verify the viewing seller is the assigned seller
             const { data: requestData } = await (supabase as any)
                 .from('maintenance_requests')
-                .select('id, status, description, location, city, latitude, longitude, budget, estimated_budget_max, preferred_start_date, preferred_time_slot, time_preference, time_slot, service_category, category, project_duration_days, buyer_id, assigned_seller_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved, job_completion_code, final_amount, seller_pricing, seller_completion_date, buyer_completion_date, seller_on_way_at, work_started_at, before_photos, completion_photos')
+                .select('id, status, description, location, city, latitude, longitude, budget, estimated_budget_max, preferred_start_date, preferred_time_slot, time_preference, time_slot, service_category, category, project_duration_days, buyer_id, assigned_seller_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved, final_amount, seller_pricing, seller_completion_date, buyer_completion_date, seller_on_way_at, work_started_at, before_photos, completion_photos')
                 .eq('id', id)
                 .eq('assigned_seller_id', user.id)
                 .maybeSingle();
 
 
             if (requestData) {
-                let buyerProfile: any = null;
+                let buyerProfile: { id: string; full_name: string | null; company_name: string | null; avatar_url: string | null; phone: string | null } | null = null;
                 if ((requestData as any).buyer_id) {
                     const { data: buyerData } = await (supabase as any)
                         .from('profiles')
-                        .select('id, full_name, company_name, avatar_seed, phone')
+                        .select('id, full_name, company_name, avatar_url, phone')
                         .eq('id', (requestData as any).buyer_id)
                         .maybeSingle();
                     buyerProfile = buyerData;
@@ -236,11 +237,11 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     const getProgressStep = () => {
         if (!canonicalJob) return 0;
         const timeline = getRequestTimeline(canonicalJob);
-        const activeIndex = timeline.findIndex((step) => step.isActive);
+        const activeIndex = timeline.findIndex((step) => step.status === 'current');
         if (activeIndex >= 0) return activeIndex + 1;
 
         const completedIndex = timeline.reduce((lastIndex, step, index) => (
-            step.isCompleted ? index : lastIndex
+            step.status === 'completed' ? index : lastIndex
         ), -1);
         return completedIndex >= 0 ? completedIndex + 1 : 1;
     };
@@ -294,7 +295,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     };
 
     const getStartDate = () => {
-        return canonicalJob.scheduledFor;
+        return canonicalJob?.scheduledFor ?? null;
     };
 
     const getDuration = () => {
@@ -346,15 +347,24 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                     const d = R * c; // in metres
 
                     if (d > 200) { // 200m radius
-                        toast.error(`You are ${Math.round(d)}m away. You must be within 200m to start the job.`);
+                        toast.error(
+                            currentLanguage === 'ar'
+                                ? `أنت على بُعد ${Math.round(d)} م من الموقع. يجب أن تكون ضمن 200 م لبدء العمل.`
+                                : `You are ${Math.round(d)}m from the job site. You must be within 200m to begin.`
+                        );
                         resolve(false);
                     } else {
                         resolve(true);
                     }
                 },
                 () => {
-                    toast.error('Could not verify getting location. Assuming onsite (Dev Mode).');
-                    resolve(true); // Allow in dev/error
+                    // Location permission denied or unavailable — allow but inform
+                    toast.info(
+                        currentLanguage === 'ar'
+                            ? 'تعذّر التحقق من موقعك — تأكد أنك في الموقع قبل البدء'
+                            : 'Location unavailable — please ensure you are on-site before starting'
+                    );
+                    resolve(true);
                 }
             );
         });
@@ -363,9 +373,9 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     const handleStatusUpdate = async (newStatus: string) => {
         // GEOFENCING ENFORCEMENT
         if (newStatus === 'in_progress') {
-            const req = job as any;
+            const req = job as Record<string, unknown>;
             if (req.latitude && req.longitude) {
-                const isOnsite = await checkLocation(req.latitude, req.longitude);
+                const isOnsite = await checkLocation(req.latitude as number, req.longitude as number);
                 if (!isOnsite) return;
             }
         }
@@ -384,12 +394,12 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
             queryClient.invalidateQueries({ queryKey: ["seller-active-jobs"] });
             queryClient.invalidateQueries({ queryKey: ["seller-active-job"] });
             queryClient.invalidateQueries({ queryKey: ["seller-scheduled-jobs"] });
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Failed to update status');
         }
     };
     const updateStatusMutation = useMutation({
-        mutationFn: async (updateData: any) => {
+        mutationFn: async (updateData: Record<string, unknown>) => {
             const { error } = await (supabase as any).from('maintenance_requests').update(updateData).eq('id', id);
             if (error) throw error;
         },
@@ -425,9 +435,9 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     };
 
     const handleSellerPhotoProofComplete = async (photos: string[]) => {
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
 
-        const updateData: any = {
+        const updateData = {
             seller_marked_complete: true,
             seller_completion_date: new Date().toISOString(),
             completion_photos: photos,
@@ -457,24 +467,18 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     const handleCodeSubmit = async (code: string) => {
         setIsSubmittingCode(true);
         try {
-            const storedCode = (job as any).job_completion_code as string | null | undefined;
-            if (!storedCode || storedCode !== code) {
-                toast.error(currentLanguage === 'ar' ? "الرمز غير صحيح" : "Incorrect code");
-                setIsSubmittingCode(false);
-                return;
-            }
-
-            const { error } = await (supabase as any)
-                .from('maintenance_requests')
-                .update({
-                    buyer_marked_complete: true,
-                    buyer_completion_date: new Date().toISOString(),
-                    status: 'completed'
-                })
-                .eq('id', id);
+            const { data: verified, error } = await supabase
+                .rpc('verify_job_completion_code', {
+                    p_request_id: id,
+                    p_code: code,
+                });
 
             if (error) throw error;
 
+            if (!verified) {
+                toast.error(currentLanguage === 'ar' ? "الرمز غير صحيح" : "Incorrect code");
+                return;
+            }
 
             toast.success(currentLanguage === 'ar' ? "تم تأكيد إنجاز العمل!" : "Job completion confirmed!");
             setShowCompletionCodeModal(false);
@@ -483,8 +487,8 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
             queryClient.invalidateQueries({ queryKey: ["seller-active-jobs"] });
             queryClient.invalidateQueries({ queryKey: ["seller-active-job"] });
             queryClient.invalidateQueries({ queryKey: ["seller-scheduled-jobs"] });
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Failed to submit code');
         } finally {
             setIsSubmittingCode(false);
         }
@@ -492,7 +496,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
 
     // Helper to check conditions
     const isWaitingForBuyer = canonicalJob?.completionState === 'seller_marked_complete';
-    const isBuyerPriceApproved = canonicalJob?.pricingState === 'buyer_confirmed';
+    const isBuyerPriceApproved = canonicalJob?.pricingState === 'approved';
 
     if (isLoading) {
         return (
@@ -507,14 +511,18 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
         );
     }
 
-    if (!job) {
+    if (!isLoading && job === null) {
         return (
             <div className="min-h-screen bg-background pb-safe" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
                 <div className="h-[60vh] flex items-center justify-center">
                     <EmptyState
                         icon={Briefcase}
                         title={t.notFound}
-                        description=""
+                        description={
+                            currentLanguage === 'ar'
+                                ? 'لم يعد هذا الطلب مسنداً إليك'
+                                : 'This job is no longer assigned to you'
+                        }
                         actionLabel={t.back}
                         onAction={() => navigate('/app/seller/home')}
                     />
@@ -538,7 +546,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
         );
     }
 
-    const buyerProfile = job.profiles as any;
+    const buyerProfile = job.profiles as { id: string; full_name: string | null; company_name: string | null; avatar_url: string | null; phone: string | null } | null;
     const photos = (job as any).before_photos || (job as any).photos || [];
     const completionPhotos = (job as any).completion_photos || [];
     const allPhotos = [...(Array.isArray(photos) ? photos : []), ...(Array.isArray(completionPhotos) ? completionPhotos : [])];
@@ -611,7 +619,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                         className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/40 rounded-3xl p-5 border border-emerald-200 dark:border-emerald-900/40 text-center space-y-2"
                     >
                         <div className="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center mx-auto mb-2 shadow-lg shadow-emerald-500/30">
-                            <Award size={28} className="text-white" />
+                            <Award size={28 as number} className="text-white" />
                         </div>
                         <Heading3 lang={currentLanguage} className="text-emerald-800 dark:text-emerald-300">
                             {currentLanguage === 'ar' ? 'تم إنجاز العمل بنجاح!' : 'Job Completed!'}
@@ -685,7 +693,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                                 const startDate = getStartDate();
                                 if (!startDate) return currentLanguage === 'ar' ? 'مرن' : 'Flexible';
                                 const date = new Date(startDate);
-                                const sellerProposal = (job as any)?.seller_counter_proposal as any;
+                                const sellerProposal = ((job as Record<string, unknown>)?.seller_counter_proposal) as Record<string, string> | null | undefined;
                                 // Check multiple field names for time preference
                                 const timeSlot = sellerProposal?.time_preference || sellerProposal?.time_slot ||
                                     (job as any)?.time_preference || (job as any)?.time_slot ||
@@ -776,7 +784,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                     <SoftCard className="p-4 mb-3">
                         <div className={cn("flex items-start gap-3", currentLanguage === 'ar' ? 'flex-row-reverse' : '')}>
                             <AvatarBadge
-                                src={(sellerProfile as any)?.profile_image_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id}`}
+                                src={(sellerProfile as Record<string, unknown>)?.profile_image_url as string | undefined || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id}`}
                                 fallback={(sellerProfile?.company_name || sellerProfile?.full_name || "S")[0]}
                                 size="md"
                                 className="border border-border/50 rounded-full"
@@ -786,7 +794,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                                     <Heading3 lang={currentLanguage} className="leading-tight text-base">
                                         {sellerProfile?.company_name || sellerProfile?.full_name || (currentLanguage === 'ar' ? 'أنت' : 'You')}
                                     </Heading3>
-                                    {(sellerProfile as any)?.is_seller_verified && (
+                                    {(sellerProfile as Record<string, unknown>)?.is_seller_verified && (
                                         <BadgeCheck className="h-5 w-5 text-primary fill-primary/20 flex-shrink-0" />
                                     )}
                                 </div>
@@ -794,16 +802,16 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                                     {t.serviceProvider}
                                 </BodySmall>
                                 <div className={cn("flex items-center gap-3 flex-wrap", currentLanguage === 'ar' ? 'flex-row-reverse justify-end' : '')}>
-                                    {(sellerProfile?.seller_rating || 0) > 0 && (
+                                    {((sellerProfile as any)?.seller_rating || 0) > 0 && (
                                         <div className="flex items-center gap-1">
                                             <Star size={14} className="text-amber-500 fill-amber-500" />
-                                            <span className="text-sm font-semibold">{sellerProfile?.seller_rating?.toFixed(1)}</span>
+                                            <span className="text-sm font-semibold">{(sellerProfile as any)?.seller_rating?.toFixed(1)}</span>
                                         </div>
                                     )}
-                                    {(sellerProfile?.completed_projects || 0) > 0 && (
+                                    {((sellerProfile as any)?.completed_projects || 0) > 0 && (
                                         <div className="flex items-center gap-1 text-muted-foreground">
                                             <Briefcase size={14} />
-                                            <Caption lang={currentLanguage}>{sellerProfile?.completed_projects} {t.jobs}</Caption>
+                                            <Caption lang={currentLanguage}>{(sellerProfile as any)?.completed_projects} {t.jobs}</Caption>
                                         </div>
                                     )}
                                 </div>
@@ -815,7 +823,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                     <SoftCard className="p-4">
                         <div className={cn("flex items-center gap-3", currentLanguage === 'ar' ? 'flex-row-reverse' : '')}>
                             <AvatarBadge
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${buyerProfile?.avatar_seed || buyerProfile?.id}`}
+                                src={buyerProfile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${buyerProfile?.id}`}
                                 fallback={(buyerProfile?.company_name?.[0] || buyerProfile?.full_name?.[0] || (currentLanguage === 'ar' ? 'ع' : 'C')).toUpperCase()}
                                 size="md"
                                 className="border border-border/50 rounded-full bg-muted"
@@ -891,7 +899,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                     >
                         <div className="flex items-center gap-2 mb-3">
                             <FileText size={18} className="text-primary" />
-                            <BodySmall lang={currentLanguage} className="font-semibold">{(t as any).pricingSummary || 'Pricing Summary'}</BodySmall>
+                            <BodySmall lang={currentLanguage} className="font-semibold">{(t as Record<string, string>).pricingSummary || 'Pricing Summary'}</BodySmall>
                         </div>
                         <SoftCard className="p-4">
                             <div className="space-y-3">

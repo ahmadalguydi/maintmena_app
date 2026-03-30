@@ -1,10 +1,10 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Clock, DollarSign, ArrowUpRight, Gift, Shield, ChevronLeft, Briefcase } from 'lucide-react';
+import { TrendingUp, DollarSign, ArrowUpRight, Gift, Shield, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useSellerEarnings } from '@/hooks/useSellerEarnings';
 import { getAllCategories } from '@/lib/serviceCategories';
+import { GradientHeader } from '@/components/mobile/GradientHeader';
 
 interface SellerEarningsProps {
     currentLanguage: 'en' | 'ar';
@@ -69,27 +69,10 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
         return found?.icon ?? '🔧';
     };
 
-    // Month comparison bar chart — heights are percentage of the larger value
-    const maxMonthly = Math.max(earnings.thisMonth, earnings.lastMonth, 1);
-    const thisMonthPct = Math.round((earnings.thisMonth / maxMonthly) * 100);
-    const lastMonthPct = Math.round((earnings.lastMonth / maxMonthly) * 100);
-
     return (
         <div className="min-h-screen bg-background pb-32" dir={isRTL ? 'rtl' : 'ltr'}>
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border/30">
-                <div className="flex items-center gap-3 p-4">
-                    <button onClick={() => navigate(-1)} className="p-2">
-                        <ChevronLeft size={24} className={isRTL ? 'rotate-180' : ''} />
-                    </button>
-                    <h1 className={cn(
-                        "text-xl font-bold",
-                        isRTL ? "font-ar-heading" : "font-heading"
-                    )}>
-                        {t.title}
-                    </h1>
-                </div>
-            </div>
+            <GradientHeader title={t.title} showBack onBack={() => navigate(-1)} />
 
             <div className="p-4 space-y-5">
                 {/* Earnings Summary Card */}
@@ -139,40 +122,72 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
                                 </div>
                             </div>
 
-                            {/* Month comparison bar chart */}
+                            {/* Month comparison line graph */}
                             <div className="bg-white/10 rounded-2xl p-3 col-span-2">
-                                <div className={cn("text-xs opacity-70 mb-3", isRTL && "font-ar-body")}>
-                                    {t.thisMonth} vs {t.lastMonth}
-                                </div>
-                                <div className="flex items-end gap-4 h-14">
-                                    {/* Last month bar */}
-                                    <div className="flex-1 flex flex-col items-center gap-1">
-                                        <div className="w-full flex items-end justify-center" style={{ height: '40px' }}>
-                                            <div
-                                                className="w-full rounded-t-lg bg-white/30 transition-all duration-700"
-                                                style={{ height: isLoading ? '0%' : `${lastMonthPct}%` }}
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className={cn("text-xs opacity-70", isRTL && "font-ar-body")}>
+                                        {t.thisMonth} vs {t.lastMonth}
+                                    </span>
+                                    {!isLoading && earnings.lastMonth > 0 && (
+                                        <span className={cn(
+                                            "text-[11px] font-bold flex items-center gap-0.5",
+                                            earnings.thisMonth >= earnings.lastMonth ? "text-emerald-300" : "text-red-300"
+                                        )}>
+                                            <ArrowUpRight
+                                                size={12}
+                                                className={cn("shrink-0", earnings.thisMonth < earnings.lastMonth && "rotate-90")}
                                             />
-                                        </div>
-                                        <span className={cn("text-xs opacity-70 truncate w-full text-center", isRTL && "font-ar-body")}>
-                                            {t.lastMonth}
+                                            {Math.round(Math.abs(((earnings.thisMonth - earnings.lastMonth) / earnings.lastMonth) * 100))}%
                                         </span>
-                                    </div>
-                                    {/* This month bar */}
-                                    <div className="flex-1 flex flex-col items-center gap-1">
-                                        <div className="w-full flex items-end justify-center" style={{ height: '40px' }}>
-                                            <div
-                                                className="w-full rounded-t-lg bg-white transition-all duration-700"
-                                                style={{ height: isLoading ? '0%' : `${thisMonthPct}%` }}
-                                            />
-                                        </div>
-                                        <span className={cn("text-xs opacity-70 truncate w-full text-center", isRTL && "font-ar-body")}>
-                                            {t.thisMonth}
-                                        </span>
-                                    </div>
+                                    )}
                                 </div>
-                                <div className="flex justify-between mt-1 text-xs font-semibold opacity-90">
-                                    <span>SAR {isLoading ? '...' : earnings.lastMonth.toLocaleString()}</span>
-                                    <span>SAR {isLoading ? '...' : earnings.thisMonth.toLocaleString()}</span>
+
+                                {/* SVG line graph */}
+                                {isLoading ? (
+                                    <div className="h-14 w-full animate-pulse rounded bg-white/10" />
+                                ) : (
+                                    <svg
+                                        viewBox="0 0 200 56"
+                                        preserveAspectRatio="none"
+                                        className="w-full h-14"
+                                    >
+                                        <defs>
+                                            <linearGradient id="earningsAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="rgba(255,255,255,0.30)" />
+                                                <stop offset="100%" stopColor="rgba(255,255,255,0.00)" />
+                                            </linearGradient>
+                                        </defs>
+                                        {(() => {
+                                            const padV = 6;
+                                            const h = 56 - padV * 2;
+                                            const max = Math.max(earnings.thisMonth, earnings.lastMonth, 1);
+                                            const x1 = 16, x2 = 184;
+                                            const y1 = padV + h - (earnings.lastMonth / max) * h;
+                                            const y2 = padV + h - (earnings.thisMonth / max) * h;
+                                            const bottom = 56 - padV + 4;
+                                            return (
+                                                <>
+                                                    <path
+                                                        d={`M ${x1},${y1} L ${x2},${y2} L ${x2},${bottom} L ${x1},${bottom} Z`}
+                                                        fill="url(#earningsAreaGrad)"
+                                                    />
+                                                    <line
+                                                        x1={x1} y1={y1} x2={x2} y2={y2}
+                                                        stroke="rgba(255,255,255,0.85)"
+                                                        strokeWidth="2.5"
+                                                        strokeLinecap="round"
+                                                    />
+                                                    <circle cx={x1} cy={y1} r="3.5" fill="rgba(255,255,255,0.55)" />
+                                                    <circle cx={x2} cy={y2} r="5" fill="white" />
+                                                </>
+                                            );
+                                        })()}
+                                    </svg>
+                                )}
+
+                                <div className={cn("flex justify-between mt-1 text-xs font-semibold opacity-90", isRTL && "flex-row-reverse")}>
+                                    <span className="opacity-60">{t.lastMonth}: SAR {isLoading ? '...' : earnings.lastMonth.toLocaleString()}</span>
+                                    <span>{t.thisMonth}: SAR {isLoading ? '...' : earnings.thisMonth.toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>

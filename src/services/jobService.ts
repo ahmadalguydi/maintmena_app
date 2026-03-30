@@ -1,7 +1,57 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CanonicalRequest, CanonicalRequestRow } from '@/lib/maintenanceRequest';
 import { toCanonicalRequest } from '@/lib/maintenanceRequest';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
+
+// Untyped Supabase client for tables not present in the generated schema
+const db = supabase as unknown as SupabaseClient;
+
+/** Parameters accepted by {@link createRequest}. */
+export interface CreateRequestParams {
+  title?: string;
+  description?: string;
+  category?: string;
+  status?: string;
+  urgency?: string;
+  preferred_start_date?: string;
+  scheduled_for?: string;
+  buyer_id?: string;
+  assigned_seller_id?: string | null;
+  location?: string;
+  city?: string;
+  location_address?: string;
+  location_city?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  lat?: number | null;
+  lng?: number | null;
+  budget?: string | null;
+  [key: string]: unknown;
+}
+
+/** A single quote row returned from job_dispatch_offers. */
+export interface SellerQuoteRow {
+  id: string;
+  job_id: string;
+  seller_id: string;
+  offer_status: string;
+  pricing: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  [key: string]: unknown;
+}
+
+/** Parameters accepted by {@link submitQuote}. */
+export interface QuoteData {
+  request_id: string;
+  seller_id: string;
+  price: number | string;
+  estimated_duration?: string;
+  start_date?: string;
+  proposal?: string;
+  status?: string;
+}
 
 type MaintenanceRequest = CanonicalRequest;
 
@@ -85,10 +135,11 @@ const REQUEST_SELECT_CANDIDATES = [
   REQUEST_SELECT_FIELDS_MINIMAL,
 ];
 
-const isMissingColumnError = (error: any) => error?.code === '42703';
+const isMissingColumnError = (error: unknown) =>
+  (error as { code?: string })?.code === '42703';
 
 async function fetchCanonicalRequestRows(
-  buildQuery: (selectFields: string) => Promise<{ data: CanonicalRequestRow[] | CanonicalRequestRow | null; error: any }>,
+  buildQuery: (selectFields: string) => Promise<{ data: CanonicalRequestRow[] | CanonicalRequestRow | null; error: unknown }>,
   context: string,
   fallbackData: CanonicalRequestRow[] | CanonicalRequestRow | null,
   selectCandidates = REQUEST_SELECT_CANDIDATES,
@@ -129,7 +180,7 @@ const mapRowsToCanonicalRequests = (rows: CanonicalRequestRow[] | null | undefin
 export async function fetchBuyerRequests(buyerId: string): Promise<CanonicalRequest[]> {
   const rows = await fetchCanonicalRequestRows(
     (selectFields) =>
-      (supabase as any)
+      db
         .from('maintenance_requests')
         .select(selectFields)
         .eq('buyer_id', buyerId)
@@ -145,7 +196,7 @@ export async function fetchBuyerRequests(buyerId: string): Promise<CanonicalRequ
 export async function fetchBuyerActivityRequests(buyerId: string): Promise<CanonicalRequest[]> {
   const rows = await fetchCanonicalRequestRows(
     (selectFields) =>
-      (supabase as any)
+      db
         .from('maintenance_requests')
         .select(selectFields)
         .eq('buyer_id', buyerId)
@@ -162,7 +213,7 @@ export async function fetchBuyerActivityRequests(buyerId: string): Promise<Canon
 export async function fetchRequestById(requestId: string): Promise<CanonicalRequest | null> {
   const row = await fetchCanonicalRequestRows(
     (selectFields) =>
-      (supabase as any)
+      db
         .from('maintenance_requests')
         .select(selectFields)
         .eq('id', requestId)
@@ -180,7 +231,7 @@ export async function fetchDispatchableRequests(options?: {
 }): Promise<MaintenanceRequest[]> {
   const rows = await fetchCanonicalRequestRows(
     (selectFields) => {
-      let query = (supabase as any)
+      let query = db
         .from('maintenance_requests')
         .select(selectFields)
         .eq('status', 'open')
@@ -188,10 +239,10 @@ export async function fetchDispatchableRequests(options?: {
           'created_at',
           new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         )
-        .order('created_at', { ascending: false }) as any;
+        .order('created_at', { ascending: false });
 
       if (options?.serviceCategories?.length) {
-        query = query.in('category', options.serviceCategories) as any;
+        query = query.in('category', options.serviceCategories);
       }
 
       if (options?.limit) {
@@ -210,7 +261,7 @@ export async function fetchDispatchableRequests(options?: {
 export async function fetchSellerAssignedActiveRequests(sellerId: string): Promise<CanonicalRequest[]> {
   const rows = await fetchCanonicalRequestRows(
     (selectFields) =>
-      (supabase as any)
+      db
         .from('maintenance_requests')
         .select(selectFields)
         .eq('assigned_seller_id', sellerId)
@@ -233,7 +284,7 @@ export async function updateRequestStatus(
   requestId: string,
   status: string,
 ): Promise<void> {
-  const { error } = await (supabase as any)
+  const { error } = await db
     .from('maintenance_requests')
     .update({
       status,
@@ -242,22 +293,22 @@ export async function updateRequestStatus(
     .eq('id', requestId);
 
   if (error) {
-    console.error('[jobService] updateRequestStatus error:', error);
+    if (import.meta.env.DEV) console.error('[jobService] updateRequestStatus error:', error);
     throw error;
   }
 }
 
 export async function createRequest(
-  request: any,
+  request: CreateRequestParams,
 ): Promise<MaintenanceRequest> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await db
     .from('maintenance_requests')
     .insert(request)
     .select()
     .single();
 
   if (error) {
-    console.error('[jobService] createRequest error:', error);
+    if (import.meta.env.DEV) console.error('[jobService] createRequest error:', error);
     throw error;
   }
 
@@ -280,7 +331,7 @@ export async function checkQuoteLimit(sellerId: string): Promise<{
 
   const count = await executeSupabaseQuery<number | null>(
     async () => {
-      const { count, error } = await (supabase as any)
+      const { count, error } = await db
         .from('job_dispatch_offers')
         .select('*', { count: 'exact', head: true })
         .eq('seller_id', sellerId)
@@ -303,10 +354,10 @@ export async function checkQuoteLimit(sellerId: string): Promise<{
   };
 }
 
-export async function fetchSellerQuotes(sellerId: string): Promise<any[]> {
-  return executeSupabaseQuery<any[]>(
+export async function fetchSellerQuotes(sellerId: string): Promise<SellerQuoteRow[]> {
+  return executeSupabaseQuery<SellerQuoteRow[]>(
     () =>
-      (supabase as any)
+      db
         .from('job_dispatch_offers')
         .select('*')
         .eq('seller_id', sellerId)
@@ -320,7 +371,7 @@ export async function fetchSellerQuotes(sellerId: string): Promise<any[]> {
   );
 }
 
-export async function submitQuote(quoteData: any): Promise<void> {
+export async function submitQuote(quoteData: QuoteData): Promise<void> {
   const dbQuote = {
     job_id: quoteData.request_id,
     seller_id: quoteData.seller_id,
@@ -335,12 +386,12 @@ export async function submitQuote(quoteData: any): Promise<void> {
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await (supabase as any)
+  const { error } = await db
     .from('job_dispatch_offers')
     .insert(dbQuote);
 
   if (error) {
-    console.error('[jobService] submitQuote error:', error);
+    if (import.meta.env.DEV) console.error('[jobService] submitQuote error:', error);
     throw error;
   }
 }

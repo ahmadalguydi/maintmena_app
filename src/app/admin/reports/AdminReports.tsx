@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +33,35 @@ interface AdminReportsProps {
     currentLanguage: 'en' | 'ar';
 }
 
+interface ReportProfile {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    company_name: string | null;
+}
+
+interface UserReport {
+    id: string;
+    status: string;
+    reason: string;
+    details: string | null;
+    created_at: string;
+    reporter_id: string | null;
+    reported_user_id: string | null;
+    reporter: ReportProfile | null;
+    reported_user: ReportProfile | null;
+}
+
+interface RawReport {
+    id: string;
+    status: string;
+    reason: string;
+    details: string | null;
+    created_at: string;
+    reporter_id: string | null;
+    reported_user_id: string | null;
+}
+
 const REASON_LABELS: Record<string, { en: string; ar: string }> = {
     inappropriate_image: { en: 'Inappropriate Image', ar: 'صورة غير لائقة' },
     harassment: { en: 'Harassment', ar: 'مضايقة' },
@@ -41,7 +70,7 @@ const REASON_LABELS: Record<string, { en: string; ar: string }> = {
     other: { en: 'Other', ar: 'أخرى' },
 };
 
-const STATUS_CONFIG: Record<string, { en: string; ar: string; color: string; icon: any }> = {
+const STATUS_CONFIG: Record<string, { en: string; ar: string; color: string; icon: React.ElementType }> = {
     pending: { en: 'Pending', ar: 'معلق', color: 'bg-yellow-500', icon: Clock },
     reviewed: { en: 'Reviewing', ar: 'قيد المراجعة', color: 'bg-blue-500', icon: Eye },
     resolved: { en: 'Resolved', ar: 'تم الحل', color: 'bg-green-500', icon: CheckCircle },
@@ -54,7 +83,7 @@ export const AdminReports = ({ currentLanguage }: AdminReportsProps) => {
     const queryClient = useQueryClient();
     const isArabic = currentLanguage === 'ar';
 
-    const [selectedReport, setSelectedReport] = useState<any>(null);
+    const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
     const [resolutionNotes, setResolutionNotes] = useState('');
     const [activeFilter, setActiveFilter] = useState<'pending' | 'all'>('pending');
 
@@ -78,7 +107,7 @@ export const AdminReports = ({ currentLanguage }: AdminReportsProps) => {
 
                 // Manually fetch profiles since FK points to auth.users, not public.profiles
                 const userIds = new Set<string>();
-                reportsData.forEach((r: any) => {
+                (reportsData as RawReport[]).forEach((r) => {
                     if (r.reporter_id) userIds.add(r.reporter_id);
                     if (r.reported_user_id) userIds.add(r.reported_user_id);
                 });
@@ -92,10 +121,10 @@ export const AdminReports = ({ currentLanguage }: AdminReportsProps) => {
 
                 const profileMap = new Map(profiles?.map(p => [p.id, p]));
 
-                return reportsData.map((r: any) => ({
+                return (reportsData as RawReport[]).map((r): UserReport => ({
                     ...r,
-                    reporter: r.reporter_id ? profileMap.get(r.reporter_id) : null,
-                    reported_user: r.reported_user_id ? profileMap.get(r.reported_user_id) : null
+                    reporter: r.reporter_id ? (profileMap.get(r.reporter_id) ?? null) : null,
+                    reported_user: r.reported_user_id ? (profileMap.get(r.reported_user_id) ?? null) : null,
                 }));
 
             } catch (e) {
@@ -107,7 +136,7 @@ export const AdminReports = ({ currentLanguage }: AdminReportsProps) => {
 
     const updateReportMutation = useMutation({
         mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
-            const updateData: any = {
+            const updateData: Record<string, unknown> = {
                 status,
                 resolved_by: user?.id,
                 resolved_at: new Date().toISOString(),
@@ -201,7 +230,7 @@ export const AdminReports = ({ currentLanguage }: AdminReportsProps) => {
                     </div>
                 ) : reports && reports.length > 0 ? (
                     <div className="space-y-3">
-                        {reports.map((report: any) => {
+                        {reports.map((report) => {
                             const statusConfig = STATUS_CONFIG[report.status];
                             const StatusIcon = statusConfig?.icon || Clock;
 

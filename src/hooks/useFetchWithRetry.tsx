@@ -37,7 +37,7 @@ export const useFetchWithRetry = () => {
           return result;
         } catch (error) {
           lastError = error as Error;
-          console.warn(`Attempt ${attempt + 1} failed:`, error);
+          if (import.meta.env.DEV) console.warn(`Attempt ${attempt + 1} failed:`, error);
 
           if (attempt === maxRetries - 1) {
             setIsRetrying(false);

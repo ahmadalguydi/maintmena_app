@@ -14,6 +14,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { isSupabaseRelationKnownUnavailable } from '@/lib/supabaseSchema';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
 import { cn } from '@/lib/utils';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// Untyped Supabase client for tables not present in the generated schema
+const db = supabase as unknown as SupabaseClient;
 
 interface MessagesHubProps {
   currentLanguage: 'en' | 'ar';
@@ -35,6 +39,28 @@ interface RequestMessageScope {
   assigned_seller_id: string | null;
 }
 
+interface MessageRow {
+  id: string;
+  request_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+}
+
+interface MaintenanceRequestRow {
+  id: string;
+  buyer_id: string;
+  assigned_seller_id: string | null;
+}
+
+interface ProfileRow {
+  id: string;
+  full_name: string | null;
+  company_name: string | null;
+  avatar_url: string | null;
+}
+
 const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -44,170 +70,44 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
   const pendingRefetchTimeoutRef = useRef<number | null>(null);
   const requestIdsRef = useRef<string[]>([]);
 
-  const { data: requestScopes = [] } = useQuery({
-    queryKey: ['message-request-scopes', user?.id],
-    queryFn: async (): Promise<RequestMessageScope[]> => {
-      if (!user?.id) return [];
-
-      const [buyerRequests, assignedRequests] = await Promise.all([
-        executeSupabaseQuery<any[]>(
-          () =>
-            (supabase as any)
-              .from('maintenance_requests')
-              .select('id, buyer_id, assigned_seller_id')
-              .eq('buyer_id', user.id),
-          {
-            context: 'messages-hub-buyer-requests',
-            fallbackData: [],
-            relationName: 'maintenance_requests',
-          },
-        ),
-        executeSupabaseQuery<any[]>(
-          () =>
-            (supabase as any)
-              .from('maintenance_requests')
-              .select('id, buyer_id, assigned_seller_id')
-              .eq('assigned_seller_id', user.id),
-          {
-            context: 'messages-hub-assigned-requests',
-            fallbackData: [],
-            relationName: 'maintenance_requests',
-          },
-        ),
-      ]);
-
-      const requestMap = new Map<string, RequestMessageScope>();
-      [...buyerRequests, ...assignedRequests].forEach((request) => {
-        requestMap.set(request.id, {
-          id: request.id,
-          buyer_id: request.buyer_id,
-          assigned_seller_id: request.assigned_seller_id ?? null,
-        });
-      });
-
-      return Array.from(requestMap.values());
-    },
-    enabled: !!user?.id,
-    staleTime: 30_000,
-    placeholderData: (previousData) => previousData ?? [],
-  });
-
-  const requestScopeKey = useMemo(
-    () => requestScopes.map((request) => request.id).sort().join(','),
-    [requestScopes],
-  );
-
-  useEffect(() => {
-    requestIdsRef.current = requestScopes.map((request) => request.id);
-  }, [requestScopes]);
-
   const { data: conversations, isLoading } = useQuery({
-    queryKey: ['conversations', user?.id, requestScopeKey],
+    queryKey: ['conversations', user?.id],
     queryFn: async (): Promise<Conversation[]> => {
-      if (!user?.id || requestScopes.length === 0) return [];
+      if (!user?.id) return [];
       if (isSupabaseRelationKnownUnavailable('messages')) return [];
 
-      const requestIds = requestScopes.map((request) => request.id);
-      const requestMap = new Map(
-        requestScopes.map((request) => [request.id, request]),
-      );
+      const { data, error } = await db.rpc('get_user_conversations', { 
+        user_uuid: user.id 
+      });
 
-      const messages = await executeSupabaseQuery<any[]>(
-        () =>
-          (supabase as any)
-            .from('messages')
-            .select('id, request_id, sender_id, content, created_at, is_read')
-            .in('request_id', requestIds)
-            .order('created_at', { ascending: false })
-            .limit(100),
-        {
-          context: 'messages-hub-messages',
-          fallbackData: [],
-          relationName: 'messages',
-          retries: 0,
-        },
-      );
-
-      if (messages.length === 0) return [];
-
-      const otherUserIds = new Set<string>();
-      for (const message of messages) {
-        const request = requestMap.get(message.request_id);
-        if (!request) continue;
-
-        const otherUserId =
-          request.buyer_id === user.id
-            ? request.assigned_seller_id
-            : request.buyer_id;
-
-        if (otherUserId) {
-          otherUserIds.add(otherUserId);
-        }
+      if (error) {
+        console.error('[MessagesHub] RPC Error:', error);
+        return [];
       }
 
-      const profiles = otherUserIds.size
-        ? await executeSupabaseQuery<any[]>(
-            () =>
-              supabase
-                .from('profiles')
-                .select('id, full_name, company_name, avatar_seed')
-                .in('id', Array.from(otherUserIds)),
-            {
-              context: 'messages-hub-profiles',
-              fallbackData: [],
-              relationName: 'profiles',
-            },
-          )
-        : [];
-
-      const profileMap = new Map(
-        profiles.map((profile) => [profile.id, profile]),
-      );
-
-      const conversationMap = new Map<string, Conversation>();
-      for (const message of messages) {
-        const request = requestMap.get(message.request_id);
-        if (!request) continue;
-
-        const otherUserId =
-          request.buyer_id === user.id
-            ? request.assigned_seller_id
-            : request.buyer_id;
-        if (!otherUserId) continue;
-
-        if (!conversationMap.has(message.request_id)) {
-          const profile = profileMap.get(otherUserId);
-          const otherUserName =
-            profile?.company_name || profile?.full_name || 'User';
-          const seed = profile?.avatar_seed || profile?.id || otherUserId;
-
-          conversationMap.set(message.request_id, {
-            id: message.request_id,
-            request_id: message.request_id,
-            last_message: message.content,
-            last_message_at: message.created_at,
-            unread_count: 0,
-            other_user_name: otherUserName,
-            other_user_avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`,
-          });
-        }
-
-        if (!message.is_read && message.sender_id !== user.id) {
-          const conversation = conversationMap.get(message.request_id);
-          if (conversation) {
-            conversation.unread_count += 1;
-          }
-        }
-      }
-
-      return Array.from(conversationMap.values());
+      return (data as any[] || []).map(row => ({
+        id: row.id,
+        request_id: row.request_id,
+        last_message: row.last_message,
+        last_message_at: row.last_message_at,
+        unread_count: row.unread_count,
+        other_user_name: row.other_user_name,
+        other_user_avatar: row.other_user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.other_user_id || row.request_id}`,
+        other_user_id: row.other_user_id
+      }));
     },
     enabled: !!user?.id,
-    staleTime: 30_000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     placeholderData: (previousData) => previousData ?? [],
   });
+
+  useEffect(() => {
+    if (conversations) {
+      requestIdsRef.current = conversations.map((c) => c.request_id);
+    }
+  }, [conversations]);
 
   useEffect(() => {
     if (!user || isSupabaseRelationKnownUnavailable('messages')) return;
@@ -234,8 +134,9 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
           table: 'messages',
         },
         (payload) => {
-          const requestId =
-            (payload.new as any)?.request_id || (payload.old as any)?.request_id;
+          const newRecord = payload.new as Record<string, unknown>;
+          const oldRecord = payload.old as Record<string, unknown>;
+          const requestId = (newRecord?.request_id || oldRecord?.request_id) as string | undefined;
           if (!requestId || !requestIdsRef.current.includes(requestId)) {
             return;
           }
@@ -250,10 +151,12 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
           table: 'maintenance_requests',
         },
         (payload) => {
-          const nextBuyerId = (payload.new as any)?.buyer_id;
-          const previousBuyerId = (payload.old as any)?.buyer_id;
-          const nextAssignedSellerId = (payload.new as any)?.assigned_seller_id;
-          const previousAssignedSellerId = (payload.old as any)?.assigned_seller_id;
+          const newMr = payload.new as Record<string, unknown>;
+          const oldMr = payload.old as Record<string, unknown>;
+          const nextBuyerId = newMr?.buyer_id;
+          const previousBuyerId = oldMr?.buyer_id;
+          const nextAssignedSellerId = newMr?.assigned_seller_id;
+          const previousAssignedSellerId = oldMr?.assigned_seller_id;
 
           if (
             nextBuyerId !== user.id &&
@@ -310,7 +213,23 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
   }, [conversations, searchQuery]);
 
   const handleConversationClick = (conversation: Conversation) => {
-    navigate(`/app/messages/thread?request=${conversation.request_id}`);
+    // SEAMLESS TRANSITION GENIUS WORK:
+    // Seed the thread cache with the last message so it montes with data instantly.
+    // We use a 50 limit as per the new thread pagination standard.
+    const requestId = conversation.request_id;
+    queryClient.setQueryData(['messages', requestId, 50], (old: any) => {
+      if (old) return old;
+      return [{
+        id: `seed-${Date.now()}`,
+        request_id: requestId,
+        content: conversation.last_message,
+        created_at: conversation.last_message_at,
+        sender_id: conversation.unread_count > 0 ? '' : user?.id, // dummy guess for visual sanity
+        is_read: true
+      }];
+    });
+
+    navigate(`/app/messages/thread?request=${requestId}`);
   };
 
   if (isLoading) {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useKeyboardAvoidance } from '@/hooks/useKeyboardAvoidance';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface LoginProps {
@@ -21,6 +22,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { containerStyle } = useKeyboardAvoidance();
 
   const content = {
     en: {
@@ -79,43 +81,40 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
       }
 
       // Default redirect based on user type
-      setTimeout(async () => {
-        // Check role via user_roles table directly since we just logged in
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData?.user) {
-          const { data: roles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userData.user.id);
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userData.user.id);
 
-          const roleMap = roles?.map(r => r.role) || [];
+        const roleMap = roles?.map(r => r.role) || [];
 
-          if (roleMap.includes('admin')) {
-            navigate('/app/admin/home');
-            return;
-          }
-          if (roleMap.includes('seller')) {
-            localStorage.setItem('userType', 'seller');
-            navigate('/app/seller/home');
-            return;
-          }
-
-          // Default to buyer
-          localStorage.setItem('userType', 'buyer');
-          navigate('/app/buyer/home');
+        if (roleMap.includes('admin')) {
+          navigate('/app/admin/home');
+          return;
+        }
+        if (roleMap.includes('seller')) {
+          localStorage.setItem('userType', 'seller');
+          navigate('/app/seller/home');
           return;
         }
 
-        // Fallback
+        // Default to buyer
+        localStorage.setItem('userType', 'buyer');
         navigate('/app/buyer/home');
-      }, 500);
+        return;
+      }
+
+      // Fallback
+      navigate('/app/buyer/home');
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="min-h-app bg-background flex flex-col p-6 pb-safe-or-4 pt-safe" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-app bg-background flex flex-col p-6 pb-safe-or-4 pt-safe" style={containerStyle} dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header with Back Button and Language Toggle */}
       <div className="flex items-center justify-between mb-8">
         <button
@@ -179,7 +178,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
             className="w-full h-12 text-base"
             disabled={loading}
           >
-            {loading ? '...' : t.signIn}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.signIn}
           </Button>
 
           <button

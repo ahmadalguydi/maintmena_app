@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { Bell, Check, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Body, BodySmall, Caption, Heading2, Heading3 } from '@/components/mobile/Typography';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
-import { getNotificationPresentation, getNotificationTarget } from '@/lib/notifications';
+import { getNotificationPresentation, getNotificationTarget, type AppNotification } from '@/lib/notifications';
 
 export default function Notifications() {
   const { userType } = useAuth();
@@ -32,6 +33,24 @@ export default function Notifications() {
   } = useNotifications();
 
   const effectiveUserType = userType === 'seller' ? 'seller' : 'buyer';
+
+  // Group notifications by time period
+  const groupNotifications = (items: AppNotification[]) => {
+    const today: AppNotification[] = [];
+    const yesterday: AppNotification[] = [];
+    const earlier: AppNotification[] = [];
+    for (const n of items) {
+      const d = new Date(n.created_at);
+      if (isToday(d)) today.push(n);
+      else if (isYesterday(d)) yesterday.push(n);
+      else earlier.push(n);
+    }
+    const groups: Array<{ label: string; items: AppNotification[] }> = [];
+    if (today.length) groups.push({ label: currentLanguage === 'ar' ? 'اليوم' : 'Today', items: today });
+    if (yesterday.length) groups.push({ label: currentLanguage === 'ar' ? 'أمس' : 'Yesterday', items: yesterday });
+    if (earlier.length) groups.push({ label: currentLanguage === 'ar' ? 'سابقاً' : 'Earlier', items: earlier });
+    return groups;
+  };
 
   const handleNotificationClick = async (notificationId: string) => {
     const notification = notifications.find((item) => item.id === notificationId);
@@ -118,52 +137,69 @@ export default function Notifications() {
               </Body>
             </motion.div>
           ) : (
-            <div className="space-y-3">
-              <AnimatePresence>
-                {notifications.map((notification, index) => {
-                  const presentation = getNotificationPresentation(notification, currentLanguage);
-
-                  return (
-                    <motion.div
-                      key={notification.id}
-                      initial={{ opacity: 0, x: currentLanguage === 'ar' ? 20 : -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.04 }}
-                    >
-                      <SoftCard
-                        onClick={() => void handleNotificationClick(notification.id)}
-                        className={`cursor-pointer p-4 transition-all hover:shadow-md ${
-                          !notification.read ? 'border-accent/20 bg-accent/5' : ''
-                        }`}
-                      >
-                        <div className="flex gap-3">
-                          <div className="text-3xl">{presentation.icon}</div>
-                          <div className="min-w-0 flex-1">
-                            <div className="mb-1 flex items-start justify-between gap-2">
-                              <Body lang={currentLanguage} className="line-clamp-1 font-semibold">
-                                {presentation.title}
-                              </Body>
-                              {!notification.read && (
-                                <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
+            <div className="space-y-5">
+              {groupNotifications(notifications).map((group) => (
+                <div key={group.label}>
+                  <p className={cn(
+                    'text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1',
+                    currentLanguage === 'ar' ? 'font-ar-body' : 'font-body',
+                  )}>
+                    {group.label}
+                  </p>
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {group.items.map((notification, index) => {
+                        const presentation = getNotificationPresentation(notification, currentLanguage);
+                        return (
+                          <motion.div
+                            key={notification.id}
+                            initial={{ opacity: 0, x: currentLanguage === 'ar' ? 20 : -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.04 }}
+                          >
+                            <SoftCard
+                              onClick={() => void handleNotificationClick(notification.id)}
+                              className={cn(
+                                'cursor-pointer p-4 transition-all hover:shadow-md',
+                                !notification.read && 'border-primary/20 bg-primary/[0.03]',
                               )}
-                            </div>
-                            <BodySmall lang={currentLanguage} className="mb-2 line-clamp-2 text-muted-foreground">
-                              {presentation.message}
-                            </BodySmall>
-                            <Caption lang={currentLanguage} className="text-muted-foreground">
-                              {format(
-                                new Date(notification.created_at),
-                                currentLanguage === 'ar' ? 'd MMM، h:mm a' : 'MMM d, h:mm a',
-                                { locale: currentLanguage === 'ar' ? ar : enUS },
-                              )}
-                            </Caption>
-                          </div>
-                        </div>
-                      </SoftCard>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+                            >
+                              <div className="flex gap-3">
+                                <div className={cn(
+                                  'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl',
+                                  !notification.read ? 'bg-primary/8' : 'bg-muted/50',
+                                )}>
+                                  {presentation.icon}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="mb-0.5 flex items-start justify-between gap-2">
+                                    <Body lang={currentLanguage} className="line-clamp-1 font-semibold text-foreground">
+                                      {presentation.title}
+                                    </Body>
+                                    {!notification.read && (
+                                      <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                                    )}
+                                  </div>
+                                  <BodySmall lang={currentLanguage} className="line-clamp-2 text-muted-foreground">
+                                    {presentation.message}
+                                  </BodySmall>
+                                  <Caption lang={currentLanguage} className="mt-1.5 text-muted-foreground/70">
+                                    {format(
+                                      new Date(notification.created_at),
+                                      currentLanguage === 'ar' ? 'h:mm a' : 'h:mm a',
+                                      { locale: currentLanguage === 'ar' ? ar : enUS },
+                                    )}
+                                  </Caption>
+                                </div>
+                              </div>
+                            </SoftCard>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </ScrollArea>

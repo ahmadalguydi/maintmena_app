@@ -45,11 +45,12 @@ export const GradientHeader = ({
       <div className="px-4 py-6">
         <div className="flex items-center justify-between gap-4">
           {showBack && (
-            <button 
+            <button
               onClick={handleBack}
+              aria-label={isArabic ? 'رجوع' : 'Go back'}
               className="p-2 -m-2 hover:bg-accent/10 rounded-lg transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className={cn('w-5 h-5', isArabic && 'rotate-180')} />
             </button>
           )}
           

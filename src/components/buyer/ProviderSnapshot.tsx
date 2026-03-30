@@ -1,4 +1,4 @@
-import { Phone, ShieldCheck, Star, BriefcaseBusiness } from 'lucide-react';
+import { MessageCircle, Phone, ShieldCheck, Star, BriefcaseBusiness, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProviderSnapshotProps {
@@ -13,6 +13,10 @@ interface ProviderSnapshotProps {
   statusLabel?: string;
   compact?: boolean;
   className?: string;
+  /** Called when buyer taps the message icon */
+  onMessage?: () => void;
+  /** Called when buyer taps "View Profile" */
+  onViewProfile?: () => void;
 }
 
 export const ProviderSnapshot = ({
@@ -27,6 +31,8 @@ export const ProviderSnapshot = ({
   statusLabel,
   compact = false,
   className,
+  onMessage,
+  onViewProfile,
 }: ProviderSnapshotProps) => {
   const isArabic = currentLanguage === 'ar';
   const displayName =
@@ -108,14 +114,6 @@ export const ProviderSnapshot = ({
             </div>
           ) : null}
 
-          {providerPhone ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Phone className="h-4 w-4 text-primary/80" />
-              <span className={cn('font-medium', isArabic ? 'font-ar-body' : 'font-body')}>
-                {providerPhone}
-              </span>
-            </div>
-          ) : null}
         </div>
       </div>
 
@@ -129,6 +127,46 @@ export const ProviderSnapshot = ({
           </span>
         </div>
       ) : null}
+
+      {/* Action buttons: call, message, view profile */}
+      {(providerPhone || onMessage || onViewProfile) && (
+        <div className={cn('flex gap-2 mt-4', compact && 'mt-3')}>
+          {providerPhone && (
+            <a
+              href={`tel:${providerPhone}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border/60 bg-background py-2.5 text-sm font-semibold text-foreground transition-colors active:bg-muted hover:bg-muted/50"
+            >
+              <Phone className="h-4 w-4 text-primary" />
+              <span className={cn(isArabic ? 'font-ar-body' : 'font-body')}>
+                {isArabic ? 'اتصال' : 'Call'}
+              </span>
+            </a>
+          )}
+          {onMessage && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onMessage(); }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border/60 bg-background py-2.5 text-sm font-semibold text-foreground transition-colors active:bg-muted hover:bg-muted/50"
+            >
+              <MessageCircle className="h-4 w-4 text-primary" />
+              <span className={cn(isArabic ? 'font-ar-body' : 'font-body')}>
+                {isArabic ? 'رسالة' : 'Message'}
+              </span>
+            </button>
+          )}
+          {onViewProfile && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onViewProfile(); }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border/60 bg-background py-2.5 text-sm font-semibold text-foreground transition-colors active:bg-muted hover:bg-muted/50"
+            >
+              <User className="h-4 w-4 text-primary" />
+              <span className={cn(isArabic ? 'font-ar-body' : 'font-body')}>
+                {isArabic ? 'الملف' : 'Profile'}
+              </span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

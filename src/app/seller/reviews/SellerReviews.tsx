@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { MessageSquare, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { GradientHeader } from '@/components/mobile/GradientHeader';
@@ -16,6 +17,7 @@ interface SellerReviewsProps {
 
 export const SellerReviews = ({ currentLanguage }: SellerReviewsProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isArabic = currentLanguage === 'ar';
 
   const { data: reviews = [], isLoading } = useQuery({
@@ -37,12 +39,14 @@ export const SellerReviews = ({ currentLanguage }: SellerReviewsProps) => {
   });
 
   const totalReviews = reviews.length;
+  type ReviewWithBuyer = { id: string; rating: number; review_text?: string | null; created_at: string; buyer?: { company_name?: string | null; full_name?: string | null } | null };
+  const typedReviews = reviews as ReviewWithBuyer[];
   const averageRating = totalReviews
-    ? (reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / totalReviews).toFixed(1)
+    ? (typedReviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1)
     : '0.0';
   const ratingBreakdown = [5, 4, 3, 2, 1].map((level) => ({
     level,
-    count: reviews.filter((review: any) => review.rating === level).length,
+    count: typedReviews.filter((review) => review.rating === level).length,
   }));
 
   const content = {
@@ -69,7 +73,7 @@ export const SellerReviews = ({ currentLanguage }: SellerReviewsProps) => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background pb-24" dir={isArabic ? 'rtl' : 'ltr'}>
-        <GradientHeader title={t.title} />
+        <GradientHeader title={t.title} showBack onBack={() => navigate(-1)} />
         <div className="px-6 py-6 space-y-3">
           <Skeleton className="h-36 rounded-3xl" />
           <Skeleton className="h-40 rounded-3xl" />
@@ -142,7 +146,7 @@ export const SellerReviews = ({ currentLanguage }: SellerReviewsProps) => {
               </p>
             </div>
 
-            {reviews.map((review: any, index: number) => {
+            {typedReviews.map((review, index) => {
               const buyerName =
                 review.buyer?.company_name ||
                 review.buyer?.full_name ||

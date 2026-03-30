@@ -12,7 +12,7 @@ interface ActivityItem {
   content_type: string;
   content_id: string;
   created_at: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   user_email?: string;
 }
 
@@ -38,7 +38,7 @@ export function ActivityLog() {
     if (!error && data) {
       const enrichedData = data.map(item => ({
         ...item,
-        user_email: (item.profiles as any)?.email || 'Unknown user'
+        user_email: (item.profiles as { email?: string } | null)?.email || 'Unknown user'
       }));
       setActivities(enrichedData);
     }

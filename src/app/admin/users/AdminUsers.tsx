@@ -33,12 +33,24 @@ interface AdminUsersProps {
     currentLanguage: 'en' | 'ar';
 }
 
+interface AdminUser {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    company_name: string | null;
+    avatar_url: string | null;
+    user_type: string | null;
+    phone: string | null;
+    created_at: string;
+    verified_seller: boolean | null;
+}
+
 export const AdminUsers = ({ currentLanguage }: AdminUsersProps) => {
     const navigate = useNavigate();
     const isArabic = currentLanguage === 'ar';
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [roleFilter, setRoleFilter] = useState<'all' | 'buyer' | 'seller'>('all');
 
     const { data: users, isLoading } = useQuery({
@@ -60,7 +72,7 @@ export const AdminUsers = ({ currentLanguage }: AdminUsersProps) => {
 
             const { data, error } = await query;
             if (error) throw error;
-            return data || [];
+            return (data || []) as AdminUser[];
         },
     });
 
@@ -159,7 +171,7 @@ export const AdminUsers = ({ currentLanguage }: AdminUsersProps) => {
                     </div>
                 ) : users && users.length > 0 ? (
                     <div className="space-y-3">
-                        {users.map((user: any) => (
+                        {users.map((user) => (
                             <SoftCard
                                 key={user.id}
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"

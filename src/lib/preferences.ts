@@ -1,182 +1,186 @@
 /**
  * Centralized Preferences Manager
- * 
- * This utility provides a single source of truth for all localStorage preferences.
- * Use this instead of direct localStorage access to ensure consistent key naming
- * and type safety across the application.
+ *
+ * Critical preferences (language, userType, onboarding, haptics) are written
+ * through `storage` so they survive on native via @capacitor/preferences.
+ * Legacy keys are kept as aliases so older code that still reads localStorage
+ * directly continues to work during the transition period.
  */
 
-// Standardized localStorage keys
+import { storage } from './storage';
+
+// ── Key constants ─────────────────────────────────────────────────────────────
+
 const KEYS = {
-    language: 'maintmena_language',
-    currency: 'maintmena_currency',
-    dateFormat: 'maintmena_date_format',
-    theme: 'maintmena_theme',
-    userType: 'maintmena_user_type',
-    // Legacy keys for backward compatibility reads
-    legacyLanguage: ['language', 'preferredLanguage', 'currentLanguage'],
-    legacyCurrency: ['preferred_currency'],
+  // Durable (via @capacitor/preferences on native)
+  language:      'mm_lang',
+  userType:      'mm_user_type',
+  onboarding:    'mm_onboarding_done',
+  haptics:       'mm_haptics_enabled',
+  // Remaining — localStorage only (transient / session-level data)
+  currency:      'maintmena_currency',
+  dateFormat:    'maintmena_date_format',
+  theme:         'maintmena_theme',
+  // Legacy aliases written alongside new keys for backward compat
+  legacyLanguage:  ['language', 'preferredLanguage', 'currentLanguage', 'maintmena_language'],
+  legacyCurrency:  ['preferred_currency'],
 } as const;
 
-export type Language = 'en' | 'ar';
-export type Currency = 'SAR' | 'USD' | 'EUR';
+export type Language   = 'en' | 'ar';
+export type Currency   = 'SAR' | 'USD' | 'EUR';
 export type DateFormat = 'gregorian' | 'hijri';
-export type Theme = 'light' | 'dark' | 'system';
-export type UserType = 'buyer' | 'seller' | 'admin';
+export type Theme      = 'light' | 'dark' | 'system';
+export type UserType   = 'buyer' | 'seller' | 'admin';
 
-/**
- * Get language preference with legacy key support
- */
+// ── Language ──────────────────────────────────────────────────────────────────
+
 export function getLanguage(): Language {
-    // Try new key first
-    const newValue = localStorage.getItem(KEYS.language);
-    if (newValue === 'en' || newValue === 'ar') {
-        return newValue;
-    }
+  const v = storage.getItem(KEYS.language);
+  if (v === 'en' || v === 'ar') return v;
 
-    // Fall back to legacy keys
-    for (const legacyKey of KEYS.legacyLanguage) {
-        const legacyValue = localStorage.getItem(legacyKey);
-        if (legacyValue === 'en' || legacyValue === 'ar') {
-            // Migrate to new key
-            localStorage.setItem(KEYS.language, legacyValue);
-            return legacyValue;
-        }
+  for (const k of KEYS.legacyLanguage) {
+    const lv = storage.getItem(k);
+    if (lv === 'en' || lv === 'ar') {
+      setLanguage(lv);   // migrate to durable key
+      return lv;
     }
-
-    // Default to Arabic (primary market)
-    return 'ar';
+  }
+  return 'ar';
 }
 
-/**
- * Set language preference
- */
 export function setLanguage(lang: Language): void {
-    localStorage.setItem(KEYS.language, lang);
-    // Also set legacy keys for compatibility with components not yet migrated
-    KEYS.legacyLanguage.forEach(key => {
-        localStorage.setItem(key, lang);
-    });
+  storage.setItem(KEYS.language, lang);
+  // Keep legacy keys in sync so components still reading them directly work
+  for (const k of KEYS.legacyLanguage) {
+    storage.setItem(k, lang);
+  }
 }
 
-/**
- * Get currency preference
- */
-export function getCurrency(): Currency {
-    const newValue = localStorage.getItem(KEYS.currency);
-    if (newValue === 'SAR' || newValue === 'USD' || newValue === 'EUR') {
-        return newValue;
-    }
+// ── User type ─────────────────────────────────────────────────────────────────
 
-    // Check legacy key
-    const legacyValue = localStorage.getItem('preferred_currency');
-    if (legacyValue === 'SAR' || legacyValue === 'USD' || legacyValue === 'EUR') {
-        localStorage.setItem(KEYS.currency, legacyValue);
-        return legacyValue;
-    }
-
-    return 'SAR';
-}
-
-/**
- * Set currency preference
- */
-export function setCurrency(currency: Currency): void {
-    localStorage.setItem(KEYS.currency, currency);
-    localStorage.setItem('preferred_currency', currency); // Legacy compatibility
-}
-
-/**
- * Get date format preference
- */
-export function getDateFormat(): DateFormat {
-    const value = localStorage.getItem(KEYS.dateFormat);
-    if (value === 'gregorian' || value === 'hijri') {
-        return value;
-    }
-
-    const legacyValue = localStorage.getItem('dateFormat') || localStorage.getItem('preferredDateFormat');
-    if (legacyValue === 'gregorian' || legacyValue === 'hijri') {
-        localStorage.setItem(KEYS.dateFormat, legacyValue);
-        return legacyValue;
-    }
-
-    return 'gregorian';
-}
-
-/**
- * Set date format preference
- */
-export function setDateFormat(format: DateFormat): void {
-    localStorage.setItem(KEYS.dateFormat, format);
-    localStorage.setItem('dateFormat', format); // Legacy compatibility
-    localStorage.setItem('preferredDateFormat', format); // Legacy compatibility
-}
-
-/**
- * Get theme preference
- */
-export function getTheme(): Theme {
-    const value = localStorage.getItem(KEYS.theme);
-    if (value === 'light' || value === 'dark' || value === 'system') {
-        return value;
-    }
-    return 'system';
-}
-
-/**
- * Set theme preference
- */
-export function setTheme(theme: Theme): void {
-    localStorage.setItem(KEYS.theme, theme);
-}
-
-/**
- * Get user type from storage
- */
 export function getUserType(): UserType | null {
-    const value = localStorage.getItem(KEYS.userType) || localStorage.getItem('userType');
-    if (value === 'buyer' || value === 'seller' || value === 'admin') {
-        return value;
-    }
-    return null;
+  const v = storage.getItem(KEYS.userType) ?? storage.getItem('userType');
+  if (v === 'buyer' || v === 'seller' || v === 'admin') return v;
+  return null;
 }
 
-/**
- * Set user type
- */
 export function setUserType(userType: UserType): void {
-    localStorage.setItem(KEYS.userType, userType);
-    localStorage.setItem('userType', userType); // Legacy compatibility
+  storage.setItem(KEYS.userType, userType);
+  storage.setItem('userType', userType);   // legacy compat
 }
 
-/**
- * Clear all preferences (for logout)
- */
+// ── Onboarding ────────────────────────────────────────────────────────────────
+
+export function hasSeenOnboarding(): boolean {
+  return storage.getItem(KEYS.onboarding) === 'true';
+}
+
+export function markOnboardingDone(): void {
+  storage.setItem(KEYS.onboarding, 'true');
+  storage.setItem('hasSeenOnboarding', 'true');   // legacy compat
+}
+
+// ── Haptics ───────────────────────────────────────────────────────────────────
+
+export function getHapticsEnabled(): boolean {
+  // Default to enabled; only disabled when explicitly set to 'false'
+  return storage.getItem(KEYS.haptics) !== 'false';
+}
+
+export function setHapticsEnabled(enabled: boolean): void {
+  storage.setItem(KEYS.haptics, String(enabled));
+  storage.setItem('hapticFeedbackEnabled', String(enabled));   // legacy compat
+}
+
+// ── Currency (localStorage only — not critical) ───────────────────────────────
+
+export function getCurrency(): Currency {
+  const v = storage.getItem(KEYS.currency);
+  if (v === 'SAR' || v === 'USD' || v === 'EUR') return v;
+  const lv = storage.getItem('preferred_currency');
+  if (lv === 'SAR' || lv === 'USD' || lv === 'EUR') {
+    setCurrency(lv);
+    return lv;
+  }
+  return 'SAR';
+}
+
+export function setCurrency(currency: Currency): void {
+  storage.setItem(KEYS.currency, currency);
+  for (const k of KEYS.legacyCurrency) storage.setItem(k, currency);
+}
+
+// ── Date format ───────────────────────────────────────────────────────────────
+
+export function getDateFormat(): DateFormat {
+  const v = storage.getItem(KEYS.dateFormat);
+  if (v === 'gregorian' || v === 'hijri') return v;
+  const lv = storage.getItem('dateFormat') ?? storage.getItem('preferredDateFormat');
+  if (lv === 'gregorian' || lv === 'hijri') {
+    setDateFormat(lv);
+    return lv;
+  }
+  return 'gregorian';
+}
+
+export function setDateFormat(format: DateFormat): void {
+  storage.setItem(KEYS.dateFormat, format);
+  storage.setItem('dateFormat', format);
+  storage.setItem('preferredDateFormat', format);
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+
+export function getTheme(): Theme {
+  const v = storage.getItem(KEYS.theme);
+  if (v === 'light' || v === 'dark' || v === 'system') return v;
+  return 'system';
+}
+
+export function setTheme(theme: Theme): void {
+  storage.setItem(KEYS.theme, theme);
+}
+
+// ── Clear all (logout) ────────────────────────────────────────────────────────
+
 export function clearPreferences(): void {
-    Object.values(KEYS).forEach(key => {
-        if (typeof key === 'string') {
-            localStorage.removeItem(key);
-        } else if (Array.isArray(key)) {
-            key.forEach(k => localStorage.removeItem(k));
-        }
-    });
+  const allKeys = [
+    KEYS.language,
+    KEYS.userType,
+    KEYS.onboarding,
+    KEYS.haptics,
+    KEYS.currency,
+    KEYS.dateFormat,
+    KEYS.theme,
+    ...KEYS.legacyLanguage,
+    ...KEYS.legacyCurrency,
+    'userType',
+    'hasSeenOnboarding',
+    'hapticFeedbackEnabled',
+    'dateFormat',
+    'preferredDateFormat',
+  ] as string[];
+
+  for (const key of allKeys) storage.removeItem(key);
 }
 
-// Export default object for convenient import
 export const preferences = {
-    getLanguage,
-    setLanguage,
-    getCurrency,
-    setCurrency,
-    getDateFormat,
-    setDateFormat,
-    getTheme,
-    setTheme,
-    getUserType,
-    setUserType,
-    clearPreferences,
-    KEYS,
+  getLanguage,
+  setLanguage,
+  getUserType,
+  setUserType,
+  hasSeenOnboarding,
+  markOnboardingDone,
+  getHapticsEnabled,
+  setHapticsEnabled,
+  getCurrency,
+  setCurrency,
+  getDateFormat,
+  setDateFormat,
+  getTheme,
+  setTheme,
+  clearPreferences,
+  KEYS,
 };
 
 export default preferences;

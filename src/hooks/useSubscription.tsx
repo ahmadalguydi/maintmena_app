@@ -85,7 +85,7 @@ export function useSubscription() {
         setDaysLeftInTrial(null);
       }
     } catch (error) {
-      console.error('Error fetching subscription:', error);
+      if (import.meta.env.DEV) console.error('Error fetching subscription:', error);
     } finally {
       setLoading(false);
     }
@@ -144,8 +144,8 @@ export function useSubscription() {
 
       await fetchSubscription();
       return { error: null };
-    } catch (error: any) {
-      return { error: error.message };
+    } catch (error: unknown) {
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 
@@ -167,8 +167,8 @@ export function useSubscription() {
 
       await fetchSubscription();
       return { error: null };
-    } catch (error: any) {
-      return { error: error.message };
+    } catch (error: unknown) {
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 

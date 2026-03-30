@@ -21,10 +21,23 @@ import {
 } from '@/lib/flowDefaults';
 
 
+interface VendorServicePricing {
+  category: string;
+  available?: boolean;
+}
+
+interface BookingVendor {
+  id: string;
+  company_name: string | null;
+  full_name: string | null;
+  services_pricing?: VendorServicePricing[] | null;
+  service_categories?: string[] | null;
+}
+
 interface BookingRequestModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  vendor: any;
+  vendor: BookingVendor;
   currentLanguage: 'en' | 'ar';
   onSuccess?: () => void;
 }
@@ -61,12 +74,12 @@ const BookingRequestModal = ({
 
   const allCategories = getAllCategories();
 
-  const vendorServices = vendor?.services_pricing && Array.isArray(vendor.services_pricing)
-    ? vendor.services_pricing.filter((s: any) => s.available !== false)
+  const vendorServices: VendorServicePricing[] = vendor?.services_pricing && Array.isArray(vendor.services_pricing)
+    ? vendor.services_pricing.filter((s) => s.available !== false)
     : [];
 
   const vendorCategories = vendorServices.length > 0
-    ? allCategories.filter(cat => vendorServices.some((s: any) => s.category === cat.key))
+    ? allCategories.filter(cat => vendorServices.some((s) => s.category === cat.key))
     : (vendor?.service_categories
       ? allCategories.filter(cat => vendor.service_categories.includes(cat.key))
       : []);
@@ -230,10 +243,10 @@ const BookingRequestModal = ({
 
       onSuccess?.();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: currentLanguage === 'ar' ? 'خطأ في الإرسال' : 'Error sending request',
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     } finally {

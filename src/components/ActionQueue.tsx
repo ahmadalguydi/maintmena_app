@@ -18,6 +18,27 @@ interface ActionQueueProps {
   currentLanguage: 'en' | 'ar';
 }
 
+interface RawActionItem {
+  id?: string;
+  title: string;
+  description?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+}
+
+interface RawSignal {
+  id: string;
+  company_name: string;
+  deadline?: string;
+  action_items: RawActionItem[] | null;
+}
+
+interface RawTender {
+  id: string;
+  title: string;
+  submission_deadline: string;
+  action_items: RawActionItem[] | null;
+}
+
 interface ActionItem {
   id: string;
   title: string;
@@ -120,9 +141,9 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
           .in('id', trackedSignalIds)
           .eq('status', 'active');
 
-        signals?.forEach((signal: any) => {
+        (signals as RawSignal[] | null)?.forEach((signal) => {
           if (signal.action_items && Array.isArray(signal.action_items)) {
-            const actions: ActionItem[] = signal.action_items.map((item: any) => {
+            const actions: ActionItem[] = signal.action_items.map((item) => {
               const daysLeft = signal.deadline ? differenceInDays(new Date(signal.deadline), now) : undefined;
               return {
                 id: item.id || item.title,
@@ -160,9 +181,9 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
           .in('id', trackedTenderIds)
           .eq('status', 'open');
 
-        tenders?.forEach((tender: any) => {
+        (tenders as RawTender[] | null)?.forEach((tender) => {
           if (tender.action_items && Array.isArray(tender.action_items)) {
-            const actions: ActionItem[] = tender.action_items.map((item: any) => {
+            const actions: ActionItem[] = tender.action_items.map((item) => {
               const daysLeft = differenceInDays(new Date(tender.submission_deadline), now);
               return {
                 id: item.id || item.title,
@@ -222,7 +243,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
       // Auto-expand groups with pending items
       setExpandedGroups(new Set(pending.map(g => g.sourceId)));
     } catch (error) {
-      console.error('Error fetching action queue:', error);
+      if (import.meta.env.DEV) console.error('Error fetching action queue:', error);
     } finally {
       setLoading(false);
     }
@@ -247,7 +268,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
       toast.success(completed ? 'Task completed' : 'Task reopened');
       fetchActionQueue();
     } catch (error) {
-      console.error('Error updating action:', error);
+      if (import.meta.env.DEV) console.error('Error updating action:', error);
       toast.error('Failed to update task');
     }
   };
@@ -312,7 +333,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
       case 'critical':
         return {
           bg: 'bg-red-50 dark:bg-red-950/20 border-l-4 border-red-500',
-          badge: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+          badge: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-200 border-red-200 dark:border-red-500/30'
         };
       case 'high':
         return {
@@ -322,7 +343,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
       case 'medium':
         return {
           bg: 'bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500',
-          badge: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+          badge: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-200 border-blue-200 dark:border-blue-500/30'
         };
       default:
         return {

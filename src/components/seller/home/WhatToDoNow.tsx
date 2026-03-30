@@ -3,7 +3,6 @@ import { TrendingUp, ChevronRight, ChevronLeft, Heart, Shield, Zap, Award } from
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -158,7 +157,6 @@ export function WhatToDoNow({ currentLanguage, onEnableCategory }: WhatToDoNowPr
         if (insight.category) {
             onEnableCategory?.(insight.category);
         }
-        toast.success(currentLanguage === 'ar' ? insight.ctaLabelAr : insight.ctaLabel);
     };
 
     return (

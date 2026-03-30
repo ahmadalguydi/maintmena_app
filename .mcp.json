@@ -1,8 +1,9 @@
-{
+﻿{
   "mcpServers": {
     "ruflo": {
-      "command": "npx",
+      "command": "cmd",
       "args": [
+        "/c", "npx", "ruflo",
         "-y",
         "@claude-flow/cli@latest",
         "mcp",

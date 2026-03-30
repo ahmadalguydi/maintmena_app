@@ -95,15 +95,15 @@ export const ManageServices = ({ currentLanguage }: ManageServicesProps) => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('profiles')
-        .select('services_pricing' as any)
+        .select('services_pricing')
         .eq('id', user.id)
         .single();
-      const d = data as any;
+      const d = data as { services_pricing?: unknown[] } | null;
       if (d?.services_pricing && Array.isArray(d.services_pricing)) {
         // Migrate old format (no subcategories field) to new
-        const migrated: SellerService[] = d.services_pricing.map((s: any) => ({
+        const migrated: SellerService[] = d.services_pricing.map((s: Record<string, unknown>) => ({
           id: s.id || Date.now().toString(),
           category: s.category,
           subcategories: s.subcategories || [],
@@ -125,13 +125,13 @@ export const ManageServices = ({ currentLanguage }: ManageServicesProps) => {
       .filter(s => s.available)
       .map(s => s.category);
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('profiles')
       .update({
-        services_pricing: updated as any,
+        services_pricing: updated,
         service_categories: serviceCategories,
         updated_at: new Date().toISOString(),
-      } as any)
+      })
       .eq('id', user.id);
 
     if (error) {
@@ -271,10 +271,10 @@ export const ManageServices = ({ currentLanguage }: ManageServicesProps) => {
                   <span className={cn(
                     'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full',
                     selectedCount === 0
-                      ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                      ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-200'
                       : allSelected
-                        ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+                        ? 'bg-green-100 text-green-600 dark:bg-green-500/15 dark:text-green-200'
+                        : 'bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-200',
                   )}>
                     {selectedCount}/{totalCount} {isAr ? 'تخصص' : 'selected'}
                   </span>
@@ -286,8 +286,8 @@ export const ManageServices = ({ currentLanguage }: ManageServicesProps) => {
                 <span className={cn(
                   'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full',
                   svc.available
-                    ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+                    ? 'bg-green-100 text-green-600 dark:bg-green-500/15 dark:text-green-200'
+                    : 'bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-200',
                 )}>
                   {svc.available ? t.active : t.paused}
                 </span>

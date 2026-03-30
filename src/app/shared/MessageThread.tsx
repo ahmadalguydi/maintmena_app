@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useKeyboardAvoidance } from '@/hooks/useKeyboardAvoidance';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/contexts/RoleContext';
 import { GradientHeader } from '@/components/mobile/GradientHeader';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Send, Check, CheckCheck, Paperclip, Image as ImageIcon, MapPin, FileText, Download, ArrowUpDown } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -16,6 +18,10 @@ import { PriceProposalBubble } from '@/components/mobile/PriceProposalBubble';
 import { ReportButton } from '@/components/mobile/ReportButton';
 import { isSupabaseRelationKnownUnavailable, rememberMissingSupabaseRelation } from '@/lib/supabaseSchema';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// Untyped Supabase client for tables not present in the generated schema
+const db = supabase as unknown as SupabaseClient;
 
 // Allowed file types and max size
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -55,11 +61,21 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  const handleBack = () => {
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate(currentRole === 'seller' ? '/app/seller/home' : '/app/buyer/home', { replace: true });
+    }
+  };
+
   const requestId = searchParams.get('request');
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [messageLimit, setMessageLimit] = useState(50);
   const isSeller = currentRole === 'seller';
+  const { containerStyle: keyboardStyle } = useKeyboardAvoidance(0);
 
   // Thread ID for localStorage key
   const threadId = requestId || '';
@@ -81,31 +97,36 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
   };
 
   const { data: messages, isLoading } = useQuery({
-    queryKey: ['messages', requestId],
+    queryKey: ['messages', requestId, messageLimit],
     queryFn: async () => {
       if (!requestId) return [];
       if (isSupabaseRelationKnownUnavailable('messages')) return [];
 
-      const data = await executeSupabaseQuery<any[]>(
-        () => (supabase as any)
+      const data = await executeSupabaseQuery<Message[]>(
+        () => db
           .from('messages')
           .select('*')
           .eq('request_id', requestId)
-          .order('created_at', { ascending: true }),
+          .order('created_at', { ascending: false })
+          .limit(messageLimit) as any,
         {
-          context: 'message-thread-messages',
+          context: 'message-thread',
           fallbackData: [],
           relationName: 'messages',
-          retries: 0,
-        },
+        }
       );
-
-      return (data || []).map(msg => ({
+      
+      // Sort ascending for proper chat order
+      return [...(data || [])].map(msg => ({
         ...msg,
         payload: msg.payload ? (msg.payload as unknown as MessagePayload) : undefined
-      })) as Message[];
+      })).sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ) as Message[];
     },
-    enabled: !!requestId
+    enabled: !!requestId,
+    // SEAMLESS TRANSITION: Use the seeded placeholder data if available
+    placeholderData: (previousData) => previousData,
   });
 
   // Determine the other party's ID from messages
@@ -129,8 +150,13 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
           table: 'messages',
           filter: `request_id=eq.${requestId}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['messages', requestId] });
+        (payload) => {
+          queryClient.setQueryData(['messages', requestId, messageLimit], (old: Message[] | undefined) => {
+            if (!old) return [payload.new as Message];
+            // Dedupe optimistic messages
+            if (old.some(m => m.id === payload.new.id)) return old;
+            return [...old, payload.new as Message];
+          });
         }
       )
       .on(
@@ -141,8 +167,11 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
           table: 'messages',
           filter: `request_id=eq.${requestId}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['messages', requestId] });
+        (payload) => {
+          queryClient.setQueryData(['messages', requestId, messageLimit], (old: Message[] | undefined) => {
+            if (!old) return [payload.new as Message];
+            return old.map(m => m.id === payload.new.id ? { ...m, ...payload.new as Message } : m);
+          });
         }
       )
       .subscribe();
@@ -150,7 +179,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, requestId]);
+  }, [queryClient, requestId, messageLimit]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -171,13 +200,17 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
         .in('id', unreadMessages.map(m => m.id));
 
       if (!error) {
-        queryClient.invalidateQueries({ queryKey: ['messages', requestId] });
+        // Optimistic cache update for read status
+        queryClient.setQueryData(['messages', requestId, messageLimit], (old: Message[] | undefined) => {
+           if (!old) return old;
+           return old.map(m => unreadMessages.find(um => um.id === m.id) ? { ...m, is_read: true } : m);
+        });
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
       }
     };
 
     markAsRead();
-  }, [messages, user, queryClient, requestId]);
+  }, [messages, user, queryClient, requestId, messageLimit]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({ content, payload }: { content: string; payload?: MessagePayload }) => {
@@ -185,7 +218,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
         throw new Error(currentLanguage === 'ar' ? 'خدمة الرسائل غير متاحة حالياً' : 'Messaging is currently unavailable');
       }
 
-      const messageData: any = {
+      const messageData: Record<string, unknown> = {
         sender_id: user!.id,
         content,
         request_id: requestId,
@@ -193,26 +226,50 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
 
       if (payload) messageData.payload = payload;
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('messages')
-        .insert(messageData);
+        .insert(messageData as any)
+        .select('*')
+        .single();
 
       if (error) {
         rememberMissingSupabaseRelation(error, 'messages');
         throw error;
       }
+      return data;
     },
-    onSuccess: () => {
-      setMessageText('');
-      queryClient.invalidateQueries({ queryKey: ['messages', requestId] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    onMutate: async (newMsg) => {
+       await queryClient.cancelQueries({ queryKey: ['messages', requestId, messageLimit] });
+       const previousMessages = queryClient.getQueryData<Message[]>(['messages', requestId, messageLimit]);
+       const optimisticMsg: Message = {
+         id: `temp-${Date.now()}`,
+         sender_id: user!.id,
+         content: newMsg.content,
+         created_at: new Date().toISOString(),
+         is_read: false,
+         payload: newMsg.payload,
+       };
+       queryClient.setQueryData(['messages', requestId, messageLimit], (old: Message[] = []) => [...old, optimisticMsg]);
+       setMessageText(''); // immediate UI clear
+       return { previousMessages, tempId: optimisticMsg.id };
     },
-    onError: (error: any) => {
+    onError: (error: unknown, variables, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['messages', requestId, messageLimit], context.previousMessages);
+      }
+      const errorMessage = error instanceof Error ? error.message : undefined;
       toast({
         title: currentLanguage === 'ar' ? 'خطأ' : 'Error',
-        description: error?.message || (currentLanguage === 'ar' ? 'فشل إرسال الرسالة' : 'Failed to send message'),
+        description: errorMessage || (currentLanguage === 'ar' ? 'فشل إرسال الرسالة' : 'Failed to send message'),
         variant: 'destructive'
       });
+      setMessageText(variables.content);
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.setQueryData(['messages', requestId, messageLimit], (old: Message[] = []) => {
+        return old.map(m => m.id === context?.tempId ? { ...data, payload: data.payload as unknown as MessagePayload } as Message : m);
+      });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
 
@@ -270,10 +327,10 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
 
       const content = type === 'image' ? '📷 Image' : '📎 File';
       sendMessageMutation.mutate({ content, payload });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: currentLanguage === 'ar' ? 'فشل الرفع' : 'Upload failed',
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive'
       });
     } finally {
@@ -380,29 +437,13 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
 
   const ct = content_text[currentLanguage];
 
-  if (isLoading) {
-    return (
-      <div className="pb-20" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
-        <GradientHeader title={ct.title} onBack={() => navigate(-1)} />
-        <div className="px-6 py-6">
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                <div className="w-3/4 h-16 bg-muted/50 rounded-3xl animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex h-app min-h-app flex-col bg-background" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex h-app min-h-app flex-col bg-background" style={keyboardStyle} dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
       <GradientHeader
         title={ct.title}
         showBack={true}
-        onBack={() => navigate(-1)}
+        onBack={handleBack}
+        className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm shadow-sm flex-shrink-0"
         rightAction={
           otherPartyId ? (
             <ReportButton
@@ -437,8 +478,28 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       />
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-4 space-y-4">
-        {messages?.map((message, index) => {
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="flex-1 overflow-y-auto px-6 py-6 pb-2" 
+        style={keyboardStyle}
+      >
+        {messages && messages.length >= messageLimit && (
+          <div className="flex justify-center mb-6">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setMessageLimit(prev => prev + 50)}
+              className="text-xs bg-muted/30"
+            >
+              {currentLanguage === 'ar' ? 'عرض الرسائل السابقة' : 'Load old messages'}
+            </Button>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {messages?.map((message, index) => {
           const isOwn = message.sender_id === user?.id;
           const showTimestamp = index === 0 ||
             new Date(message.created_at).getDate() !== new Date(messages[index - 1].created_at).getDate();
@@ -450,15 +511,13 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
                   {new Date(message.created_at).toLocaleDateString()}
                 </div>
               )}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+              <div
+                className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-forwards`}
               >
                 <div
                   className={`max-w-[75%] px-4 py-3 rounded-3xl ${isOwn
-                    ? 'bg-primary text-primary-foreground rounded-br-md'
-                    : 'bg-muted text-foreground rounded-bl-md'
+                    ? 'bg-primary text-primary-foreground rounded-br-md shadow-sm'
+                    : 'bg-muted text-foreground rounded-bl-md shadow-sm border border-border/40' // Added slight styling improvement for incoming
                     }`}
                 >
                   <p className="text-sm leading-relaxed">{message.content}</p>
@@ -476,12 +535,13 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           );
         })}
+        </div>
         <div ref={messagesEndRef} />
-      </div>
+      </motion.div>
 
       {/* Quick Replies */}
       <div className="px-6 py-2">

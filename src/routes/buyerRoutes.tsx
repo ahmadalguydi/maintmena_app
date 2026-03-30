@@ -12,7 +12,8 @@ const BuyerActivity = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/activ
 const RequestDetail = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/requests/RequestDetail'), 'RequestDetail');
 const BuyerProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/profile/BuyerProfile'), 'BuyerProfile');
 const BuyerEditProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/profile/EditProfile'), 'EditProfile');
-const BuyerHistory = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/profile/History'), 'History');
+// History removed — Activity screen covers this. Route redirects below.
+const VendorProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/explore/VendorProfile'), 'VendorProfile');
 const MessagesHub = lazyRoute<RouteProps>(() => import('@/app/shared/MessagesHub'));
 
 export function buyerRoutes({ currentLanguage }: RouteProps) {
@@ -20,7 +21,6 @@ export function buyerRoutes({ currentLanguage }: RouteProps) {
         <>
             {/* Guest-accessible routes */}
             <Route path="/app/buyer/explore" element={<Navigate to="/app/buyer/home" replace />} />
-            <Route path="/app/buyer/vendor/:id" element={<Navigate to="/app/buyer/home" replace />} />
 
             <Route path="/app/buyer/requests/new" element={<Navigate to="/app/buyer/home?compose=1" replace />} />
             <Route path="/app/buyer/requests" element={<Navigate to="/app/buyer/activity" replace />} />
@@ -62,16 +62,19 @@ export function buyerRoutes({ currentLanguage }: RouteProps) {
                 </ProtectedRoute>
             } />
             <Route path="/app/buyer/history" element={
-                <ProtectedRoute allowedRoles={['buyer']}>
-                    <Suspense fallback={<RouteLoader />}>
-                        <BuyerHistory currentLanguage={currentLanguage} />
-                    </Suspense>
-                </ProtectedRoute>
+                <Navigate to="/app/buyer/activity" replace />
             } />
             <Route path="/app/buyer/messages" element={
                 <ProtectedRoute allowedRoles={['buyer']}>
                     <Suspense fallback={<RouteLoader />}>
                         <MessagesHub currentLanguage={currentLanguage} />
+                    </Suspense>
+                </ProtectedRoute>
+            } />
+            <Route path="/app/buyer/vendor/:id" element={
+                <ProtectedRoute allowedRoles={['buyer']}>
+                    <Suspense fallback={<RouteLoader />}>
+                        <VendorProfile currentLanguage={currentLanguage} />
                     </Suspense>
                 </ProtectedRoute>
             } />

@@ -131,8 +131,10 @@ export const FloatingNav = ({
   const isVendorProfilePage = location.pathname.startsWith('/app/buyer/vendor/');
   const isHelpPage = location.pathname === '/app/help';
   const isRequestDetailPage = location.pathname.startsWith('/app/buyer/request/');
+  const isSettingsPage = location.pathname === '/app/settings';
+  const isAdminPage = location.pathname.startsWith('/app/admin/');
 
-  const shouldHideNav = isMessageThreadPage || isSellerJobDetailPage || isBuyerJobDetailPage || isVendorProfilePage || isHelpPage || isRequestDetailPage;
+  const shouldHideNav = isMessageThreadPage || isSellerJobDetailPage || isBuyerJobDetailPage || isVendorProfilePage || isHelpPage || isRequestDetailPage || isSettingsPage || isAdminPage;
 
   return (
     <motion.nav
@@ -166,12 +168,13 @@ export const FloatingNav = ({
               const showBadge = isMessages && unreadMessages > 0;
 
               return (
-                <button
+                <motion.button
                   key={tab.route}
                   onClick={() => handleTabClick(tab.route, tab.name)}
+                  whileTap={{ scale: 0.88 }}
                   className={cn(
                     'flex flex-col items-center justify-center min-w-[56px] min-h-[44px] relative py-1 gap-0.5',
-                    'transition-colors duration-200 active:scale-95',
+                    'transition-colors duration-200',
                     isActive ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
@@ -220,7 +223,7 @@ export const FloatingNav = ({
                       }}
                     />
                   )}
-                </button>
+                </motion.button>
               );
             })}
           </div>

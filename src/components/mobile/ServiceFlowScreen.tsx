@@ -126,8 +126,8 @@ interface ConfirmationViewProps {
         subIssue?: string | null;
         location: string;
         time: string;
-        lat: number;
-        lng: number;
+        lat: number | undefined;
+        lng: number | undefined;
         rawLocation: { lat: number; lng: number; address: string; city: string };
         rawTime: {
             mode: 'asap' | 'scheduled';
@@ -519,13 +519,7 @@ export const ServiceFlowScreen = ({
                 state.location.lat,
                 state.location.lng,
                 3
-            ).then((result) => {
-                if (result.eligibleCount > 0) {
-                    console.log(`Dispatched to ${result.eligibleCount} sellers`);
-                } else {
-                    console.log('No eligible sellers:', result.error);
-                }
-            }).catch(console.error);
+            ).catch(console.error);
 
         } catch (err) {
             console.error('Submit error:', err);
@@ -660,11 +654,11 @@ export const ServiceFlowScreen = ({
                             subIssue: subIssueLabel,
                             location: state.location.city || (currentLanguage === 'ar' ? 'الموقع الحالي' : 'Current Location'),
                             time: timeLabel,
-                            lat: state.location.lat || 0,
-                            lng: state.location.lng || 0,
+                            lat: state.location.lat ?? undefined,
+                            lng: state.location.lng ?? undefined,
                             rawLocation: {
-                                lat: state.location.lat || 0,
-                                lng: state.location.lng || 0,
+                                lat: state.location.lat ?? 0,
+                                lng: state.location.lng ?? 0,
                                 address: state.location.address || '',
                                 city: state.location.city || ''
                             },

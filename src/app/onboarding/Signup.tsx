@@ -7,13 +7,14 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/contexts/RoleContext';
-import { ArrowLeft, CheckCircle2, XCircle, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { ProgressBar } from '@/components/mobile/ProgressBar';
 import { signupSchema } from '@/lib/validationSchemas';
 import { handleError } from '@/lib/errorHandler';
 import { toast } from 'sonner';
 import { LanguageToggle } from '@/components/mobile/LanguageToggle';
 import { supabase } from '@/integrations/supabase/client';
+import { useKeyboardAvoidance } from '@/hooks/useKeyboardAvoidance';
 
 interface SignupProps {
   currentLanguage: 'en' | 'ar';
@@ -26,6 +27,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
   const { intendedRole } = useRole();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const { containerStyle } = useKeyboardAvoidance();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -146,7 +148,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
     setLoading(true);
 
     // Auto-assign free plan for buyers
-    const metadata: any = {
+    const metadata: Record<string, string | undefined> = {
       full_name: formData.name,
       phone: formData.phone,
       user_type: intendedRole || 'buyer',
@@ -223,7 +225,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
   };
 
   return (
-    <div className="min-h-app bg-background flex flex-col p-6 pb-safe-or-4 pt-safe" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-app bg-background flex flex-col p-6 pb-safe-or-4 pt-safe" style={containerStyle} dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header with Back Button and Language Toggle */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={handleBack} className="flex items-center gap-2 text-muted-foreground">
@@ -264,7 +266,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
                 <Label>{t.step1.type}</Label>
                 <RadioGroup
                   value={formData.accountType}
-                  onValueChange={(value: any) => setFormData({ ...formData, accountType: value })}
+                  onValueChange={(value: 'individual' | 'company') => setFormData({ ...formData, accountType: value })}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="individual" id="individual" />
@@ -387,7 +389,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
           )}
 
           <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-            {step === 3 ? (loading ? '...' : t.signUp) : t.next}
+            {step === 3 && loading ? <Loader2 className="h-5 w-5 animate-spin" /> : step === 3 ? t.signUp : t.next}
           </Button>
         </form>
 

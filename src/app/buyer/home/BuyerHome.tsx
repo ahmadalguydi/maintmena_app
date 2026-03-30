@@ -116,15 +116,15 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
 
       if (!reqs || reqs.length === 0) return [];
 
-      const visibleRequests = reqs.filter((req: any) => shouldShowBuyerRequestOnHome(req));
+      const visibleRequests = reqs.filter((req) => shouldShowBuyerRequestOnHome(req));
 
       if (visibleRequests.length === 0) return [];
 
       // Batch-fetch all seller profiles in a single query (fixes N+1)
       const sellerIds = [...new Set(
         visibleRequests
-          .filter((r: any) => r.assigned_seller_id)
-          .map((r: any) => r.assigned_seller_id as string)
+          .filter((r) => r.assigned_seller_id)
+          .map((r) => r.assigned_seller_id as string)
       )] as string[];
 
       const sellerProfileMap = new Map<
@@ -137,7 +137,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
         }
       >();
       if (sellerIds.length > 0) {
-        const sellerProfiles = await executeSupabaseQuery<any[]>(
+        const sellerProfiles = await executeSupabaseQuery<{ id: string; full_name: string | null; company_name: string | null; avatar_url: string | null; phone: string | null; }[]>(
           () => supabase
             .from('profiles')
             .select('id, full_name, company_name, avatar_url, phone')
@@ -148,7 +148,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
             relationName: 'profiles',
           },
         );
-        (sellerProfiles || []).forEach((p: any) => sellerProfileMap.set(p.id, p));
+        (sellerProfiles || []).forEach((p) => sellerProfileMap.set(p.id, p));
       }
 
       const results: ActiveRequest[] = [];
@@ -211,6 +211,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
           providerRating,
           providerVerified,
           providerExperienceYears,
+          providerId: req.assigned_seller_id || undefined,
           lat: canonicalRequest.latitude ?? canonicalRequest.lat,
           lng: canonicalRequest.longitude ?? canonicalRequest.lng,
           estimatedPrice,
@@ -239,7 +240,17 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
     queryFn: async (): Promise<PendingReviewPrompt | null> => {
       if (!user?.id) return null;
 
-      const completedRequests = await executeSupabaseQuery<any[]>(
+      interface CompletedRequestRow {
+        id: string;
+        title: string | null;
+        category: string | null;
+        location: string | null;
+        assigned_seller_id: string;
+        buyer_marked_complete: boolean | null;
+        buyer_completion_date: string | null;
+      }
+
+      const completedRequests = await executeSupabaseQuery<CompletedRequestRow[]>(
         () => (supabase as any)
           .from('maintenance_requests')
           .select('id, title, category, location, assigned_seller_id, buyer_marked_complete, buyer_completion_date')
@@ -260,10 +271,10 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
         return null;
       }
 
-      const requestIds = completedRequests.map((request: any) => request.id);
+      const requestIds = completedRequests.map((request) => request.id);
       const reviews = isSupabaseRelationKnownUnavailable('seller_reviews')
         ? []
-        : await executeSupabaseQuery<any[]>(
+        : await executeSupabaseQuery<{ request_id: string | null }[]>(
             () => (supabase as any)
               .from('seller_reviews')
               .select('request_id')
@@ -279,11 +290,11 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
 
       const reviewedRequestIds = new Set(
         reviews
-          .map((review: any) => review.request_id)
+          .map((review) => review.request_id)
           .filter(Boolean),
       );
 
-      const nextPromptRequest = completedRequests.find((request: any) => {
+      const nextPromptRequest = completedRequests.find((request) => {
         const hasExistingReview = reviewedRequestIds.has(request.id);
         const promptCount = getBuyerReviewPromptCount(window.localStorage, request.id);
         const hasLocalReviewSubmission = hasBuyerReviewBeenSubmittedLocally(
@@ -305,7 +316,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
 
       const promptCount = getBuyerReviewPromptCount(window.localStorage, nextPromptRequest.id);
 
-      const seller = await executeSupabaseQuery<any | null>(
+      const seller = await executeSupabaseQuery<{ full_name: string | null; company_name: string | null } | null>(
         () => supabase
           .from('profiles')
           .select('full_name, company_name')
@@ -455,7 +466,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
   // The separate queries for activeRequests and activeJobs were redundant as they overlapped
   // with activeDispatchRequests. We consolidated them above.
   const isActivityLoading = false; // Query results are ready by the time we render
-  const haltedJobs: any[] = []; // In-memory filter if needed
+  const haltedJobs: never[] = []; // In-memory filter if needed
 
   const hasBuyerHomeDataError = Boolean(
     activeDispatchRequestsError || pendingReviewPromptError,

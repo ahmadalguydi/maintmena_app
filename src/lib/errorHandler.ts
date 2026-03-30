@@ -31,7 +31,7 @@ export const handleError = (error: unknown, context: string): string => {
  * Safe error message extraction
  * Only returns safe, user-friendly messages
  */
-export const getSafeErrorMessage = (error: any): string => {
+export const getSafeErrorMessage = (error: unknown): string => {
   // Known safe error messages from Supabase Auth
   const safeMessages = [
     'Invalid login credentials',
@@ -39,8 +39,8 @@ export const getSafeErrorMessage = (error: any): string => {
     'User already registered',
     'Password should be at least 6 characters',
   ];
-  
-  const message = error?.message || '';
+
+  const message = (error instanceof Error ? error.message : '') || '';
   
   if (safeMessages.some(safe => message.includes(safe))) {
     return message;

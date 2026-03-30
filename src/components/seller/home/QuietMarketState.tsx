@@ -1,4 +1,4 @@
-import { Cloud, Expand, Zap, Plus } from 'lucide-react';
+import { Cloud, Expand, Zap, Plus, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -64,9 +64,11 @@ export function QuietMarketState({
             peakNote: 'السباكة الطارئة تزداد بعد 9 مساءً',
             increaseOdds: 'زيادة فرصك',
             expandRadius: 'توسيع النطاق',
-            expandRadiusDetail: '5 → 8 كم',
-            enableUrgent: 'أعمال عاجلة',
-            addService: 'أضف خدمة',
+            expandRadiusDetail: 'وسّع نطاقك لتظهر لعملاء أكثر',
+            enableUrgent: 'تفعيل الطارئة',
+            enableUrgentDetail: 'الطلبات العاجلة تُوزَّع أسرع وبأجر أعلى',
+            addService: 'إضافة خدمة',
+            addServiceDetail: 'خدمة جديدة = فرص إضافية',
         },
         en: {
             calmTitle: "It's calm in your area right now",
@@ -78,9 +80,11 @@ export function QuietMarketState({
             peakNote: 'Emergency plumbing peaks after 9 PM',
             increaseOdds: 'Increase Your Odds',
             expandRadius: 'Expand Radius',
-            expandRadiusDetail: '5 → 8 km',
-            enableUrgent: 'Urgent Jobs',
-            addService: 'Add service',
+            expandRadiusDetail: 'Reach more customers in a wider area',
+            enableUrgent: 'Enable Urgent Jobs',
+            enableUrgentDetail: 'Urgent requests pay more and dispatch faster',
+            addService: 'Add a Service',
+            addServiceDetail: 'More services = more chances to match',
         },
     };
 
@@ -174,44 +178,70 @@ export function QuietMarketState({
                 </p>
             </div>
 
-            {/* Increase Your Odds - Smaller and secondary styling */}
-            <div className="px-1">
-                <p className={cn(
-                    "text-xs font-medium text-muted-foreground mb-2",
-                    currentLanguage === 'ar' ? 'font-ar-body' : 'font-body'
-                )}>
-                    {t.increaseOdds}
-                </p>
-                <div className="flex gap-2 flex-wrap">
+            {/* Increase Your Odds */}
+            <div className="rounded-3xl bg-card border border-border/40 overflow-hidden" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <div className="px-5 pt-4 pb-2">
+                    <p className={cn(
+                        "text-sm font-bold text-foreground",
+                        currentLanguage === 'ar' ? 'font-ar-display' : 'font-display'
+                    )}>
+                        {t.increaseOdds}
+                    </p>
+                </div>
+                <div className="divide-y divide-border/40">
                     <button
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-xs text-foreground font-medium hover:bg-muted transition-colors"
+                        className="w-full flex items-center gap-4 px-5 py-3.5 active:bg-muted/30 transition-colors"
                         onClick={() => {
                             onExpandRadius?.();
-                            toast.success(currentLanguage === 'ar' ? 'تم توسيع النطاق' : 'Radius expanded');
+                            toast.info(currentLanguage === 'ar' ? 'تم توسيع نطاق الخدمة' : 'Service radius increased');
                         }}
                     >
-                        <Expand className="h-3 w-3" />
-                        {t.expandRadius}
+                        <div className="h-9 w-9 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center shrink-0">
+                            <Expand className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1 text-start">
+                            <p className={cn("text-sm font-semibold text-foreground", currentLanguage === 'ar' ? 'font-ar-body' : '')}>
+                                {t.expandRadius}
+                            </p>
+                            <p className={cn("text-xs text-muted-foreground mt-0.5", currentLanguage === 'ar' ? 'font-ar-body' : '')}>
+                                {t.expandRadiusDetail}
+                            </p>
+                        </div>
+                        <ChevronRight className={cn("h-4 w-4 text-muted-foreground/50 shrink-0", currentLanguage === 'ar' && 'rotate-180')} />
                     </button>
                     <button
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-xs text-foreground font-medium hover:bg-muted transition-colors"
-                        onClick={() => {
-                            onEnableUrgent?.();
-                            toast.success(currentLanguage === 'ar' ? 'تم تفعيل الأعمال العاجلة' : 'Urgent jobs enabled');
-                        }}
+                        className="w-full flex items-center gap-4 px-5 py-3.5 active:bg-muted/30 transition-colors"
+                        onClick={() => onEnableUrgent?.()}
                     >
-                        <Zap className="h-3 w-3" />
-                        {t.enableUrgent}
+                        <div className="h-9 w-9 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center shrink-0">
+                            <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div className="flex-1 text-start">
+                            <p className={cn("text-sm font-semibold text-foreground", currentLanguage === 'ar' ? 'font-ar-body' : '')}>
+                                {t.enableUrgent}
+                            </p>
+                            <p className={cn("text-xs text-muted-foreground mt-0.5", currentLanguage === 'ar' ? 'font-ar-body' : '')}>
+                                {t.enableUrgentDetail}
+                            </p>
+                        </div>
+                        <ChevronRight className={cn("h-4 w-4 text-muted-foreground/50 shrink-0", currentLanguage === 'ar' && 'rotate-180')} />
                     </button>
                     <button
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-xs text-foreground font-medium hover:bg-muted transition-colors"
-                        onClick={() => {
-                            onAddService?.();
-                            toast.success(currentLanguage === 'ar' ? 'أضف خدمة من الملف' : 'Add service from profile');
-                        }}
+                        className="w-full flex items-center gap-4 px-5 py-3.5 active:bg-muted/30 transition-colors"
+                        onClick={() => onAddService?.()}
                     >
-                        <Plus className="h-3 w-3" />
-                        {t.addService}
+                        <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center shrink-0">
+                            <Plus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div className="flex-1 text-start">
+                            <p className={cn("text-sm font-semibold text-foreground", currentLanguage === 'ar' ? 'font-ar-body' : '')}>
+                                {t.addService}
+                            </p>
+                            <p className={cn("text-xs text-muted-foreground mt-0.5", currentLanguage === 'ar' ? 'font-ar-body' : '')}>
+                                {t.addServiceDetail}
+                            </p>
+                        </div>
+                        <ChevronRight className={cn("h-4 w-4 text-muted-foreground/50 shrink-0", currentLanguage === 'ar' && 'rotate-180')} />
                     </button>
                 </div>
             </div>

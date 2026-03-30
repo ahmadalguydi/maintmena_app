@@ -233,17 +233,20 @@ export function MissionHeroCard({
       className="relative overflow-hidden rounded-[2.5rem] border border-border/40 bg-card shadow-sm transition-all duration-500"
     >
       <motion.div
-        className="relative cursor-pointer overflow-hidden bg-[#F0EBE6]"
+        className={cn(
+          'relative overflow-hidden bg-[#F0EBE6]',
+          !isMapExpanded && 'cursor-pointer',
+        )}
         animate={{ height: isMapExpanded ? 360 : 208 }}
         transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-        onClick={handleMapToggle}
+        onClick={!isMapExpanded ? handleMapToggle : undefined}
       >
         <LazyServiceLocationMap
           currentLanguage={currentLanguage}
           lat={lat}
           lng={lng}
           locationLabel={location || t.locationPending}
-          interactive
+          interactive={false}
           showLocationPill={false}
           showInteractionHint={false}
           heightClassName={isMapExpanded ? 'h-[360px]' : 'h-[208px]'}
@@ -280,7 +283,14 @@ export function MissionHeroCard({
             ) : null
           }
           footerOverlay={
-            <motion.div className="pointer-events-none flex items-center gap-1 rounded-full border border-black/5 bg-white/84 px-3 py-1.5 shadow-sm backdrop-blur-md">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleMapToggle(event);
+              }}
+              className="pointer-events-auto flex items-center gap-1 rounded-full border border-black/5 bg-white/84 px-3 py-1.5 shadow-sm backdrop-blur-md"
+            >
               <motion.div animate={{ rotate: isMapExpanded ? 0 : 180 }} transition={{ duration: 0.3 }}>
                 <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
               </motion.div>
@@ -291,7 +301,7 @@ export function MissionHeroCard({
                     : t.expandMap
                   : t.locationPending}
               </span>
-            </motion.div>
+            </button>
           }
         />
 

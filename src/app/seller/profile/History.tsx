@@ -52,7 +52,7 @@ export const History = ({ currentLanguage }: HistoryProps) => {
 
       // 4. Fetch quotes for price info
       const quoteIds = contracts?.filter(c => c.quote_id).map(c => c.quote_id) || [];
-      let quoteMap = new Map<string, any>();
+      let quoteMap = new Map<string, { id: string; price: number }>();
       if (quoteIds.length > 0) {
         const { data: quotes } = await supabase
           .from('quote_submissions')
@@ -68,7 +68,8 @@ export const History = ({ currentLanguage }: HistoryProps) => {
         .eq('seller_id', user?.id);
 
       const reviewsByRequest = new Map(reviews?.map(r => [r.request_id, r]) || []);
-      const reviewsByContractId = new Map(reviews?.filter((r: any) => r.contract_id).map((r: any) => [r.contract_id, r]) || []);
+      type ReviewRow = typeof reviews extends (infer R)[] ? R : never;
+      const reviewsByContractId = new Map(reviews?.filter((r: ReviewRow & { contract_id?: string | null }) => r.contract_id).map((r: ReviewRow & { contract_id?: string | null }) => [r.contract_id as string, r]) || []);
 
       // 6. Gather Buyer IDs for Bulk Fetch
       const buyerIds = new Set<string>();
@@ -76,7 +77,7 @@ export const History = ({ currentLanguage }: HistoryProps) => {
       bookings?.forEach(b => { if (b.buyer_id) buyerIds.add(b.buyer_id); });
 
       // 7. Fetch Profiles
-      let profileMap = new Map();
+      let profileMap = new Map<string, { id: string; full_name: string | null; company_name: string | null }>();
       if (buyerIds.size > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
@@ -104,7 +105,7 @@ export const History = ({ currentLanguage }: HistoryProps) => {
         if (['cancelled', 'rejected', 'declined'].includes(r.status)) isRejected = true;
 
         // Price extraction: quote > contract metadata > budget
-        const price = quote?.price || (contract?.metadata as any)?.final_price || r.budget || 0;
+        const price = quote?.price || (contract?.metadata as Record<string, unknown>)?.final_price || r.budget || 0;
 
         return {
           ...r,
@@ -134,7 +135,7 @@ export const History = ({ currentLanguage }: HistoryProps) => {
         if (['cancelled', 'rejected', 'declined'].includes(b.status)) isRejected = true;
 
         // Price extraction
-        const price = b.final_agreed_price || b.final_amount || (contract?.metadata as any)?.final_price || 0;
+        const price = b.final_agreed_price || b.final_amount || (contract?.metadata as Record<string, unknown>)?.final_price || 0;
 
         return {
           ...b,
@@ -179,17 +180,22 @@ export const History = ({ currentLanguage }: HistoryProps) => {
       // Combine all items
       const allItems = [...processedRequests, ...processedBookings, ...processedRejectedQuotes];
 
+      type HistoryItem = typeof allItems[number] & {
+        seller_completion_date?: string | null;
+        completed_at?: string | null;
+        updated_at: string;
+      };
       // Split into completed and rejected
       const completed = allItems
         .filter(item => item.category === 'completed')
-        .sort((a: any, b: any) =>
+        .sort((a: HistoryItem, b: HistoryItem) =>
           new Date(b.seller_completion_date || b.completed_at || b.updated_at).getTime() -
           new Date(a.seller_completion_date || a.completed_at || a.updated_at).getTime()
         );
 
       const rejected = allItems
         .filter(item => item.category === 'rejected')
-        .sort((a: any, b: any) =>
+        .sort((a: HistoryItem, b: HistoryItem) =>
           new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
 
@@ -243,8 +249,8 @@ export const History = ({ currentLanguage }: HistoryProps) => {
   const items = activeTab === 'completed' ? completedJobs : rejectedItems;
 
   // Calculate total earnings
-  const totalEarnings = completedJobs.reduce((sum: number, job: any) => {
-    return sum + (job.calculated_price || 0);
+  const totalEarnings = completedJobs.reduce((sum: number, job) => {
+    return sum + ((job as { calculated_price?: number }).calculated_price || 0);
   }, 0);
 
   const renderStars = (rating: number) => {
@@ -264,21 +270,23 @@ export const History = ({ currentLanguage }: HistoryProps) => {
   };
 
   // Get display title for item
-  const getDisplayTitle = (item: any) => {
+  const getDisplayTitle = (item: Record<string, unknown>) => {
     const isBooking = item.type === 'booking';
     const isQuote = item.type === 'quote';
-    const buyerName = item.profiles?.company_name || item.profiles?.full_name || (currentLanguage === 'ar' ? 'العميل' : 'Client');
+    const profiles = item.profiles as { company_name?: string | null; full_name?: string | null } | null;
+    const buyerName = profiles?.company_name || profiles?.full_name || (currentLanguage === 'ar' ? 'العميل' : 'Client');
 
     if (isBooking) {
       return `${t.bookingWith} ${buyerName}`;
     }
+    const maintenanceRequests = item.maintenance_requests as { title?: string | null; title_ar?: string | null } | null;
     if (isQuote) {
-      return currentLanguage === 'ar' && item.maintenance_requests?.title_ar
-        ? item.maintenance_requests.title_ar
-        : item.maintenance_requests?.title || item.service_category;
+      return currentLanguage === 'ar' && maintenanceRequests?.title_ar
+        ? maintenanceRequests.title_ar
+        : maintenanceRequests?.title || (item.service_category as string | undefined);
     }
     // Request
-    return currentLanguage === 'ar' && item.title_ar ? item.title_ar : item.title || item.service_category;
+    return currentLanguage === 'ar' && item.title_ar ? item.title_ar : item.title || (item.service_category as string | undefined);
   };
 
   return (
@@ -353,20 +361,27 @@ export const History = ({ currentLanguage }: HistoryProps) => {
             </BodySmall>
           </div>
         ) : (
-          items.map((item: any) => {
-            const isBooking = item.type === 'booking';
-            const isRequest = item.type === 'request';
-            const hasReview = item.review;
-            const hasCompletionPhotos = item.completion_photos && Array.isArray(item.completion_photos) && item.completion_photos.length > 0;
-            const warrantyActive = item.warranty_expires_at && new Date(item.warranty_expires_at) > new Date();
-            const price = item.calculated_price;
+          items.map((item) => {
+            const rec = item as Record<string, unknown>;
+            const isBooking = rec.type === 'booking';
+            const isRequest = rec.type === 'request';
+            const hasReview = rec.review;
+            const hasCompletionPhotos = rec.completion_photos && Array.isArray(rec.completion_photos) && (rec.completion_photos as unknown[]).length > 0;
+            const warrantyActive = rec.warranty_expires_at && new Date(rec.warranty_expires_at as string) > new Date();
+            const price = rec.calculated_price as number | undefined;
+
+            type ReviewData = { rating: number; review_text?: string | null };
+            const review = rec.review as ReviewData | null | undefined;
+            const recProfiles = rec.profiles as { company_name?: string | null; full_name?: string | null } | null;
+            const maintenanceReqs = rec.maintenance_requests as { city?: string | null } | null;
+            const completionPhotos = rec.completion_photos as string[] | null | undefined;
 
             return (
-              <SoftCard key={item.id}>
+              <SoftCard key={rec.id as string}>
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <Heading3 lang={currentLanguage} className="flex-1 line-clamp-2">
-                      {getDisplayTitle(item)}
+                      {getDisplayTitle(rec)}
                     </Heading3>
                     <StatusPill
                       status={activeTab === 'completed' ? 'success' : 'error'}
@@ -375,18 +390,18 @@ export const History = ({ currentLanguage }: HistoryProps) => {
                   </div>
 
                   {/* Buyer Name (for non-booking items) */}
-                  {!isBooking && item.profiles && (
+                  {!isBooking && recProfiles && (
                     <BodySmall lang={currentLanguage} className="text-muted-foreground">
-                      {t.buyer}: {(item.profiles as any).company_name || (item.profiles as any).full_name}
+                      {t.buyer}: {recProfiles.company_name || recProfiles.full_name}
                     </BodySmall>
                   )}
 
                   <div className="grid grid-cols-2 gap-3">
-                    {(item.city || item.location_city || item.maintenance_requests?.city) && (
+                    {(rec.city || rec.location_city || maintenanceReqs?.city) && (
                       <div className="flex items-center gap-2">
                         <MapPin size={14} className="text-muted-foreground flex-shrink-0" />
                         <BodySmall lang={currentLanguage} className="text-muted-foreground truncate">
-                          {item.city || item.location_city || item.maintenance_requests?.city}
+                          {(rec.city || rec.location_city || maintenanceReqs?.city) as string}
                         </BodySmall>
                       </div>
                     )}
@@ -396,15 +411,15 @@ export const History = ({ currentLanguage }: HistoryProps) => {
                         {activeTab === 'completed' ? t.completedOn : t.rejectedOn}:{' '}
                         {new Date(
                           activeTab === 'completed'
-                            ? item.seller_completion_date || item.completed_at
-                            : item.updated_at
+                            ? (rec.seller_completion_date || rec.completed_at || rec.updated_at) as string
+                            : rec.updated_at as string
                         ).toLocaleDateString()}
                       </BodySmall>
                     </div>
                   </div>
 
                   {/* Price */}
-                  {price > 0 && (
+                  {price !== undefined && price > 0 && (
                     <div className="flex items-center gap-2 pt-2 border-t border-border/30">
                       <DollarSign size={16} className="text-primary" />
                       <BodySmall lang={currentLanguage} className="font-semibold text-primary">
@@ -421,10 +436,10 @@ export const History = ({ currentLanguage }: HistoryProps) => {
                         <BodySmall lang={currentLanguage} className="text-muted-foreground font-medium">
                           {t.review}:
                         </BodySmall>
-                        {hasReview ? (
+                        {review ? (
                           <div className="flex items-center gap-2">
-                            {renderStars(item.review.rating)}
-                            <span className="text-sm font-medium">({item.review.rating}/5)</span>
+                            {renderStars(review.rating)}
+                            <span className="text-sm font-medium">({review.rating}/5)</span>
                           </div>
                         ) : (
                           <BodySmall lang={currentLanguage} className="text-muted-foreground italic">
@@ -432,16 +447,16 @@ export const History = ({ currentLanguage }: HistoryProps) => {
                           </BodySmall>
                         )}
                       </div>
-                      {hasReview && item.review.review_text && (
+                      {review?.review_text && (
                         <p className="text-sm text-muted-foreground italic pl-6">
-                          "{item.review.review_text}"
+                          "{review.review_text}"
                         </p>
                       )}
                     </div>
                   )}
 
                   {/* Completion Photos */}
-                  {activeTab === 'completed' && hasCompletionPhotos && (
+                  {activeTab === 'completed' && hasCompletionPhotos && completionPhotos && (
                     <div className="pt-2 border-t border-border/30">
                       <div className="flex items-center gap-2 mb-2">
                         <Camera size={14} className="text-muted-foreground" />
@@ -450,7 +465,7 @@ export const History = ({ currentLanguage }: HistoryProps) => {
                         </BodySmall>
                       </div>
                       <div className="flex gap-2 overflow-x-auto">
-                        {item.completion_photos.slice(0, 4).map((photo: string, idx: number) => (
+                        {completionPhotos.slice(0, 4).map((photo, idx) => (
                           <img
                             key={idx}
                             src={photo}
@@ -458,9 +473,9 @@ export const History = ({ currentLanguage }: HistoryProps) => {
                             className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                           />
                         ))}
-                        {item.completion_photos.length > 4 && (
+                        {completionPhotos.length > 4 && (
                           <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-medium">+{item.completion_photos.length - 4}</span>
+                            <span className="text-sm font-medium">+{completionPhotos.length - 4}</span>
                           </div>
                         )}
                       </div>
@@ -468,7 +483,7 @@ export const History = ({ currentLanguage }: HistoryProps) => {
                   )}
 
                   {/* Warranty Status */}
-                  {activeTab === 'completed' && item.warranty_expires_at && (
+                  {activeTab === 'completed' && rec.warranty_expires_at && (
                     <div className="pt-2 border-t border-border/30">
                       <div className="flex items-center gap-2">
                         <Shield size={14} className={warrantyActive ? 'text-green-500' : 'text-muted-foreground'} />
@@ -478,14 +493,14 @@ export const History = ({ currentLanguage }: HistoryProps) => {
                         <span className={cn(
                           "text-xs px-2 py-0.5 rounded-full",
                           warrantyActive
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-200"
                             : "bg-muted text-muted-foreground"
                         )}>
                           {warrantyActive ? t.warrantyActive : t.warrantyExpired}
                         </span>
                         {warrantyActive && (
                           <BodySmall className="text-muted-foreground">
-                            ({new Date(item.warranty_expires_at).toLocaleDateString()})
+                            ({new Date(rec.warranty_expires_at as string).toLocaleDateString()})
                           </BodySmall>
                         )}
                       </div>

@@ -31,7 +31,6 @@ interface ActiveJob {
     seller_marked_complete?: boolean;
     buyer_marked_complete?: boolean;
     buyer_price_approved?: boolean;
-    job_completion_code?: string;
     budget?: number;
 }
 
@@ -224,12 +223,6 @@ export function SellerHomeMissionMode({
     };
 
     const handleStartMoving = async () => {
-        if (activeJob.id.includes('mock')) {
-            activeJob.status = 'en_route';
-            toast.success(currentLanguage === 'ar' ? 'تم البدء بالتنقل (تجريبي)' : 'Navigation started (Mock)');
-            return;
-        }
-        
         if (isUpdating) return;
         setIsUpdating(true);
         try {
@@ -244,12 +237,6 @@ export function SellerHomeMissionMode({
     };
 
     const handleMarkArrived = async () => {
-        if (activeJob.id.includes('mock')) {
-            activeJob.status = 'arrived';
-            toast.success(currentLanguage === 'ar' ? 'تم تأكيد الوصول (تجريبي)' : 'Arrival confirmed (Mock)');
-            return;
-        }
-        
         if (isUpdating) return;
         setIsUpdating(true);
         try {
@@ -263,12 +250,6 @@ export function SellerHomeMissionMode({
     };
 
     const handleStartWork = async () => {
-        if (activeJob.id.includes('mock')) {
-            activeJob.status = 'in_progress';
-            toast.success(currentLanguage === 'ar' ? 'تم بدء العمل (تجريبي)' : 'Work started (Mock)');
-            return;
-        }
-        
         if (isUpdating) return;
         setIsUpdating(true);
         try {
@@ -300,20 +281,7 @@ export function SellerHomeMissionMode({
     };
 
     const handlePhotoProofComplete = async (photos: string[], overridePrice?: number) => {
-        if (activeJob.id.includes('mock')) {
-            toast.success(currentLanguage === 'ar' ? 'تم إرسال الإثباتات (تجريبي)' : 'Photos submitted (Mock)');
-            setShowPhotoProof(false);
-            // Simulate progression
-            activeJob.seller_marked_complete = true;
-            activeJob.buyer_price_approved = true;
-            activeJob.job_completion_code = '123456';
-            forceUpdate();
-            // Automatically show code modal for mock flow too
-            setTimeout(() => setShowCompletionCodeModal(true), 300);
-            return;
-        }
-
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
         const priceToUse = overridePrice !== undefined ? overridePrice : finalPrice;
 
         const updateData: any = {
@@ -351,40 +319,30 @@ export function SellerHomeMissionMode({
     const handleCodeSubmit = async (code: string) => {
         setIsSubmittingCode(true);
         try {
-            if (activeJob.id.includes('mock')) {
-                if (code !== '123456') throw new Error(currentLanguage === 'ar' ? 'رمز خاطئ' : 'Incorrect Code');
-                toast.success(currentLanguage === 'ar' ? 'تم إكتمال المهمة بنجاح (تجريبي)' : 'Job completed successfully (Mock)');
-                setShowCompletionCodeModal(false);
-                return;
-            }
+            const { data: verified, error } = await supabase
+                .rpc('verify_job_completion_code', {
+                    p_request_id: activeJob.id,
+                    p_code: code,
+                });
 
-            if (activeJob.job_completion_code !== code) {
+            if (error) throw error;
+
+            if (!verified) {
                 toast.error(currentLanguage === 'ar' ? "الرمز غير صحيح" : "Incorrect code");
                 return;
             }
-
-            const { error } = await (supabase as any).from('maintenance_requests').update({
-                buyer_marked_complete: true,
-                buyer_completion_date: new Date().toISOString(),
-                status: 'completed'
-            }).eq('id', activeJob.id);
-
-            if (error) throw error;
 
             toast.success(currentLanguage === 'ar' ? "تم تأكيد إنجاز العمل!" : "Job completion confirmed!");
             setShowCompletionCodeModal(false);
             queryClient.invalidateQueries({ queryKey: ['seller-active-job'] });
             queryClient.invalidateQueries({ queryKey: ['seller-active-jobs'] });
             queryClient.invalidateQueries({ queryKey: ['seller-scheduled-jobs'] });
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Failed to submit code');
         } finally {
             setIsSubmittingCode(false);
         }
     };
-
-    const [, _forceUpdate] = useState({});
-    const forceUpdate = () => _forceUpdate({});
 
     const handleCall = () => {
         if (activeJob.buyer_phone) {
@@ -421,7 +379,7 @@ export function SellerHomeMissionMode({
                 lng={activeJob.location_lng}
                 buyerName={activeJob.buyer_name}
                 buyerPhone={activeJob.buyer_phone}
-                eta={getMissionStatus() === 'en_route' ? 8 : undefined}
+                eta={undefined}
                 onNavigate={handleNavigate}
                 onStartMoving={handleStartMoving}
                 onMarkArrived={handleMarkArrived}
@@ -455,8 +413,12 @@ export function SellerHomeMissionMode({
                             className="w-full flex items-center gap-3 px-4 py-3.5 text-[15px] font-medium text-foreground hover:bg-muted/50 transition-colors rounded-xl"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                toast.success(currentLanguage === 'ar' ? 'تم إرسال تحديث للعميل' : 'Late notification sent to customer');
                                 setManageOpen(false);
+                                if (activeJob.buyer_phone) {
+                                    window.open(`tel:${activeJob.buyer_phone}`);
+                                } else {
+                                    toast.info(currentLanguage === 'ar' ? 'رقم العميل غير متوفر' : 'Customer phone not available');
+                                }
                             }}
                         >
                             <AlertTriangle className="h-5 w-5 text-foreground shrink-0" strokeWidth={1.5} />
@@ -466,8 +428,12 @@ export function SellerHomeMissionMode({
                             className="w-full flex items-center gap-3 px-4 py-3.5 text-[15px] font-medium text-foreground hover:bg-muted/50 transition-colors rounded-xl"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                toast.success(currentLanguage === 'ar' ? 'سيتم التواصل مع العميل' : 'Support notified about unresponsive customer');
                                 setManageOpen(false);
+                                if (activeJob.buyer_phone) {
+                                    window.open(`tel:${activeJob.buyer_phone}`);
+                                } else {
+                                    toast.info(currentLanguage === 'ar' ? 'رقم العميل غير متوفر' : 'Customer phone not available');
+                                }
                             }}
                         >
                             <PhoneOff className="h-5 w-5 text-foreground shrink-0" strokeWidth={1.5} />

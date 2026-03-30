@@ -33,7 +33,7 @@ export const useDateFormat = () => {
       setDateFormat(format);
       localStorage.setItem('preferredDateFormat', format);
     } catch (error) {
-      console.error('Error loading date format:', error);
+      if (import.meta.env.DEV) console.error('Error loading date format:', error);
       const stored = localStorage.getItem('preferredDateFormat') as DateFormatType;
       setDateFormat(stored || 'gregorian');
     } finally {

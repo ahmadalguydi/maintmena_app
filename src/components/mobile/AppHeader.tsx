@@ -74,7 +74,7 @@ export const AppHeader = ({
   };
 
   const displayName = userName ||
-    (currentLanguage === 'ar' ? profile?.full_name_ar : profile?.full_name) ||
+    (currentLanguage === 'ar' ? (profile as any)?.full_name_ar : profile?.full_name) ||
     profile?.full_name ||
     user?.email?.split('@')[0] ||
     'User';
@@ -85,7 +85,13 @@ export const AppHeader = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
+    <motion.header 
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: -100, opacity: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50"
+    >
       <div className="px-4 py-3 flex items-center justify-between">
         {/* Left: Avatar + Greeting (or Sign Up for guests) */}
         <div className="flex items-center gap-3">
@@ -208,6 +214,6 @@ export const AppHeader = ({
           )}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };

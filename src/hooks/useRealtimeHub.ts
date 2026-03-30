@@ -3,7 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
-import { getNotificationPresentation, notificationQueryKeys } from '@/lib/notifications';
+import { getNotificationPresentation, notificationQueryKeys, type AppNotification } from '@/lib/notifications';
+
+type NotificationRow = Pick<AppNotification, 'notification_type' | 'title' | 'message'>;
 
 /**
  * Centralized Realtime Hub
@@ -35,16 +37,18 @@ export function useRealtimeHub() {
                     queryClient.invalidateQueries({ queryKey: notificationQueryKeys.list(user.id) });
                     queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount(user.id) });
 
-                    const n = payload.new as any;
-                    if (
-                        n?.notification_type === 'new_message' ||
-                        n?.notification_type === 'seller_on_way' ||
-                        n?.notification_type === 'seller_arrived' ||
-                        n?.notification_type === 'job_completed' ||
-                        n?.notification_type === 'price_approval_needed'
-                    ) {
-                        const presentation = getNotificationPresentation(n, 'en');
-                        toast.info(presentation.title);
+                    const n = payload.new as NotificationRow | null;
+                    if (n?.notification_type) {
+                        const lang = (
+                            localStorage.getItem('preferredLanguage') ||
+                            localStorage.getItem('currentLanguage') ||
+                            'ar'
+                        ) as 'en' | 'ar';
+                        const presentation = getNotificationPresentation(n, lang);
+                        toast.info(`${presentation.icon} ${presentation.title}`, {
+                            description: presentation.message,
+                            duration: 5000,
+                        });
                     }
                 }
             )
@@ -64,7 +68,7 @@ export function useRealtimeHub() {
                     queryClient.invalidateQueries({ queryKey: ['message-request-scopes', user.id] });
                     queryClient.invalidateQueries({ queryKey: ['conversations', user.id] });
                     // Invalidate specific request tracking query
-                    const requestId = (payload.new as any)?.id || (payload.old as any)?.id;
+                    const requestId = (payload.new as { id?: string } | null)?.id || (payload.old as { id?: string } | null)?.id;
                     if (requestId) {
                         queryClient.invalidateQueries({ queryKey: ['request-tracking', requestId] });
                         queryClient.invalidateQueries({ queryKey: ['request-detail', requestId] });
@@ -72,28 +76,25 @@ export function useRealtimeHub() {
                 }
             )
             // ── 3. Maintenance requests — seller side (requests assigned to me) ──
+            //    Server-side filter ensures only rows where assigned_seller_id = user.id
+            //    are sent over the wire. This includes the moment of assignment (UPDATE
+            //    sets assigned_seller_id to user.id) since Supabase matches on the new row.
             .on(
                 'postgres_changes',
                 {
                     event: '*',
                     schema: 'public',
                     table: 'maintenance_requests',
+                    filter: `assigned_seller_id=eq.${user.id}`,
                 },
                 (payload) => {
-                    const nextAssignedSellerId = (payload.new as any)?.assigned_seller_id;
-                    const previousAssignedSellerId = (payload.old as any)?.assigned_seller_id;
-
-                    if (nextAssignedSellerId !== user.id && previousAssignedSellerId !== user.id) {
-                        return;
-                    }
-
                     queryClient.invalidateQueries({ queryKey: ['seller-active-job', user.id] });
                     queryClient.invalidateQueries({ queryKey: ['seller-scheduled-jobs', user.id] });
                     queryClient.invalidateQueries({ queryKey: ['seller-active-jobs', user.id] });
                     queryClient.invalidateQueries({ queryKey: ['seller-job-detail'] });
                     queryClient.invalidateQueries({ queryKey: ['message-request-scopes', user.id] });
                     queryClient.invalidateQueries({ queryKey: ['conversations', user.id] });
-                    const requestId = (payload.new as any)?.id || (payload.old as any)?.id;
+                    const requestId = (payload.new as { id?: string } | null)?.id || (payload.old as { id?: string } | null)?.id;
                     if (requestId) {
                         queryClient.invalidateQueries({ queryKey: ['request-detail', requestId] });
                     }

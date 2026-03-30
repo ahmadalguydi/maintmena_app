@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,7 +8,9 @@ import { BrowserRouter, Routes, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from 'framer-motion';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { trackPageView } from '@/lib/brevoAnalytics';
+import { getLanguage, setLanguage } from '@/lib/preferences';
 import { AuthProvider } from "./hooks/useAuth";
+import { useDeepLinks } from "./hooks/useDeepLinks";
 import { CurrencyProvider } from "./hooks/useCurrency";
 import { RoleProvider } from "./contexts/RoleContext";
 import { CelebrationProvider } from "./contexts/CelebrationContext";
@@ -93,9 +95,13 @@ function AppChrome({ currentLanguage }: { currentLanguage: 'en' | 'ar' }) {
     setShowAuthModal(true);
   };
 
+  const shouldHideHeader = location.pathname.startsWith('/app/messages/thread') || location.pathname.includes('/messages/thread');
+
   return (
     <>
-      <AppHeader currentLanguage={currentLanguage} />
+      <AnimatePresence>
+        {!shouldHideHeader && <AppHeader currentLanguage={currentLanguage} />}
+      </AnimatePresence>
       <FloatingNav
         currentLanguage={currentLanguage}
         onAuthRequired={handleAuthRequired}
@@ -110,11 +116,14 @@ function AppChrome({ currentLanguage }: { currentLanguage: 'en' | 'ar' }) {
   );
 }
 
+
 /**
- * ScrollToTop - Scrolls to top on route change
+ * ScrollToTop - Scrolls to top on route change.
+ * Also initialises the deep link listener (needs router context).
  */
 function ScrollToTop() {
   const location = useLocation();
+  useDeepLinks();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -163,14 +172,21 @@ function AnimatedRoutesWrapper({ children }: { children: React.ReactNode }) {
  * Provides all context providers and renders routes
  */
 const App = () => {
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'ar'>(() => {
-    const saved = localStorage.getItem('language');
-    return (saved === 'en' || saved === 'ar') ? saved : 'ar';
-  });
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'ar'>(() => getLanguage());
+
+  const handleLanguageToggle = useCallback((lang: 'en' | 'ar') => {
+    setCurrentLanguage(lang);
+    setLanguage(lang);
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem('language', currentLanguage);
-  }, [currentLanguage]);
+    const handler = (e: Event) => {
+      const { lang } = (e as CustomEvent<{ lang: 'en' | 'ar' }>).detail;
+      handleLanguageToggle(lang);
+    };
+    window.addEventListener('mm:language-change', handler);
+    return () => window.removeEventListener('mm:language-change', handler);
+  }, [handleLanguageToggle]);
 
   return (
     <ErrorBoundary>
@@ -191,7 +207,7 @@ const App = () => {
                     <div className="min-h-screen flex flex-col bg-paper">
                       <Chrome
                         currentLanguage={currentLanguage}
-                        onToggle={() => setCurrentLanguage(currentLanguage === 'en' ? 'ar' : 'en')}
+                        onToggle={() => handleLanguageToggle(currentLanguage === 'en' ? 'ar' : 'en')}
                       />
                       <AppChrome currentLanguage={currentLanguage} />
                       <AnimatedRoutesWrapper>

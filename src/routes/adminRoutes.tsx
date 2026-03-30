@@ -11,6 +11,11 @@ const AdminSupport = lazy(() => import('@/app/admin/support/AdminSupport').then(
 const AdminDisputes = lazy(() => import('@/app/admin/disputes/AdminDisputes').then(m => ({ default: m.AdminDisputes })));
 const AdminScores = lazy(() => import('@/app/admin/scores/AdminScores').then(m => ({ default: m.AdminScores })));
 const AdminIssues = lazy(() => import('@/app/admin/issues/AdminIssues').then(m => ({ default: m.AdminIssues })));
+const AdminJobs = lazy(() => import('@/app/admin/jobs/AdminJobs').then(m => ({ default: m.AdminJobs })));
+const AdminSellers = lazy(() => import('@/app/admin/sellers/AdminSellers').then(m => ({ default: m.AdminSellers })));
+const AdminFinancials = lazy(() => import('@/app/admin/financials/AdminFinancials').then(m => ({ default: m.AdminFinancials })));
+const AdminDispatch = lazy(() => import('@/app/admin/dispatch/AdminDispatch').then(m => ({ default: m.AdminDispatch })));
+const AdminDemand = lazy(() => import('@/app/admin/demand/AdminDemand').then(m => ({ default: m.AdminDemand })));
 const Admin = lazy(() => import('@/pages/Admin'));
 const BlogEditor = lazy(() => import('@/components/admin/BlogEditor').then(m => ({ default: m.BlogEditor })));
 
@@ -100,6 +105,43 @@ export function adminRoutes({ currentLanguage }: RouteProps) {
                 <ProtectedRoute allowedRoles={['admin']}>
                     <Suspense fallback={<RouteLoader />}>
                         <AdminScores currentLanguage={currentLanguage} />
+                    </Suspense>
+                </ProtectedRoute>
+            } />
+
+            {/* New Admin Screens */}
+            <Route path="/app/admin/jobs" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <Suspense fallback={<RouteLoader />}>
+                        <AdminJobs currentLanguage={currentLanguage} />
+                    </Suspense>
+                </ProtectedRoute>
+            } />
+            <Route path="/app/admin/sellers" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <Suspense fallback={<RouteLoader />}>
+                        <AdminSellers currentLanguage={currentLanguage} />
+                    </Suspense>
+                </ProtectedRoute>
+            } />
+            <Route path="/app/admin/financials" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <Suspense fallback={<RouteLoader />}>
+                        <AdminFinancials currentLanguage={currentLanguage} />
+                    </Suspense>
+                </ProtectedRoute>
+            } />
+            <Route path="/app/admin/dispatch" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <Suspense fallback={<RouteLoader />}>
+                        <AdminDispatch currentLanguage={currentLanguage} />
+                    </Suspense>
+                </ProtectedRoute>
+            } />
+            <Route path="/app/admin/demand" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <Suspense fallback={<RouteLoader />}>
+                        <AdminDemand currentLanguage={currentLanguage} />
                     </Suspense>
                 </ProtectedRoute>
             } />

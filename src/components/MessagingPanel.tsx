@@ -30,6 +30,20 @@ interface MessagePayload {
   longitude?: number;
 }
 
+interface RawMessage {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  payload?: MessagePayload;
+}
+
+interface ProfileRecord {
+  id: string;
+  full_name: string | null;
+  company_name: string | null;
+}
+
 interface Message {
   id: string;
   sender_id: string;
@@ -132,23 +146,24 @@ export const MessagingPanel = ({ quoteId, bookingId, quoteTitle, userType, onClo
 
       if (error) throw error;
 
-      const senderIds = Array.from(new Set((data || []).map((m: any) => m.sender_id)));
-      let profilesMap: Record<string, any> = {};
+      const rawMessages = (data || []) as RawMessage[];
+      const senderIds = Array.from(new Set(rawMessages.map((m) => m.sender_id)));
+      let profilesMap: Record<string, ProfileRecord> = {};
       if (senderIds.length) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name, company_name')
           .in('id', senderIds);
-        profilesMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]));
+        profilesMap = Object.fromEntries((profiles || []).map((p) => [p.id, p as ProfileRecord]));
       }
 
-      const messagesWithSenders = (data || []).map((m: any) => ({
+      const messagesWithSenders: Message[] = rawMessages.map((m) => ({
         ...m,
-        sender_name: profilesMap[m.sender_id]?.company_name || profilesMap[m.sender_id]?.full_name || 'Unknown'
+        sender_name: profilesMap[m.sender_id]?.company_name || profilesMap[m.sender_id]?.full_name || 'Unknown',
       }));
 
       setMessages(messagesWithSenders);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching messages:', error);
     } finally {
       setLoading(false);
@@ -171,9 +186,9 @@ export const MessagingPanel = ({ quoteId, bookingId, quoteTitle, userType, onClo
 
     setSending(true);
     try {
-      const messageData: any = {
+      const messageData: Record<string, unknown> = {
         sender_id: user.id,
-        content: messageContent || (payload?.type === 'image' ? '📷 Image' : payload?.type === 'file' ? '📎 File' : '📍 Location')
+        content: messageContent || (payload?.type === 'image' ? '📷 Image' : payload?.type === 'file' ? '📎 File' : '📍 Location'),
       };
 
       if (quoteId) messageData.quote_id = quoteId;
@@ -194,8 +209,8 @@ export const MessagingPanel = ({ quoteId, bookingId, quoteTitle, userType, onClo
 
       setNewMessage('');
       toast.success('Message sent!');
-    } catch (error: any) {
-      toast.error('Failed to send message: ' + error.message);
+    } catch (error: unknown) {
+      toast.error('Failed to send message: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setSending(false);
     }
@@ -243,8 +258,8 @@ export const MessagingPanel = ({ quoteId, bookingId, quoteTitle, userType, onClo
       };
 
       await handleSendMessage(undefined, payload);
-    } catch (error: any) {
-      toast.error('Failed to upload file: ' + error.message);
+    } catch (error: unknown) {
+      toast.error('Failed to upload file: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setUploading(false);
     }

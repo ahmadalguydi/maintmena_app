@@ -18,6 +18,30 @@ interface EarningsData {
     }[];
 }
 
+interface CompletedRow {
+    id: string;
+    budget: number | null;
+    final_amount: number | null;
+    status: string;
+    created_at: string;
+    category: string | null;
+    updated_at: string | null;
+}
+
+interface PendingRow {
+    budget: number | null;
+    final_amount: number | null;
+}
+
+interface EarningsTransaction {
+    id: string;
+    amount: number;
+    type: string;
+    service_type: string;
+    date: string;
+    status: string;
+}
+
 export function useSellerEarnings() {
     const { user } = useAuth();
 
@@ -45,7 +69,7 @@ export function useSellerEarnings() {
                 .limit(200);
 
             // Calculate earnings from completed jobs
-            const allCompleted = (completedRequests || []).map((r: any) => ({
+            const allCompleted: EarningsTransaction[] = (completedRequests || []).map((r: CompletedRow) => ({
                 id: r.id,
                 amount: r.final_amount || r.budget || 0,
                 type: 'request',
@@ -56,16 +80,16 @@ export function useSellerEarnings() {
 
             // This month earnings
             const thisMonth = allCompleted
-                .filter((t: any) => new Date(t.date) >= new Date(startOfMonth))
-                .reduce((sum: number, t: any) => sum + t.amount, 0);
+                .filter((t) => new Date(t.date) >= new Date(startOfMonth))
+                .reduce((sum, t) => sum + t.amount, 0);
 
             // Last month earnings
             const lastMonth = allCompleted
-                .filter((t: any) => {
+                .filter((t) => {
                     const d = new Date(t.date);
                     return d >= new Date(startOfLastMonth) && d <= new Date(endOfLastMonth);
                 })
-                .reduce((sum: number, t: any) => sum + t.amount, 0);
+                .reduce((sum, t) => sum + t.amount, 0);
 
             // Pending — accepted but not yet completed/paid
             const { data: pendingRequests } = await (supabase as any)
@@ -74,11 +98,11 @@ export function useSellerEarnings() {
                 .eq('assigned_seller_id', user.id)
                 .in('status', ['accepted', 'en_route', 'arrived', 'in_progress']);
 
-            const pendingPayments = (pendingRequests || []).reduce((sum: number, r: any) => sum + (r.final_amount || r.budget || 0), 0);
+            const pendingPayments = (pendingRequests || []).reduce((sum: number, r: PendingRow) => sum + (r.final_amount || r.budget || 0), 0);
 
             // Sort transactions by most recent
             const recentTransactions = [...allCompleted]
-                .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .slice(0, 10);
 
             return {

@@ -76,7 +76,7 @@ export function SellerSetupChecklist({ currentLanguage, completeness }: SellerSe
                         className={cn(
                             'w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition-all',
                             item.done
-                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                                ? 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200'
                                 : 'bg-white dark:bg-card border border-red-200 dark:border-red-700 text-foreground hover:bg-red-50 active:scale-[0.98]',
                         )}
                     >

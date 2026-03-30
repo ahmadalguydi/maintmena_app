@@ -104,10 +104,10 @@ export const useJourneyProgress = ({
                 .eq('id', entityId);
 
             if (error) {
-                console.error('[useJourneyProgress] Error updating last seen stage:', error);
+                if (import.meta.env.DEV) console.error('[useJourneyProgress] Error updating last seen stage:', error);
             }
         } catch (err) {
-            console.error('[useJourneyProgress] Exception updating last seen stage:', err);
+            if (import.meta.env.DEV) console.error('[useJourneyProgress] Exception updating last seen stage:', err);
         }
     }, [entityTable, entityId, role, currentStageIndex]);
 

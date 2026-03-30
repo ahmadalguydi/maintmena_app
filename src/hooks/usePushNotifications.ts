@@ -1,60 +1,42 @@
+import { useEffect, useRef } from 'react';
+import { useAuth } from './useAuth';
+import { registerPushNotifications } from '@/lib/pushNotifications';
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+const SESSION_KEY = 'mm_push_registered_v1';
 
-export const usePushNotifications = () => {
-    const [permission, setPermission] = useState<NotificationPermission>('default');
-    const [isSupported, setIsSupported] = useState(false);
-    const { toast } = useToast();
+/**
+ * Initialises push notification registration once per session after login.
+ * Detects platform automatically (Capacitor native / Median / Web Push).
+ *
+ * Mounted inside RealtimeHub so it runs for every authenticated user.
+ */
+export function usePushNotifications(): void {
+  const { user } = useAuth();
+  const registeredRef = useRef(false);
 
-    useEffect(() => {
-        if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
-            setIsSupported(true);
-            setPermission(Notification.permission);
+  useEffect(() => {
+    if (!user) {
+      registeredRef.current = false;
+      return;
+    }
 
-            // Register SW if not already
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW Registered:', reg))
-                .catch(err => console.error('SW Error:', err));
-        }
-    }, []);
+    // Skip if we already registered in this session for this user
+    const sessionKey = `${SESSION_KEY}:${user.id}`;
+    if (sessionStorage.getItem(sessionKey) === '1') {
+      registeredRef.current = true;
+      return;
+    }
 
-    const requestPermission = async () => {
-        if (!isSupported) {
-            toast({
-                title: 'Not Supported',
-                description: 'Push notifications are not supported on this device.',
-                variant: 'destructive',
-            });
-            return false;
-        }
+    if (registeredRef.current) return;
+    registeredRef.current = true;
 
-        try {
-            const result = await Notification.requestPermission();
-            setPermission(result);
+    // 3 s delay so the push-permission prompt doesn't stack on top of login
+    const timeoutId = window.setTimeout(() => {
+      registerPushNotifications(user.id)
+        .then(() => sessionStorage.setItem(sessionKey, '1'))
+        .catch(() => undefined);
+    }, 3000);
 
-            if (result === 'granted') {
-                const reg = await navigator.serviceWorker.ready;
-                // In a real implementation with VAPID:
-                // const sub = await reg.pushManager.subscribe({ ... });
-                // await supabase.from('push_subscriptions').insert(...)
-
-                toast({
-                    title: 'Notifications Enabled',
-                    description: 'You will now receive updates.',
-                });
-                return true;
-            }
-        } catch (error) {
-            console.error('Permission error:', error);
-        }
-        return false;
-    };
-
-    return {
-        permission,
-        isSupported,
-        requestPermission
-    };
-};
+    return () => window.clearTimeout(timeoutId);
+  }, [user]);
+}

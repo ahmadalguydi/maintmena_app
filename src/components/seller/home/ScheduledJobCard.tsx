@@ -65,7 +65,7 @@ export function ScheduledJobCard({ job, currentLanguage, onEnterFocusMode, onCon
     const t = content[currentLanguage];
 
     // Time calculations
-    const scheduledDate = job.preferred_start_date ? new Date(job.preferred_start_date) : null;
+    const scheduledDate = job.scheduled_for ? new Date(job.scheduled_for) : null;
     const diffMs = scheduledDate ? scheduledDate.getTime() - now.getTime() : null;
     const diffMinutes = diffMs ? Math.max(0, Math.floor(diffMs / 60000)) : null;
     const diffHours = diffMinutes !== null ? diffMinutes / 60 : null;
@@ -154,7 +154,7 @@ export function ScheduledJobCard({ job, currentLanguage, onEnterFocusMode, onCon
                                 {categoryLabel}
                             </h3>
                             {/* Accepted badge */}
-                            <span className="text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-100/80 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-semibold text-green-600 dark:text-green-200 bg-green-100/80 dark:bg-green-500/15 px-2 py-0.5 rounded-full">
                                 {t.accepted}
                             </span>
                         </div>
@@ -175,8 +175,8 @@ export function ScheduledJobCard({ job, currentLanguage, onEnterFocusMode, onCon
                                 className={cn(
                                     "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold",
                                     isForcedFocusMode
-                                        ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                                        ? "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-200"
+                                        : "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200"
                                 )}
                             >
                                 <Timer className="w-3 h-3" />
@@ -237,7 +237,12 @@ export function ScheduledJobCard({ job, currentLanguage, onEnterFocusMode, onCon
                             {/* Map */}
                             {(job.lat || job.lng) && (
                                 <div className="rounded-xl overflow-hidden h-32 bg-muted relative">
-                                    <img src={staticMapUrl} alt="Location" className="w-full h-full object-cover" />
+                                    <img
+                                        src={staticMapUrl}
+                                        alt="Location"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                    />
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="w-5 h-5 rounded-full bg-primary shadow-lg border-2 border-white" />
                                     </div>

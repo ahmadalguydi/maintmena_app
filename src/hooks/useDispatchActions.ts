@@ -53,7 +53,7 @@ export function useDispatchActions() {
             //    This means a "logged out" seller who was online IS eligible.
             const { data: sellers, error: sellersError } = await (supabase as any)
                 .from('profiles')
-                .select('id, location_lat, location_lng, services_pricing, service_categories, is_online, user_type')
+                .select('id, location_lat, location_lng, services_pricing, service_categories, is_online, user_type, service_radius_km')
                 .eq('user_type', 'seller')   // profiles uses user_type, not role
                 .eq('is_online', true);
 
@@ -69,12 +69,20 @@ export function useDispatchActions() {
             // 2. Filter by category capability using flexible matching:
             //    - services_pricing[].serviceType  (normalised key)
             //    - service_categories[]            (direct category key array)
+            //    Also filter by service_radius_km when buyer location is available.
             const normalize = (s: string) => s.toLowerCase().replace(/[\s-]+/g, '_');
             const categoryNorm = normalize(category);
-            console.log(`[Dispatch] category="${category}" normalised="${categoryNorm}"`);
-            console.log(`[Dispatch] Total online sellers: ${sellers.length}`);
 
             const eligible = sellers.filter((s: any) => {
+                // Service radius check — skip if no buyer location or seller hasn't set a radius
+                if (buyerLat != null && buyerLng != null) {
+                    const radiusKm: number | null = s.service_radius_km ?? null;
+                    if (radiusKm != null && radiusKm > 0 && s.location_lat && s.location_lng) {
+                        const distanceM = haversineDistance(buyerLat, buyerLng, s.location_lat, s.location_lng);
+                        if (distanceM > radiusKm * 1000) return false;
+                    }
+                }
+
                 // Check service_categories array (simple string array on the profile)
                 const cats: string[] = Array.isArray(s.service_categories)
                     ? s.service_categories.filter(Boolean)
@@ -83,22 +91,13 @@ export function useDispatchActions() {
 
                 // Check services_pricing (JSONB array — may use { serviceType } or { category })
                 const pricing: any[] = Array.isArray(s.services_pricing) ? s.services_pricing : [];
-                const matchesPricing = pricing.some(
+                return pricing.some(
                     (p: any) => (p.enabled || p.available) && (
                         normalize(p.serviceType || '') === categoryNorm ||
                         normalize(p.category || '') === categoryNorm
                     )
                 );
-                if (!matchesPricing) {
-                    console.log(
-                        `[Dispatch] Seller ${s.id} rejected: no match.`,
-                        { cats, pricingTypes: pricing.map((p: any) => p.serviceType || p.category) }
-                    );
-                }
-                return matchesPricing;
             });
-
-            console.log(`[Dispatch] Eligible sellers: ${eligible.length}`);
 
             if (eligible.length === 0) {
                 return { sessionId: null, eligibleCount: 0, error: 'No sellers available for this category' };
@@ -125,6 +124,9 @@ export function useDispatchActions() {
             }
 
             // 4. Call start_job_dispatch RPC
+            if (!jobId) {
+                return { sessionId: null, eligibleCount: 0, error: 'Invalid job ID' };
+            }
             const { data, error: rpcError } = await (supabase as any).rpc('start_job_dispatch', {
                 p_job_id: jobId,
                 p_job_type: jobType,
@@ -151,8 +153,9 @@ export function useDispatchActions() {
      * Accept a dispatched job offer via the atomic RPC.
      * After RPC success, updates the original job record app-side.
      */
-    const acceptOffer = async (offerId: string, pricing?: any): Promise<AcceptResult> => {
+    const acceptOffer = async (offerId: string, pricing?: Record<string, unknown>): Promise<AcceptResult> => {
         if (!user?.id) return { accepted: false, error: 'Not authenticated' };
+        if (!offerId) return { accepted: false, error: 'Invalid offer ID' };
 
         try {
             // accept_job_offer is a new RPC not yet in generated types
@@ -212,5 +215,100 @@ export function useDispatchActions() {
         }
     };
 
-    return { triggerDispatch, acceptOffer, declineOffer };
+    /**
+     * Catch-up dispatch for a seller who just came online (or just loaded the app while online).
+     * Finds unassigned open requests matching the seller's categories/radius that they haven't
+     * received an offer for yet, then fires individual dispatch waves so they can see the jobs.
+     */
+    const catchUpDispatch = async (): Promise<{ dispatched: number }> => {
+        if (!user?.id) return { dispatched: 0 };
+
+        try {
+            // 1. Fetch this seller's profile
+            const { data: profile, error: profileError } = await (supabase as any)
+                .from('profiles')
+                .select('service_categories, services_pricing, location_lat, location_lng, service_radius_km, is_online')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (profileError || !profile?.is_online) return { dispatched: 0 };
+
+            // 2. Fetch open/unassigned requests (limit 20 to avoid spam)
+            const { data: requests, error: requestsError } = await (supabase as any)
+                .from('maintenance_requests')
+                .select('id, category, latitude, longitude, status')
+                .in('status', ['open', 'submitted', 'matching', 'dispatching'])
+                .is('assigned_seller_id', null)
+                .limit(20);
+
+            if (requestsError || !requests || requests.length === 0) return { dispatched: 0 };
+
+            // 3. Fetch existing offers for this seller so we don't re-dispatch
+            const requestIds = requests.map((r: any) => r.id as string);
+            const { data: existingOffers } = await (supabase as any)
+                .from('job_dispatch_offers')
+                .select('job_id')
+                .eq('seller_id', user.id)
+                .in('job_id', requestIds);
+
+            const alreadyOfferedIds = new Set<string>(
+                (existingOffers ?? []).map((o: any) => o.job_id as string)
+            );
+
+            // 4. Category/radius filter (reuse same logic as triggerDispatch)
+            const normalize = (s: string) => s.toLowerCase().replace(/[\s-]+/g, '_');
+            const cats: string[] = Array.isArray(profile.service_categories)
+                ? profile.service_categories.filter(Boolean)
+                : [];
+            const pricing: any[] = Array.isArray(profile.services_pricing) ? profile.services_pricing : [];
+            const radiusKm: number | null = profile.service_radius_km ?? null;
+
+            const matched = requests.filter((req: any) => {
+                if (alreadyOfferedIds.has(req.id)) return false;
+
+                // Radius check
+                if (radiusKm != null && radiusKm > 0 && profile.location_lat && profile.location_lng && req.latitude && req.longitude) {
+                    const distM = haversineDistance(profile.location_lat, profile.location_lng, req.latitude, req.longitude);
+                    if (distM > radiusKm * 1000) return false;
+                }
+
+                // Category check
+                const catNorm = normalize(req.category || '');
+                if (cats.some((c: string) => normalize(c) === catNorm)) return true;
+                return pricing.some(
+                    (p: any) => (p.enabled || p.available) && (
+                        normalize(p.serviceType || '') === catNorm ||
+                        normalize(p.category || '') === catNorm
+                    )
+                );
+            });
+
+            if (matched.length === 0) return { dispatched: 0 };
+
+            // 5. Dispatch up to 5 at a time, fire-and-forget individual waves
+            const batch = matched.slice(0, 5);
+            let dispatched = 0;
+            await Promise.all(
+                batch.map(async (req: any) => {
+                    try {
+                        const { error } = await (supabase as any).rpc('start_job_dispatch', {
+                            p_job_id: req.id,
+                            p_job_type: 'request',
+                            p_seller_ids: [user.id],
+                            p_wave_size: 1,
+                        });
+                        if (!error) dispatched++;
+                    } catch {
+                        // Non-fatal — best effort
+                    }
+                })
+            );
+
+            return { dispatched };
+        } catch {
+            return { dispatched: 0 };
+        }
+    };
+
+    return { triggerDispatch, acceptOffer, declineOffer, catchUpDispatch };
 }

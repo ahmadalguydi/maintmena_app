@@ -60,13 +60,13 @@ export const AvatarSelector = ({
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ avatar_seed: selectedSeed })
+        .update({ avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedSeed}` })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      // Invalidate profile cache immediately with new avatar_seed
-      invalidateProfile({ avatar_seed: selectedSeed });
+      // Invalidate profile cache immediately with new avatar_url
+      invalidateProfile({ avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedSeed}` });
 
       toast.success(currentLanguage === 'ar' ? 'تم حفظ الصورة الرمزية' : 'Avatar saved successfully');
       onSelect?.(selectedSeed);

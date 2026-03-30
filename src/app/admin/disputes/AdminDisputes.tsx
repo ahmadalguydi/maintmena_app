@@ -34,7 +34,30 @@ interface AdminDisputesProps {
 export const AdminDisputes = ({ currentLanguage }: AdminDisputesProps) => {
     const navigate = useNavigate();
     const isArabic = currentLanguage === 'ar';
-    const [selectedDispute, setSelectedDispute] = useState<any>(null);
+interface DisputeSellerProfile {
+    full_name: string | null;
+    email: string | null;
+    company_name: string | null;
+}
+
+interface DisputeBuyerProfile {
+    full_name: string | null;
+    email: string | null;
+}
+
+interface HaltedJob {
+    id: string;
+    title: string | null;
+    category: string;
+    created_at: string;
+    buyer_id: string | null;
+    budget: number | null;
+    halt_reason: string | null;
+    seller: DisputeSellerProfile | null;
+    buyer: DisputeBuyerProfile | null;
+}
+
+    const [selectedDispute, setSelectedDispute] = useState<HaltedJob | null>(null);
 
     const { data: haltedJobs, isLoading } = useQuery({
         queryKey: ['admin-halted-jobs'],
@@ -54,7 +77,7 @@ export const AdminDisputes = ({ currentLanguage }: AdminDisputesProps) => {
 
                 // Fetch buyer profiles separately (no FK constraint for buyer_id)
                 const enriched = await Promise.all(
-                    data.map(async (job: any) => {
+                    data.map(async (job) => {
                         if (job.buyer_id) {
                             const { data: buyerProfile } = await supabase
                                 .from('profiles')
@@ -122,7 +145,7 @@ export const AdminDisputes = ({ currentLanguage }: AdminDisputesProps) => {
                     </div>
                 ) : haltedJobs && haltedJobs.length > 0 ? (
                     <div className="space-y-3">
-                        {haltedJobs.map((job: any) => (
+                        {haltedJobs.map((job) => (
                             <SoftCard
                                 key={job.id}
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow border-l-4 border-amber-500"

@@ -110,7 +110,7 @@ export const EnhancedBookingCard = ({
       {/* Seller profile */}
       <div className="flex items-center gap-3">
         <AvatarBadge
-          src={seller?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${seller?.avatar_seed || seller?.id || 'default'}`}
+          src={seller?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${seller?.id || 'default'}`}
           fallback={seller?.company_name?.[0] || seller?.full_name?.[0] || 'V'}
           size="md"
         />

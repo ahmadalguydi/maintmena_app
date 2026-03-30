@@ -22,6 +22,7 @@ import {
     ThumbsUp,
     ThumbsDown,
     Scale,
+    type LucideIcon,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
@@ -43,7 +44,7 @@ const statusConfig: Record<IssueStatus, { label: { en: string; ar: string }; col
     resolved: { label: { en: 'Resolved', ar: 'محلول' }, color: 'bg-green-500' },
 };
 
-const issueTypeIcons: Record<IssueType, any> = {
+const issueTypeIcons: Record<IssueType, LucideIcon> = {
     no_response: Phone,
     no_show: XCircle,
     quality: Wrench,
@@ -61,8 +62,10 @@ export const AdminIssues = ({ currentLanguage }: AdminIssuesProps) => {
     const { data: issues, isLoading } = useQuery({
         queryKey: ['admin-issues', activeFilter],
         queryFn: async () => {
-            let query = (supabase as any)
-                .from('job_issues')
+            // job_issues table may not yet be in generated Supabase types
+            const db = supabase as unknown as typeof supabase;
+            let query = db
+                .from('job_issues' as Parameters<typeof supabase.from>[0])
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(100);
@@ -86,8 +89,9 @@ export const AdminIssues = ({ currentLanguage }: AdminIssuesProps) => {
     const resolveIssueMutation = useMutation({
         mutationFn: async ({ issueId, resolution, notes }: { issueId: string; resolution: 'buyer_favor' | 'seller_favor' | 'mutual'; notes?: string }) => {
             // Update issue status to resolved with admin notes
-            const { error } = await (supabase as any)
-                .from('job_issues')
+            const db = supabase as unknown as typeof supabase;
+            const { error } = await db
+                .from('job_issues' as Parameters<typeof supabase.from>[0])
                 .update({
                     status: 'resolved',
                     resolution_type: resolution,

@@ -4,9 +4,19 @@ import {
   rememberMissingSupabaseRelation,
 } from '@/lib/supabaseSchema';
 
+type SupabaseError = {
+  message?: string;
+  details?: string;
+  hint?: string;
+  error_description?: string;
+  status?: number;
+  code?: string;
+  response?: { status?: number };
+};
+
 type SupabaseResponse<T> = {
   data: T | null;
-  error: any;
+  error: SupabaseError | null;
 };
 
 interface ExecuteSupabaseQueryOptions<T> {
@@ -41,25 +51,29 @@ const RETRYABLE_MESSAGE_PATTERNS = [
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const extractErrorMessage = (error: any) =>
-  [error?.message, error?.details, error?.hint, error?.error_description]
+const extractErrorMessage = (error: unknown) => {
+  if (!error || typeof error !== 'object') return '';
+  const e = error as SupabaseError;
+  return [e.message, e.details, e.hint, e.error_description]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();
+};
 
 export const getSupabaseRetryDelay = (attemptIndex: number) =>
   Math.min(1000 * 2 ** attemptIndex, 5000);
 
-export const isRetryableSupabaseError = (error: any) => {
+export const isRetryableSupabaseError = (error: unknown) => {
   if (!error) return false;
   if (isMissingSupabaseRelationError(error, '')) return false;
 
-  const status = Number(error?.status ?? error?.response?.status);
+  const e = error as SupabaseError;
+  const status = Number(e?.status ?? e?.response?.status);
   if (RETRYABLE_HTTP_STATUSES.has(status)) {
     return true;
   }
 
-  const code = String(error?.code ?? '').toUpperCase();
+  const code = String(e?.code ?? '').toUpperCase();
   if (RETRYABLE_SUPABASE_CODES.has(code)) {
     return true;
   }
@@ -93,7 +107,7 @@ export async function executeSupabaseQuery<T>(
   }: ExecuteSupabaseQueryOptions<T>,
 ): Promise<T> {
   let attempt = 0;
-  let lastError: any = null;
+  let lastError: unknown = null;
 
   while (attempt <= retries) {
     const { data, error } = await queryFactory();

@@ -173,6 +173,7 @@ export const OpportunityCard = React.forwardRef<HTMLDivElement, OpportunityCardP
                                 src={staticMapUrl}
                                 alt="Location Area"
                                 className="w-full h-full object-cover"
+                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                             />
                             {/* Radius circle overlay — approximate area, not exact pin */}
                             <div className="absolute inset-0 flex items-center justify-center">

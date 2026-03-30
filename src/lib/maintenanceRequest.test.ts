@@ -29,6 +29,7 @@ describe('maintenanceRequest helpers', () => {
   it('returns null coordinates when the request has no valid position', () => {
     expect(getRequestCoordinates({ latitude: null, longitude: null })).toBeNull();
     expect(getRequestCoordinates({ lat: 21.5, lng: 39.1 })).toEqual({ lat: 21.5, lng: 39.1 });
+    expect(getRequestCoordinates({ location_lat: 24.7136, location_lng: 46.6753 })).toEqual({ lat: 24.7136, lng: 46.6753 });
   });
 
   it('falls back to a neutral location label', () => {
