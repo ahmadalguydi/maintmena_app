@@ -120,8 +120,7 @@ export const BuyerActivity = ({ currentLanguage }: BuyerActivityProps) => {
     gcTime: GC_TIME.STANDARD,
     placeholderData: keepPreviousData,
     refetchInterval: REFETCH_INTERVAL.OPPORTUNITIES,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
 
   const resolvedRequests = requests ?? [];

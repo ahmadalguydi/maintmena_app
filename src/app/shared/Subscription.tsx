@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSoftOpening } from '@/hooks/useSoftOpening';
 import { GradientHeader } from '@/components/mobile/GradientHeader';
 import { SoftCard } from '@/components/mobile/SoftCard';
 import { Button } from '@/components/ui/button';
@@ -16,11 +17,12 @@ interface SubscriptionProps {
 
 export const Subscription = ({ currentLanguage }: SubscriptionProps) => {
   const { user, userType } = useAuth();
+  const { isSoftOpening } = useSoftOpening();
   const navigate = useNavigate();
   const isArabic = currentLanguage === 'ar';
-  
-  // Check if user is an alpha seller
-  const isAlphaSeller = localStorage.getItem('isAlphaSeller') === 'true' || userType === 'seller';
+
+  // Server-controlled: sellers get professional tier during soft opening
+  const isAlphaSeller = isSoftOpening && userType === 'seller';
 
   const { data: subscription, isLoading } = useQuery({
     queryKey: ['subscription', user?.id],
@@ -244,13 +246,13 @@ export const Subscription = ({ currentLanguage }: SubscriptionProps) => {
             className="w-full rounded-full h-14"
             disabled
           >
-            🔒 {t.manage} - {currentLanguage === 'ar' ? 'قريباً' : 'Coming Soon'}
+            🔒 {t.manage} - {currentLanguage === ‘ar’ ? ‘قريباً’ : ‘Coming Soon’}
           </Button>
           <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200 dark:border-amber-900">
             <p className="text-xs text-center text-amber-900 dark:text-amber-100">
-              {currentLanguage === 'ar' 
-                ? '💳 نظام الفواتير والترقية سيكون متاحاً في Q1 2025'
-                : '💳 Billing and upgrade system coming Q1 2025'}
+              {currentLanguage === ‘ar’
+                ? ‘💳 نظام الفواتير والترقية قريباً’
+                : ‘💳 Billing and upgrade system coming soon’}
             </p>
           </div>
         </div>
@@ -258,3 +260,4 @@ export const Subscription = ({ currentLanguage }: SubscriptionProps) => {
     </div>
   );
 };
+

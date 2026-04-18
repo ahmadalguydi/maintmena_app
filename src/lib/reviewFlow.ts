@@ -238,6 +238,17 @@ export const submitSellerReview = async ({
     throw new Error('seller_reviews unavailable');
   }
 
+  // Validate rating range
+  if (!rating || rating < 1 || rating > 5) {
+    throw new Error('Rating must be between 1 and 5');
+  }
+
+  // Require review text for low ratings (3 or below) to be fair to sellers
+  const normalizedText = normalizeReviewText(reviewText);
+  if (rating <= 3 && !normalizedText) {
+    throw new Error('Please provide feedback for ratings of 3 stars or below');
+  }
+
   const existingReview = await findExistingSellerReview({
     client,
     buyerId,

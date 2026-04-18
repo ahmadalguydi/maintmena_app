@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface GradientHeaderProps {
   title: string;
@@ -21,6 +22,7 @@ export const GradientHeader = ({
   rightAction 
 }: GradientHeaderProps) => {
   const navigate = useNavigate();
+  const isDark = useDarkMode();
 
   const handleBack = () => {
     if (onBack) {
@@ -31,18 +33,20 @@ export const GradientHeader = ({
   };
 
   const isArabic = /[\u0600-\u06FF]/.test(title);
-  
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      data-native-top-surface={isDark ? '#151515' : '#f8f3ed'}
+      data-native-tone={isDark ? 'dark' : 'light'}
       className={cn(
         'relative bg-gradient-to-br from-primary/10 via-accent/5 to-transparent',
         'border-b border-border/50 backdrop-blur-sm',
         className
       )}
     >
-      <div className="px-4 py-6">
+      <div className="px-4 pb-6 pt-safe">
         <div className="flex items-center justify-between gap-4">
           {showBack && (
             <button

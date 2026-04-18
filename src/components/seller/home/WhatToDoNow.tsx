@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getSellerLevelProgress } from '@/lib/sellerLevel';
 
 interface WhatToDoNowProps {
     currentLanguage: 'en' | 'ar';
@@ -54,14 +55,7 @@ const mockInsights: GrowthInsight[] = [
     },
 ];
 
-interface ReputationData {
-    currentXP: number;
-    nextTierXP: number;
-    currentTier: string;
-    currentTierAr: string;
-    nextTier: string;
-    nextTierAr: string;
-}
+// ReputationData removed — using shared getSellerLevelProgress instead
 
 const HIGHLIGHT_CLASSES: Record<string, string> = {
     primary: 'text-primary font-extrabold',
@@ -109,23 +103,13 @@ export function WhatToDoNow({ currentLanguage, onEnableCategory }: WhatToDoNowPr
     });
 
     const completedCount = stats?.completed || 0;
-    const currentXP = completedCount * 100 + 20; // Some base XP so it's not empty
-    const nextTierXP = Math.max(1000, Math.ceil(currentXP / 1000) * 1000);
+    const levelProgress = getSellerLevelProgress(completedCount);
 
     const prideStats = {
         customersChoseYou: completedCount,
         satisfactionStreak: completedCount > 0 ? Math.min(completedCount, 5) : 0,
         responseSpeed: 'Fast',
         responseSpeedAr: 'سريع',
-    };
-
-    const reputation: ReputationData = {
-        currentXP,
-        nextTierXP,
-        currentTier: completedCount > 10 ? 'Pro' : 'Beginner',
-        currentTierAr: completedCount > 10 ? 'محترف' : 'مبتدئ',
-        nextTier: completedCount > 10 ? 'Super Pro' : 'Pro',
-        nextTierAr: completedCount > 10 ? 'سوبر برو' : 'محترف',
     };
 
     const content = {
@@ -136,7 +120,7 @@ export function WhatToDoNow({ currentLanguage, onEnableCategory }: WhatToDoNowPr
             dayStreak: 'تقييم ممتاز',
             reputationGrowth: 'نمو السمعة',
             next: 'التالي:',
-            xpAway: 'نقطة باقية لفتح مستوى جديد',
+            jobsAway: 'مهمة للمستوى التالي',
         },
         en: {
             whatToDo: 'What to Do Now',
@@ -145,13 +129,11 @@ export function WhatToDoNow({ currentLanguage, onEnableCategory }: WhatToDoNowPr
             dayStreak: 'top ratings',
             reputationGrowth: 'Reputation Growth',
             next: 'NEXT:',
-            xpAway: 'XP away from next tier',
+            jobsAway: 'jobs to next level',
         },
     };
 
     const t = content[currentLanguage];
-    const progress = Math.round((reputation.currentXP / reputation.nextTierXP) * 100);
-    const remaining = reputation.nextTierXP - reputation.currentXP;
 
     const handleCta = (insight: GrowthInsight) => {
         if (insight.category) {
@@ -259,8 +241,8 @@ export function WhatToDoNow({ currentLanguage, onEnableCategory }: WhatToDoNowPr
                 </div>
 
                 <div className="shrink-0 flex items-center gap-2 rounded-full bg-card px-4 py-2 border border-border/40" style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
-                    <div className="h-7 w-7 rounded-full bg-success/10 flex items-center justify-center">
-                        <Shield className="h-3.5 w-3.5 text-success" />
+                    <div className="h-7 w-7 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                        <Shield className="h-3.5 w-3.5 text-emerald-600" />
                     </div>
                     <span className="text-[11px] font-medium text-foreground whitespace-nowrap">
                         {prideStats.satisfactionStreak} {t.dayStreak}
@@ -268,8 +250,8 @@ export function WhatToDoNow({ currentLanguage, onEnableCategory }: WhatToDoNowPr
                 </div>
 
                 <div className="shrink-0 flex items-center gap-2 rounded-full bg-card px-4 py-2 border border-border/40" style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
-                    <div className="h-7 w-7 rounded-full bg-warning/10 flex items-center justify-center">
-                        <Zap className="h-3.5 w-3.5 text-warning" />
+                    <div className="h-7 w-7 rounded-full bg-amber-500/10 flex items-center justify-center">
+                        <Zap className="h-3.5 w-3.5 text-amber-600 fill-amber-600/30" />
                     </div>
                     <span className="text-[11px] font-medium text-foreground whitespace-nowrap">
                         {currentLanguage === 'ar' ? prideStats.responseSpeedAr : prideStats.responseSpeed}
@@ -291,24 +273,39 @@ export function WhatToDoNow({ currentLanguage, onEnableCategory }: WhatToDoNowPr
                             {t.reputationGrowth}
                         </span>
                     </div>
-                    <Badge className="text-[10px] h-5 px-2.5 bg-primary/10 text-primary border border-primary/20 font-semibold rounded-full">
-                        {t.next} {currentLanguage === 'ar' ? reputation.nextTierAr : reputation.nextTier}
-                    </Badge>
+                    {levelProgress.next ? (
+                        <Badge className="text-[10px] h-5 px-2.5 bg-primary/10 text-primary border border-primary/20 font-semibold rounded-full">
+                            {t.next} {currentLanguage === 'ar' ? levelProgress.next.labelAr : levelProgress.next.label} {levelProgress.next.badge}
+                        </Badge>
+                    ) : (
+                        <Badge className="text-[10px] h-5 px-2.5 bg-amber-500/10 text-amber-600 border border-amber-500/20 font-semibold rounded-full">
+                            {levelProgress.current.badge} {currentLanguage === 'ar' ? levelProgress.current.labelAr : levelProgress.current.label}
+                        </Badge>
+                    )}
                 </div>
 
                 <div className="h-2.5 w-full rounded-full bg-secondary overflow-hidden mb-2">
                     <div
                         className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-700"
-                        style={{ width: `${Math.min(progress, 100)}%` }}
+                        style={{ width: `${Math.min(levelProgress.percentage, 100)}%` }}
                     />
                 </div>
 
-                <p className={cn(
-                    "text-xs text-muted-foreground",
-                    currentLanguage === 'ar' ? 'font-ar-body' : 'font-body'
-                )}>
-                    <span className="font-bold text-foreground">{remaining}</span> {t.xpAway}
-                </p>
+                {levelProgress.next ? (
+                    <p className={cn(
+                        "text-xs text-muted-foreground",
+                        currentLanguage === 'ar' ? 'font-ar-body' : 'font-body'
+                    )}>
+                        <span className="font-bold text-foreground">{levelProgress.remaining}</span> {t.jobsAway}
+                    </p>
+                ) : (
+                    <p className={cn(
+                        "text-xs text-muted-foreground",
+                        currentLanguage === 'ar' ? 'font-ar-body' : 'font-body'
+                    )}>
+                        {currentLanguage === 'ar' ? 'وصلت لأعلى مستوى! 🎉' : 'You reached the top level! 🎉'}
+                    </p>
+                )}
             </div>
         </div>
     );

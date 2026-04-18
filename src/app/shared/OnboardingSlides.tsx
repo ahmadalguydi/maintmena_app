@@ -86,8 +86,12 @@ export const OnboardingSlides = () => {
   const Icon = slide.icon;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col" dir={isRtl ? 'rtl' : 'ltr'}>
-      <div className="p-4 flex justify-end">
+    <div
+      data-native-screen-surface="true"
+      className="min-h-app bg-background flex flex-col pb-safe-or-4"
+      dir={isRtl ? 'rtl' : 'ltr'}
+    >
+      <div className="p-4 pt-safe flex justify-end">
         <Button variant="ghost" size="sm" onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')} className="text-sm">
           {language === 'ar' ? 'English' : 'عربي'}
         </Button>

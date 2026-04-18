@@ -28,3 +28,5 @@ export const StatsBlock = ({ block, onUpdate }: StatsBlockProps) => {
     </div>
   );
 };
+
+

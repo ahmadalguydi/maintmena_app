@@ -112,7 +112,7 @@ export const ReportButton = ({
             setSelectedReason('');
             setDetails('');
         } catch (error) {
-            console.error('Report submission error:', error);
+            if (import.meta.env.DEV) console.error('Report submission error:', error);
             toast.error(t.error);
         } finally {
             setIsSubmitting(false);

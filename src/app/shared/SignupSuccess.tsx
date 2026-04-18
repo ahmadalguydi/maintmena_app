@@ -33,7 +33,7 @@ export const SignupSuccess = () => {
         origin: { y: 0.6 }
       });
     } catch (error) {
-      console.warn('Confetti animation failed:', error);
+      if (import.meta.env.DEV) console.warn('Confetti animation failed:', error);
     }
   }, []);
 
@@ -44,19 +44,23 @@ export const SignupSuccess = () => {
       const { Capacitor } = await import('@capacitor/core');
       isNative = Capacitor.isNativePlatform();
     } catch (error) {
-      console.warn('Capacitor not available, assuming web platform');
+      if (import.meta.env.DEV) console.warn('Capacitor not available, assuming web platform');
       isNative = false;
     }
 
     if (isNative) {
-      navigate('/app/permissions/camera');
+      navigate('/app/permissions/camera', { replace: true });
     } else {
-      navigate(userType === 'seller' ? '/app/seller/home' : '/app/buyer/home');
+      navigate(userType === 'seller' ? '/app/seller/home' : '/app/buyer/home', { replace: true });
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div
+      data-native-screen-surface="true"
+      className="min-h-app bg-background flex items-center justify-center p-6 pb-safe-or-4 pt-safe"
+      dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
+    >
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

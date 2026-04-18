@@ -23,7 +23,7 @@ export const useContentTranslation = () => {
       if (error) throw error;
       return data?.translatedText || text;
     } catch (error) {
-      console.error('Translation error:', error);
+      if (import.meta.env.DEV) console.error('Translation error:', error);
       return text; // Fallback to original
     } finally {
       setIsTranslating(false);

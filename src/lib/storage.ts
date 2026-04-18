@@ -47,23 +47,33 @@ const webAdapter: StorageAdapter = {
 
 const memoryCache: Record<string, string> = {};
 
+// Cached module reference — avoids a new dynamic import promise on every write
+let _prefsModule: { Preferences: { set: (opts: { key: string; value: string }) => Promise<void>; get: (opts: { key: string }) => Promise<{ value: string | null }>; remove: (opts: { key: string }) => Promise<void>; keys: () => Promise<{ keys: string[] }> } } | null = null;
+
+async function getPrefsModule() {
+  if (!_prefsModule) {
+    _prefsModule = await import('@capacitor/preferences');
+  }
+  return _prefsModule;
+}
+
 const nativeAdapter: StorageAdapter = {
   getItem: (key) => memoryCache[key] ?? localStorage.getItem(key) ?? null,
   setItem: (key, value) => {
     memoryCache[key] = value;
-    // Write through to localStorage as a fallback / secondary store
+    // Write through to localStorage as a fast secondary store
     try { localStorage.setItem(key, value); } catch { /* ignore */ }
     // Fire-and-forget write to @capacitor/preferences (non-blocking)
-    import('@capacitor/preferences').then(({ Preferences }) => {
-      Preferences.set({ key, value }).catch(() => { /* ignore */ });
-    }).catch(() => { /* not native */ });
+    getPrefsModule()
+      .then(({ Preferences }) => Preferences.set({ key, value }))
+      .catch(() => { /* ignore on web or if plugin unavailable */ });
   },
   removeItem: (key) => {
     delete memoryCache[key];
     try { localStorage.removeItem(key); } catch { /* ignore */ }
-    import('@capacitor/preferences').then(({ Preferences }) => {
-      Preferences.remove({ key }).catch(() => { /* ignore */ });
-    }).catch(() => { /* not native */ });
+    getPrefsModule()
+      .then(({ Preferences }) => Preferences.remove({ key }))
+      .catch(() => { /* ignore */ });
   },
 };
 
@@ -90,7 +100,7 @@ export async function initStorage(): Promise<void> {
     const { Capacitor } = await import('@capacitor/core');
     if (!Capacitor.isNativePlatform()) return;
 
-    const { Preferences } = await import('@capacitor/preferences');
+    const { Preferences } = await getPrefsModule();
     const { keys } = await Preferences.keys();
 
     await Promise.all(

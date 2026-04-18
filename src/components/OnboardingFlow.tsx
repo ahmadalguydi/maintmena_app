@@ -165,7 +165,7 @@ const OnboardingFlow = ({ currentLanguage, userId, onComplete }: OnboardingFlowP
         navigate('/seller-dashboard'); // Fallback to seller dashboard
       }
     } catch (error) {
-      console.error('Onboarding error:', error);
+      if (import.meta.env.DEV) console.error('Onboarding error:', error);
       toast({
         title: currentLanguage === 'ar' ? 'خطأ' : 'Error',
         description: currentLanguage === 'ar' 

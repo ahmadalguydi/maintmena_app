@@ -155,7 +155,7 @@ export const BookingPaymentModal = ({
             </Select>
             <div className="bg-amber-50 dark:bg-amber-950/20 p-2 rounded-lg border border-amber-200 dark:border-amber-900">
               <p className="text-xs text-amber-900 dark:text-amber-100">
-                💵 Cash only during beta. 🔒 Bank Transfer & Online Payment coming Q1 2025
+                💵 Cash only during beta. 🔒 Bank Transfer & Online Payment coming soon
               </p>
             </div>
           </div>
@@ -227,3 +227,5 @@ export const BookingPaymentModal = ({
     </Dialog>
   );
 };
+
+

@@ -310,6 +310,7 @@ export const ServiceFlowScreen = ({
     const queryClient = useQueryClient();
     const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [locationRequiredPulse, setLocationRequiredPulse] = useState(false);
 
     const toSafeString = (value: unknown, fallback = ''): string => {
         if (typeof value === 'string') {
@@ -334,6 +335,18 @@ export const ServiceFlowScreen = ({
 
     const handleClose = async () => {
         await vibrate('light');
+        // If user has entered data (description, photos, or selected a category beyond step 0),
+        // confirm before discarding
+        const hasUnsavedWork = state.step > 0 && (
+            (state.description && state.description.trim().length > 0) ||
+            (state.photos && state.photos.length > 0)
+        );
+        if (hasUnsavedWork && !createdRequestId) {
+            const confirmMsg = currentLanguage === 'ar'
+                ? 'هل أنت متأكد أنك تريد الإغلاق؟ سيتم فقدان البيانات المدخلة.'
+                : 'Are you sure you want to close? Your entered data will be lost.';
+            if (!window.confirm(confirmMsg)) return;
+        }
         dispatch({ type: 'RESET' });
         setCreatedRequestId(null);
         onClose();
@@ -378,14 +391,52 @@ export const ServiceFlowScreen = ({
                 async (position) => {
                     const { latitude, longitude } = position.coords;
                     try {
-                        const response = await fetch(
-                            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${currentLanguage}`
-                        );
-                        const data = await response.json();
                         let address = '';
-                        if (data.locality) address = data.locality;
-                        else if (data.city) address = data.city;
-                        const city = data.city || data.locality || '';
+                        let city = '';
+                        let resolved = false;
+
+                        // Strategy 1: BigDataCloud — fast client-side reverse geocode
+                        try {
+                            const response = await fetch(
+                                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${currentLanguage}`
+                            );
+                            const data = await response.json();
+                            if (data && (data.city || data.locality)) {
+                                const district = data.locality !== data.city ? data.locality : null;
+                                const road = data.principalSubdivision !== data.city ? null : null;
+                                city = data.city || data.locality || '';
+                                address = district ? `${district}, ${city}` : city;
+                                resolved = true;
+                            }
+                        } catch (_) {
+                            // fall through to Nominatim
+                        }
+
+                        // Strategy 2: Nominatim (OpenStreetMap) — street-level fallback
+                        if (!resolved) {
+                            try {
+                                const response = await fetch(
+                                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+                                    { headers: { 'User-Agent': 'MaintMENA-App/1.0', 'Accept-Language': currentLanguage } }
+                                );
+                                const data = await response.json();
+                                if (data?.address) {
+                                    const district = data.address.neighbourhood || data.address.suburb || data.address.district;
+                                    const road = data.address.road || data.address.street;
+                                    city = data.address.city || data.address.town || data.address.village || '';
+                                    const detail = district || road;
+                                    address = detail && city ? `${detail}, ${city}` : city || detail || '';
+                                    resolved = true;
+                                }
+                            } catch (_) {
+                                // fall through to coordinate fallback
+                            }
+                        }
+
+                        if (!resolved) {
+                            address = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+                            city = '';
+                        }
 
                         dispatch({
                             type: 'SET_LOCATION',
@@ -396,11 +447,11 @@ export const ServiceFlowScreen = ({
                             JSON.stringify({ lat: latitude, lng: longitude, address, city }),
                         );
                     } catch (e) {
-                        console.error('Auto-locate failed', e);
+                        if (import.meta.env.DEV) console.error('Auto-locate failed', e);
                     }
                 },
-                (error) => console.error('Geolocation error:', error),
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 300000 }
+                (error) => { if (import.meta.env.DEV) console.error('Geolocation error:', error); },
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
             );
         }
     }, [isOpen, currentLanguage, state.location.address, state.location.city, state.location.lat, state.location.lng]);
@@ -427,8 +478,22 @@ export const ServiceFlowScreen = ({
         await vibrate('heavy');
 
         if (!user?.id) {
-            // Not authenticated — don't show confirmation
             toast.error(currentLanguage === 'ar' ? 'يجب تسجيل الدخول أولاً' : 'Please sign in to submit a request');
+            return;
+        }
+
+        // Location is required before submitting
+        if (!state.location.city && !state.location.address && state.location.lat === null) {
+            toast.error(
+                currentLanguage === 'ar'
+                    ? 'يرجى تحديد الموقع قبل إرسال الطلب'
+                    : 'Please set your location before submitting',
+                { duration: 4000 }
+            );
+            dispatch({ type: 'PREV_STEP' });
+            dispatch({ type: 'PREV_STEP' });
+            setLocationRequiredPulse(true);
+            setTimeout(() => setLocationRequiredPulse(false), 3000);
             return;
         }
 
@@ -469,8 +534,12 @@ export const ServiceFlowScreen = ({
             const safeDescription = toSafeString(description);
             const safeLatitude = toSafeNumber(state.location.lat);
             const safeLongitude = toSafeNumber(state.location.lng);
+            // Store address as-is (already "district, city" from geocoding).
+            // Avoid doubling city by checking if address already ends with city.
+            const addressAlreadyIncludesCity = safeAddress && safeCity
+                && safeAddress.toLowerCase().includes(safeCity.toLowerCase());
             const safeLocation = safeAddress
-                ? `${safeAddress}, ${safeCity}`.replace(/,\s*$/, '')
+                ? (addressAlreadyIncludesCity ? safeAddress : `${safeAddress}, ${safeCity}`.replace(/,\s*$/, ''))
                 : safeCity;
 
             // Insert into maintenance_requests
@@ -484,6 +553,7 @@ export const ServiceFlowScreen = ({
                     urgency: urgencyMap[state.urgency] || 'medium',
                     status: 'open',
                     location: safeLocation,
+                    city: safeCity || null,
                     latitude: safeLatitude,
                     longitude: safeLongitude,
                     preferred_start_date: preferredStartDate,
@@ -493,7 +563,7 @@ export const ServiceFlowScreen = ({
                 .single();
 
             if (error) {
-                console.error('Failed to create request:', error);
+                if (import.meta.env.DEV) console.error('Failed to create request:', error);
                 toast.error(
                     currentLanguage === 'ar'
                         ? 'فشل في إرسال الطلب. الرجاء المحاولة مجدداً.'
@@ -512,17 +582,22 @@ export const ServiceFlowScreen = ({
             dispatch({ type: 'NEXT_STEP' });
 
             // Trigger dispatch (fire and forget, non-blocking)
+            const isScheduled = state.urgency === 'scheduled' && !!preferredStartDate;
             triggerDispatch(
                 (newRequest as any).id,
                 'request',
                 state.category || 'general',
                 state.location.lat,
                 state.location.lng,
-                3
+                3,
+                {
+                    isScheduled,
+                    scheduledFor: preferredStartDate,
+                }
             ).catch(console.error);
 
         } catch (err) {
-            console.error('Submit error:', err);
+            if (import.meta.env.DEV) console.error('Submit error:', err);
             toast.error(
                 currentLanguage === 'ar'
                     ? 'حدث خطأ غير متوقع. الرجاء المحاولة مجدداً.'
@@ -595,9 +670,11 @@ export const ServiceFlowScreen = ({
                         <LocationHeader
                             currentLanguage={currentLanguage}
                             location={state.location}
+                            required={locationRequiredPulse}
                             onLocationChange={(loc) => {
                                 dispatch({ type: 'SET_LOCATION', payload: loc });
                                 localStorage.setItem('maintmena_last_location', JSON.stringify(loc));
+                                setLocationRequiredPulse(false);
                             }}
                         />
                         <TimeSelector
@@ -613,7 +690,26 @@ export const ServiceFlowScreen = ({
                         <ServiceCategoryGrid
                             currentLanguage={currentLanguage}
                             selectedCategory={state.category}
-                            onCategorySelect={(category) => dispatch({ type: 'SET_CATEGORY', payload: category })}
+                            onCategorySelect={(category) => {
+                                const hasLocation = !!(
+                                    state.location.city ||
+                                    state.location.address ||
+                                    state.location.lat !== null
+                                );
+                                if (!hasLocation) {
+                                    toast.error(
+                                        currentLanguage === 'ar'
+                                            ? 'يرجى تحديد موقعك أولاً'
+                                            : 'Please set your location first',
+                                        { duration: 3000 }
+                                    );
+                                    vibrate('heavy');
+                                    setLocationRequiredPulse(true);
+                                    setTimeout(() => setLocationRequiredPulse(false), 3000);
+                                    return;
+                                }
+                                dispatch({ type: 'SET_CATEGORY', payload: category });
+                            }}
                         />
                     </>
                 );
@@ -652,7 +748,10 @@ export const ServiceFlowScreen = ({
                             category: categoryLabel,
                             categoryIcon: categories.find(c => c.key === state.category)?.icon || '🔧',
                             subIssue: subIssueLabel,
-                            location: state.location.city || (currentLanguage === 'ar' ? 'الموقع الحالي' : 'Current Location'),
+                            location: (state.location.address && state.location.city && !state.location.address.toLowerCase().includes(state.location.city.toLowerCase())
+                                ? `${state.location.address}, ${state.location.city}`
+                                : state.location.address || state.location.city)
+                                || (currentLanguage === 'ar' ? 'الموقع الحالي' : 'Current Location'),
                             time: timeLabel,
                             lat: state.location.lat ?? undefined,
                             lng: state.location.lng ?? undefined,

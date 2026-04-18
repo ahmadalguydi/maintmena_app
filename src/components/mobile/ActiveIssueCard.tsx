@@ -103,6 +103,7 @@ export function ActiveIssueCard({
     onViewDetails,
 }: ActiveIssueCardProps) {
     const [expanded, setExpanded] = useState(true);
+    const currencyLabel = currentLanguage === 'ar' ? 'ر.س' : 'SAR';
     const config = statusConfig[issue.status] || statusConfig.pending;
     const Icon = config.icon;
     const isRaiser = issue.raised_by === userId;
@@ -357,7 +358,7 @@ export function ActiveIssueCard({
                                                     className="flex-1 border-red-300 text-red-600 hover:bg-red-50 gap-2"
                                                 >
                                                     <ThumbsDown className="w-4 h-4" />
-                                                    {currentLanguage === 'ar' ? 'لا، أحتاج المزيد' : 'No, Need More'}
+                                                    {currentLanguage === 'ar' ? 'لاٌ أحتاج المزيد' : 'No, Need More'}
                                                 </Button>
                                             )}
                                         </div>
@@ -376,7 +377,7 @@ export function ActiveIssueCard({
                                                     {currentLanguage === 'ar' ? 'السعر الأصلي:' : 'Original Price:'}
                                                 </span>
                                                 <span className="font-medium text-muted-foreground line-through">
-                                                    {issue.original_quote_amount.toLocaleString()} SAR
+                                                    {issue.original_quote_amount.toLocaleString()} {currencyLabel}
                                                 </span>
                                             </div>
                                         )}
@@ -389,7 +390,7 @@ export function ActiveIssueCard({
                                                     {currentLanguage === 'ar' ? 'السعر الجديد المقترح:' : 'Proposed New Price:'}
                                                 </span>
                                                 <span className="font-bold text-amber-700">
-                                                    {issue.proposed_new_amount.toLocaleString()} SAR
+                                                    {issue.proposed_new_amount.toLocaleString()} {currencyLabel}
                                                 </span>
                                             </div>
                                         )}
@@ -428,3 +429,4 @@ export function ActiveIssueCard({
         </motion.div>
     );
 }
+

@@ -337,10 +337,12 @@ export const getAvailableSellerActions = (
     canStartWork: inRoute,
     canComplete: lifecycle === 'in_progress',
     canEditPrice:
-      lifecycle === 'seller_assigned' ||
-      lifecycle === 'scheduled_confirmed' ||
-      lifecycle === 'in_route' ||
-      lifecycle === 'in_progress',
+      !request?.buyer_price_approved && (
+        lifecycle === 'seller_assigned' ||
+        lifecycle === 'scheduled_confirmed' ||
+        lifecycle === 'in_route' ||
+        lifecycle === 'in_progress'
+      ),
   };
 };
 

@@ -286,24 +286,24 @@ export function TenderManager({ onUpdate, currentLanguage }: { onUpdate: () => v
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Min Value (USD)</label>
+              <label className="text-sm font-medium mb-2 block">Min Value (SAR)</label>
               <Input
                 type="number"
                 value={formData.value_min}
                 onChange={(e) => setFormData({ ...formData, value_min: e.target.value })}
                 placeholder="Min value"
               />
-              <p className="text-xs text-muted-foreground mt-1">Enter in USD</p>
+              <p className="text-xs text-muted-foreground mt-1">Enter the minimum in Saudi Riyals.</p>
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Max Value (USD)</label>
+              <label className="text-sm font-medium mb-2 block">Max Value (SAR)</label>
               <Input
                 type="number"
                 value={formData.value_max}
                 onChange={(e) => setFormData({ ...formData, value_max: e.target.value })}
                 placeholder="Max value"
               />
-              <p className="text-xs text-muted-foreground mt-1">Will be converted for users</p>
+              <p className="text-xs text-muted-foreground mt-1">Enter the maximum in Saudi Riyals.</p>
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Submission Deadline</label>

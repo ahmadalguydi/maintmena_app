@@ -4,7 +4,8 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MapPin, Move, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MAPBOX_STREET_STYLE, MAPBOX_TOKEN } from '@/lib/mapbox';
+import { MAPBOX_TOKEN, getMapStyle, getStaticMapStylePath } from '@/lib/mapbox';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 export interface ServiceLocationMapProps {
   currentLanguage: 'en' | 'ar';
@@ -42,10 +43,8 @@ const INTERACTIVE_CAMERA = {
   bearing: -10,
 };
 
-const STATIC_MAP_STYLE_PATH = MAPBOX_STREET_STYLE.replace('mapbox://styles/', '');
-
-const buildStaticMapUrl = (lng: number, lat: number) =>
-  `https://api.mapbox.com/styles/v1/${STATIC_MAP_STYLE_PATH}/static/${lng},${lat},14,0/1200x600@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`;
+const buildStaticMapUrl = (lng: number, lat: number, stylePath: string) =>
+  `https://api.mapbox.com/styles/v1/${stylePath}/static/${lng},${lat},14,0/1200x600@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`;
 
 const buildMarkerElement = () => {
   const wrapper = document.createElement('div');
@@ -158,6 +157,7 @@ export const ServiceLocationMap = ({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const [staticMapFailed, setStaticMapFailed] = useState(false);
+  const isDark = useDarkMode();
   const hasCoordinates = typeof lat === 'number' && typeof lng === 'number';
 
   const interactionHint = currentLanguage === 'ar' ? 'حرّك وكبّر الخريطة' : 'Drag and zoom the map';
@@ -166,9 +166,10 @@ export const ServiceLocationMap = ({
   const camera = interactive ? INTERACTIVE_CAMERA : STATIC_CAMERA;
   const shouldShowInteractionHint = showInteractionHint ?? interactive;
   const markerElement = useMemo(() => buildMarkerElement(), []);
+  const staticStylePath = getStaticMapStylePath();
   const staticMapUrl = useMemo(
-    () => (!interactive && hasCoordinates && MAPBOX_TOKEN ? buildStaticMapUrl(lng, lat) : null),
-    [hasCoordinates, interactive, lat, lng],
+    () => (!interactive && hasCoordinates && MAPBOX_TOKEN ? buildStaticMapUrl(lng, lat, staticStylePath) : null),
+    [hasCoordinates, interactive, lat, lng, staticStylePath],
   );
 
   useEffect(() => {
@@ -184,7 +185,7 @@ export const ServiceLocationMap = ({
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: MAPBOX_STREET_STYLE,
+      style: getMapStyle(),
       center: [lng, lat],
       zoom: camera.zoom,
       pitch: camera.pitch,
@@ -214,10 +215,11 @@ export const ServiceLocationMap = ({
 
     map.on('load', stabilizeMapLayout);
     map.on('style.load', () => {
+      const dark = document.documentElement.classList.contains('dark');
       map.setFog({
-        color: 'rgb(255, 250, 245)',
-        'high-color': 'rgb(255, 243, 224)',
-        'space-color': 'rgb(255, 255, 255)',
+        color: dark ? 'rgb(18, 18, 18)' : 'rgb(255, 250, 245)',
+        'high-color': dark ? 'rgb(30, 30, 30)' : 'rgb(255, 243, 224)',
+        'space-color': dark ? 'rgb(10, 10, 10)' : 'rgb(255, 255, 255)',
         'horizon-blend': 0.08,
       });
       stabilizeMapLayout();
@@ -225,7 +227,7 @@ export const ServiceLocationMap = ({
     map.once('idle', stabilizeMapLayout);
 
     map.on('error', (event) => {
-      console.error('[ServiceLocationMap] Mapbox error:', event.error);
+      if (import.meta.env.DEV) console.error('[ServiceLocationMap] Mapbox error:', event.error);
     });
 
     const frameId = window.requestAnimationFrame(stabilizeMapLayout);
@@ -313,7 +315,10 @@ export const ServiceLocationMap = ({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-[28px] border border-border/50 bg-[linear-gradient(180deg,rgba(255,247,237,0.95),rgba(255,255,255,0.98))] shadow-[0_18px_40px_rgba(0,0,0,0.06)]',
+        'relative overflow-hidden rounded-[28px] border border-border/50 shadow-[0_18px_40px_rgba(0,0,0,0.06)]',
+        isDark
+          ? 'bg-card'
+          : 'bg-[linear-gradient(180deg,rgba(255,247,237,0.95),rgba(255,255,255,0.98))]',
         className,
       )}
       onClick={onMapClick}
@@ -348,10 +353,20 @@ export const ServiceLocationMap = ({
             onError={() => setStaticMapFailed(true)}
           />
         ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(209,115,40,0.16),_transparent_55%),linear-gradient(180deg,rgba(255,247,237,0.95),rgba(255,255,255,0.98))]" />
+          <div className={cn(
+            'absolute inset-0',
+            isDark
+              ? 'bg-[radial-gradient(circle_at_top,_rgba(209,115,40,0.1),_transparent_55%)] bg-card'
+              : 'bg-[radial-gradient(circle_at_top,_rgba(209,115,40,0.16),_transparent_55%),linear-gradient(180deg,rgba(255,247,237,0.95),rgba(255,255,255,0.98))]'
+          )} />
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.0)_30%,rgba(255,255,255,0.6))]" />
+        <div className={cn(
+          'pointer-events-none absolute inset-0',
+          isDark
+            ? 'bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.0)_30%,rgba(0,0,0,0.4))]'
+            : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.0)_30%,rgba(255,255,255,0.6))]'
+        )} />
 
         {hasCoordinates && !interactive ? <StaticMarkerOverlay /> : null}
 
@@ -363,7 +378,7 @@ export const ServiceLocationMap = ({
 
         <div className="absolute bottom-4 left-4 right-4 z-10 flex items-end justify-between gap-3">
           {showLocationPill ? (
-            <div className="max-w-[72%] rounded-full border border-white/70 bg-white/88 px-3.5 py-2 shadow-sm backdrop-blur-md">
+            <div className={cn('max-w-[72%] rounded-full px-3.5 py-2 shadow-sm backdrop-blur-md', isDark ? 'border border-white/10 bg-black/60' : 'border border-white/70 bg-white/88')}>
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 shrink-0 text-primary" />
                 <span className="truncate text-xs font-semibold text-foreground/80">
@@ -376,14 +391,14 @@ export const ServiceLocationMap = ({
           )}
 
           {hasCoordinates && shouldShowInteractionHint ? (
-            <div className="rounded-full border border-white/70 bg-white/88 px-3 py-2 shadow-sm backdrop-blur-md">
+            <div className={cn('rounded-full px-3 py-2 shadow-sm backdrop-blur-md', isDark ? 'border border-white/10 bg-black/60' : 'border border-white/70 bg-white/88')}>
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
                 <Move className="h-3.5 w-3.5" />
                 <span>{interactionHint}</span>
               </div>
             </div>
           ) : !hasCoordinates ? (
-            <div className="rounded-full border border-primary/10 bg-white/92 px-3 py-2 text-[11px] font-semibold text-muted-foreground shadow-sm">
+            <div className={cn('rounded-full px-3 py-2 text-[11px] font-semibold text-muted-foreground shadow-sm', isDark ? 'border border-white/10 bg-black/60' : 'border border-primary/10 bg-white/92')}>
               {pendingLabel}
             </div>
           ) : null}
@@ -396,7 +411,7 @@ export const ServiceLocationMap = ({
         )}
 
         {hasCoordinates && interactive && !actionButton && (
-          <div className="pointer-events-none absolute right-4 top-4 z-10 rounded-full border border-white/70 bg-white/88 px-3 py-2 shadow-sm backdrop-blur-md">
+          <div className={cn('pointer-events-none absolute right-4 top-4 z-10 rounded-full px-3 py-2 shadow-sm backdrop-blur-md', isDark ? 'border border-white/10 bg-black/60' : 'border border-white/70 bg-white/88')}>
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
               <Navigation className="h-3.5 w-3.5" />
               <span>{directionsLabel}</span>

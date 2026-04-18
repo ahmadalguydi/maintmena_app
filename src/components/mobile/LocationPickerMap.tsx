@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { MAPBOX_STREET_STYLE, MAPBOX_TOKEN } from '@/lib/mapbox';
+import { MAPBOX_TOKEN, getMapStyle } from '@/lib/mapbox';
 
 export interface LocationPickerMapProps {
     currentLanguage: 'en' | 'ar';
@@ -53,7 +53,7 @@ export const LocationPickerMap = ({
             try {
                 map.current = new mapboxgl.Map({
                     container: mapContainer.current,
-                    style: MAPBOX_STREET_STYLE, // v12 has better improved Arabic support
+                    style: getMapStyle(),
                     center: center as [number, number],
                     zoom: 15,
                     attributionControl: false,
@@ -69,7 +69,7 @@ export const LocationPickerMap = ({
 
                 // Error handling
                 map.current.on('error', (e) => {
-                    console.error('Mapbox error:', e);
+                    if (import.meta.env.DEV) console.error('Mapbox error:', e);
                 });
 
                 // Style load handling for localization
@@ -90,7 +90,7 @@ export const LocationPickerMap = ({
                 }, 500);
 
             } catch (error) {
-                console.error('Map initialization error:', error);
+                if (import.meta.env.DEV) console.error('Map initialization error:', error);
             }
         }
 
@@ -130,64 +130,48 @@ export const LocationPickerMap = ({
     const fetchAddress = async (lat: number, lng: number) => {
         setIsLoadingAddress(true);
         try {
-            let success = false;
-
-            // Strategy 1: BigDataCloud (Client-side, usually reliable)
-            try {
-                const response = await fetch(
-                    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=${currentLanguage}`
-                );
-                const data = await response.json();
-
-                if (data && (data.city || data.locality || data.principalSubdivision)) {
-                    const components = [];
-                    // Prioritize specific locality
-                    if (data.locality && data.locality !== data.city) components.push(data.locality);
-                    else if (data.principalSubdivision && data.principalSubdivision !== data.city) components.push(data.principalSubdivision);
-
-                    // Add City
-                    if (data.city) components.push(data.city);
-
-                    if (components.length > 0) {
-                        setAddress(components.join(', '));
-                        success = true;
-                    }
-                }
-            } catch (e) {
-                console.warn('BigDataCloud failed, trying fallback...', e);
-            }
-
-            if (success) return;
-
-            // Strategy 2: Nominatim (OpenStreetMap) Fallback
+            // Use Mapbox reverse geocoding — same provider as the map itself.
+            // Returns structured context: neighborhood, locality, place (city), district, region.
+            const lang = currentLanguage === 'ar' ? 'ar' : 'en';
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-                {
-                    headers: {
-                        'User-Agent': 'MaintMENA-App/1.0',
-                        'Accept-Language': currentLanguage
-                    }
-                }
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=${lang}&types=neighborhood,locality,place,address&limit=1`
             );
             const data = await response.json();
 
-            if (data && data.display_name) {
-                const district = data.address?.neighbourhood || data.address?.suburb || data.address?.quarter || data.address?.district;
-                const road = data.address?.road || data.address?.street;
-                const city = data.address?.city || data.address?.town || data.address?.village || data.address?.state;
+            if (data?.features?.length > 0) {
+                const feature = data.features[0];
+                const context = feature.context || [];
 
-                if (city && (district || road)) {
-                    setAddress(`${district || road}, ${city}`);
+                // Extract from context array: each entry has an id like "neighborhood.xxx", "place.xxx", etc.
+                const getCtx = (type: string) =>
+                    context.find((c: { id: string; text: string }) => c.id.startsWith(type))?.text || '';
+
+                const neighborhood = getCtx('neighborhood') || getCtx('locality');
+                const city = getCtx('place');
+
+                // feature.address = street number, feature.text = street name
+                const streetNumber = feature.address || '';
+                const streetName = feature.text || '';
+                const street = streetNumber && streetName
+                    ? `${streetNumber} ${streetName}`
+                    : streetName;
+
+                // Build: "street, neighborhood, city" — skip parts that match city
+                const parts: string[] = [];
+                if (street && street !== city) parts.push(street);
+                if (neighborhood && neighborhood !== street && neighborhood !== city) parts.push(neighborhood);
+                if (city) parts.push(city);
+
+                if (parts.length > 0) {
+                    setAddress(parts.join(', '));
                 } else {
-                    // Fallback to first 3 parts
-                    setAddress(data.display_name.split(',').slice(0, 3).join(','));
+                    setAddress(isRTL ? 'موقع محدد' : 'Selected Location');
                 }
             } else {
                 setAddress(isRTL ? 'موقع محدد' : 'Selected Location');
             }
         } catch (error) {
-            console.error('All geocoding strategies failed:', error);
-            // Final fallback to coordinates
+            if (import.meta.env.DEV) console.error('Geocoding failed:', error);
             setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
         } finally {
             setIsLoadingAddress(false);
@@ -209,7 +193,7 @@ export const LocationPickerMap = ({
                     setIsLocating(false);
                 },
                 (error) => {
-                    console.error('Geolocation error:', error);
+                    if (import.meta.env.DEV) console.error('Geolocation error:', error);
                     toast.error(isRTL ? 'تعذر تحديد موقعك' : 'Could not detect location');
                     setIsLocating(false);
                 }

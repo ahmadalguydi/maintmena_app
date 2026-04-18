@@ -173,7 +173,7 @@ export function BuyerMessagesSection({ userId, currentLanguage }: BuyerMessagesS
 
       setConversations(allConversations);
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      if (import.meta.env.DEV) console.error('Error fetching conversations:', error);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
     FileText, MapPin, DollarSign, Clock, Calendar, User, Briefcase,
     MessageCircle, Phone, ChevronLeft, ChevronRight, Star, CheckCircle,
-    Truck, Play, Award, Image as ImageIcon, ExternalLink, BadgeCheck, X, QrCode
+    Truck, Play, Award, Image as ImageIcon, ExternalLink, BadgeCheck, X
 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { JobTrackingCard } from "@/components/mobile/JobTrackingCard";
@@ -40,6 +40,7 @@ import { useActiveJobIssue } from "@/hooks/useJobIssues";
 import { ActiveIssueCard } from "@/components/mobile/ActiveIssueCard";
 import { FinalPriceSheet } from "@/components/mobile/FinalPriceSheet";
 import { JobCompletionCodeModal } from "@/components/mobile/JobCompletionCodeModal";
+import { JobCompletionCelebration } from "@/components/mobile/JobCompletionCelebration";
 
 interface SellerJobDetailProps {
     currentLanguage: "en" | "ar";
@@ -107,6 +108,9 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     const [showCompletionCodeModal, setShowCompletionCodeModal] = useState(false);
     const [finalPrice, setFinalPrice] = useState(0);
     const [isSubmittingCode, setIsSubmittingCode] = useState(false);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [showCelebration, setShowCelebration] = useState(false);
+    const celebrationFiredRef = useRef<Record<string, boolean>>({});
 
     const queryClient = useQueryClient();
     const isRequest = type === 'request';
@@ -125,18 +129,18 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
             // Security: verify the viewing seller is the assigned seller
             const { data: requestData } = await (supabase as any)
                 .from('maintenance_requests')
-                .select('id, status, description, location, city, latitude, longitude, budget, estimated_budget_max, preferred_start_date, preferred_time_slot, time_preference, time_slot, service_category, category, project_duration_days, buyer_id, assigned_seller_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved, final_amount, seller_pricing, seller_completion_date, buyer_completion_date, seller_on_way_at, work_started_at, before_photos, completion_photos')
+                .select('id, status, title, description, location, city, latitude, longitude, budget, estimated_budget_max, preferred_start_date, category, project_duration_days, buyer_id, assigned_seller_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved, final_amount, seller_pricing, seller_completion_date, buyer_completion_date, seller_on_way_at, work_started_at, completion_photos, photos, scheduled_for, job_completion_code')
                 .eq('id', id)
                 .eq('assigned_seller_id', user.id)
                 .maybeSingle();
 
 
             if (requestData) {
-                let buyerProfile: { id: string; full_name: string | null; company_name: string | null; avatar_url: string | null; phone: string | null } | null = null;
+                let buyerProfile: { id: string; full_name: string | null; company_name: string | null; avatar_url: string | null } | null = null;
                 if ((requestData as any).buyer_id) {
                     const { data: buyerData } = await (supabase as any)
                         .from('profiles')
-                        .select('id, full_name, company_name, avatar_url, phone')
+                        .select('id, full_name, company_name, avatar_url')
                         .eq('id', (requestData as any).buyer_id)
                         .maybeSingle();
                     buyerProfile = buyerData;
@@ -152,8 +156,29 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
             return null;
         },
         enabled: !!id && !!user?.id,
-        refetchInterval: 5000, // Poll for buyer_price_approved changes
+        staleTime: 10_000,
+        refetchInterval: 15_000,
     });
+
+    // Realtime subscription — refetch whenever the assigned request changes in DB
+    useEffect(() => {
+        if (!id || !user?.id) return;
+
+        const channel = supabase
+            .channel(`seller-job-detail-${id}`)
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'maintenance_requests', filter: `id=eq.${id}` },
+                () => {
+                    queryClient.invalidateQueries({ queryKey: ['seller-job-detail', id, 'request'] });
+                }
+            )
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [id, user?.id, queryClient]);
+
+    // Trigger celebration only manually on code submit now (per user request)
 
     // acceptedQuote removed — not used in dispatch flow
 
@@ -273,10 +298,8 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
         ) : null;
         const displayCity = getLocalizedCity(city);
 
-        // If in Arabic and we have a city match, replace English city name with Arabic in address
         if (currentLanguage === 'ar' && cityData && address) {
-            const localizedAddress = address.replace(new RegExp(cityData.en, 'gi'), cityData.ar);
-            return localizedAddress;
+            return address.replace(new RegExp(cityData.en, 'gi'), cityData.ar);
         }
 
         if (address && displayCity) {
@@ -288,11 +311,14 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     };
 
     const getAmount = () => {
-        const baseAmount = job?.isRequest
-            ? ((job as any).budget || (job as any).estimated_budget_max)
+        if (!job) return 0;
+        // Always prefer final_amount (set by seller at completion) over the original estimate (budget)
+        const baseAmount = job.isRequest
+            ? ((job as any).final_amount || (job as any).budget || (job as any).estimated_budget_max)
             : ((job as any).final_amount || (job as any).final_agreed_price || (job as any).deposit_amount);
         return baseAmount || 0;
     };
+    const hasFinalAmount = !!(job as any)?.final_amount;
 
     const getStartDate = () => {
         return canonicalJob?.scheduledFor ?? null;
@@ -371,16 +397,19 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     };
 
     const handleStatusUpdate = async (newStatus: string) => {
-        // GEOFENCING ENFORCEMENT
-        if (newStatus === 'in_progress') {
-            const req = job as Record<string, unknown>;
-            if (req.latitude && req.longitude) {
-                const isOnsite = await checkLocation(req.latitude as number, req.longitude as number);
-                if (!isOnsite) return;
-            }
-        }
+        if (isUpdatingStatus) return; // Prevent double-tap
+        setIsUpdatingStatus(true);
 
         try {
+            // GEOFENCING ENFORCEMENT
+            if (newStatus === 'in_progress') {
+                const req = job as Record<string, unknown>;
+                if (req.latitude && req.longitude) {
+                    const isOnsite = await checkLocation(req.latitude as number, req.longitude as number);
+                    if (!isOnsite) return;
+                }
+            }
+
             const { error } = await (supabase as any)
                 .from('maintenance_requests')
                 .update({ status: newStatus })
@@ -396,6 +425,8 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
             queryClient.invalidateQueries({ queryKey: ["seller-scheduled-jobs"] });
         } catch (error: unknown) {
             toast.error(error instanceof Error ? error.message : 'Failed to update status');
+        } finally {
+            setIsUpdatingStatus(false);
         }
     };
     const updateStatusMutation = useMutation({
@@ -435,33 +466,41 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
     };
 
     const handleSellerPhotoProofComplete = async (photos: string[]) => {
-        const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
+        if (isUpdatingStatus) return;
+        setIsUpdatingStatus(true);
 
-        const updateData = {
-            seller_marked_complete: true,
-            seller_completion_date: new Date().toISOString(),
-            completion_photos: photos,
-            job_completion_code: code,
-            final_amount: finalPrice,
-            budget: finalPrice,
-        };
+        try {
+            const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
 
-        const { error } = await (supabase as any)
-            .from('maintenance_requests')
-            .update(updateData)
-            .eq('id', id);
+            const updateData = {
+                status: 'seller_marked_complete',
+                seller_marked_complete: true,
+                seller_completion_date: new Date().toISOString(),
+                completion_photos: photos,
+                job_completion_code: code,
+                final_amount: finalPrice,
+                // Do NOT overwrite budget — keep original estimate separate from final
+            };
 
-        if (error) {
-            toast.error("Failed to mark complete");
-            return;
+            const { error } = await (supabase as any)
+                .from('maintenance_requests')
+                .update(updateData)
+                .eq('id', id);
+
+            if (error) {
+                toast.error(currentLanguage === 'ar' ? "فشل في إكمال الطلب" : "Failed to mark complete");
+                return;
+            }
+
+            queryClient.invalidateQueries({ queryKey: ["seller-job-detail", id, type] });
+            queryClient.invalidateQueries({ queryKey: ["seller-home"] });
+            queryClient.invalidateQueries({ queryKey: ["seller-active-jobs"] });
+            queryClient.invalidateQueries({ queryKey: ["seller-active-job"] });
+            queryClient.invalidateQueries({ queryKey: ["seller-scheduled-jobs"] });
+            toast.success(currentLanguage === 'ar' ? "تم تحديث الحالة بنجاح" : "Status updated successfully");
+        } finally {
+            setIsUpdatingStatus(false);
         }
-
-        queryClient.invalidateQueries({ queryKey: ["seller-job-detail", id, type] });
-        queryClient.invalidateQueries({ queryKey: ["seller-home"] });
-        queryClient.invalidateQueries({ queryKey: ["seller-active-jobs"] });
-        queryClient.invalidateQueries({ queryKey: ["seller-active-job"] });
-        queryClient.invalidateQueries({ queryKey: ["seller-scheduled-jobs"] });
-        toast.success(currentLanguage === 'ar' ? "تم تحديث الحالة بنجاح" : "Status updated successfully");
     };
 
     const handleCodeSubmit = async (code: string) => {
@@ -480,8 +519,9 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                 return;
             }
 
-            toast.success(currentLanguage === 'ar' ? "تم تأكيد إنجاز العمل!" : "Job completion confirmed!");
             setShowCompletionCodeModal(false);
+            setShowCelebration(true);
+            if (id) celebrationFiredRef.current[id] = true;
             queryClient.invalidateQueries({ queryKey: ["seller-job-detail", id, type] });
             queryClient.invalidateQueries({ queryKey: ["seller-home"] });
             queryClient.invalidateQueries({ queryKey: ["seller-active-jobs"] });
@@ -693,37 +733,39 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                                 const startDate = getStartDate();
                                 if (!startDate) return currentLanguage === 'ar' ? 'مرن' : 'Flexible';
                                 const date = new Date(startDate);
-                                const sellerProposal = ((job as Record<string, unknown>)?.seller_counter_proposal) as Record<string, string> | null | undefined;
-                                // Check multiple field names for time preference
-                                const timeSlot = sellerProposal?.time_preference || sellerProposal?.time_slot ||
-                                    (job as any)?.time_preference || (job as any)?.time_slot ||
-                                    (job as any)?.preferred_time_slot;
-                                const dateStr = format(date, "MMM d", { locale: currentLanguage === 'ar' ? ar : enUS });
+                                const dateStr = format(date, "EEE, MMM d", { locale: currentLanguage === 'ar' ? ar : enUS });
 
-                                // Try to get time from time_slot first
-                                if (timeSlot) {
-                                    const timeMap: Record<string, string> = {
-                                        morning: currentLanguage === 'ar' ? 'صباحاً' : 'Morning',
-                                        afternoon: currentLanguage === 'ar' ? 'ظهراً' : 'Afternoon',
-                                        evening: currentLanguage === 'ar' ? 'مساءً' : 'Evening'
-                                    };
-                                    return `${dateStr} • ${timeMap[timeSlot] || timeSlot}`;
-                                }
-
-                                // Fall back to time window based on hour if date has time component
+                                // If the date has a real time component, show it directly (never show "Morning/Evening")
                                 const hours = date.getHours();
                                 const minutes = date.getMinutes();
                                 if (hours !== 0 || minutes !== 0) {
-                                    // Determine time window from hour: morning (6-11), afternoon (12-17), night (18+)
-                                    let timeLabel: string;
-                                    if (hours >= 6 && hours < 12) {
-                                        timeLabel = currentLanguage === 'ar' ? 'صباحاً' : 'Morning';
-                                    } else if (hours >= 12 && hours < 18) {
-                                        timeLabel = currentLanguage === 'ar' ? 'ظهراً' : 'Afternoon';
-                                    } else {
-                                        timeLabel = currentLanguage === 'ar' ? 'مساءً' : 'Evening';
+                                    const timeStr = date.toLocaleTimeString(
+                                        currentLanguage === 'ar' ? 'ar-SA' : 'en-US',
+                                        { hour: 'numeric', minute: '2-digit', hour12: true }
+                                    );
+                                    return `${dateStr} • ${timeStr}`;
+                                }
+
+                                // No time component — try to resolve from slot field (legacy data)
+                                const sellerProposal = ((job as Record<string, unknown>)?.seller_counter_proposal) as Record<string, string> | null | undefined;
+                                const timeSlot = sellerProposal?.time_preference || sellerProposal?.time_slot ||
+                                    (job as any)?.time_preference || (job as any)?.time_slot ||
+                                    (job as any)?.preferred_time_slot;
+                                if (timeSlot) {
+                                    // Map legacy slot names to specific times
+                                    const slotTimeMap: Record<string, string> = { morning: '09:00', afternoon: '13:00', evening: '17:00' };
+                                    const resolvedTime = slotTimeMap[timeSlot] ?? timeSlot;
+                                    // resolvedTime may be "09:00" or already a HH:MM string
+                                    const [h, m] = resolvedTime.split(':').map(Number);
+                                    if (!isNaN(h)) {
+                                        const t = new Date(date);
+                                        t.setHours(h, m || 0, 0, 0);
+                                        const timeStr = t.toLocaleTimeString(
+                                            currentLanguage === 'ar' ? 'ar-SA' : 'en-US',
+                                            { hour: 'numeric', minute: '2-digit', hour12: true }
+                                        );
+                                        return `${dateStr} • ${timeStr}`;
                                     }
-                                    return `${dateStr} • ${timeLabel}`;
                                 }
 
                                 return dateStr;
@@ -753,7 +795,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                     <SoftCard className="p-4">
                         {/* Service Badge - Neutral style like explore screen */}
                         <div className={cn(
-                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-border/50 shadow-sm float-left mr-3 mb-1",
+                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-background border border-border/50 shadow-sm float-left mr-3 mb-1",
                             currentLanguage === 'ar' ? 'flex-row-reverse' : ''
                         )}>
                             <span className="text-sm text-blue-500">{getCategoryIcon((job as any).service_category)}</span>
@@ -1002,7 +1044,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                                     onClick={() => setShowCompletionCodeModal(true)}
                                     className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-base font-semibold shadow-lg shadow-primary/30 gap-2"
                                 >
-                                    <QrCode size={20} />
+                                    <CheckCircle size={20} />
                                     {currentLanguage === 'ar' ? "أدخل الرمز من شاشة العميل" : "Enter Code from Customer's Screen"}
                                 </Button>
                             </motion.div>
@@ -1066,7 +1108,7 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                 isOpen={showFinalPriceSheet}
                 onClose={() => setShowFinalPriceSheet(false)}
                 onSubmit={handleFinalPriceSubmit}
-                initialPrice={(job as any)?.budget || (job as any)?.estimated_budget_max || 0}
+                initialPrice={(job as any)?.final_amount || 0}
                 currentLanguage={currentLanguage}
             />
 
@@ -1129,6 +1171,29 @@ export const SellerJobDetail = ({ currentLanguage }: SellerJobDetailProps) => {
                     }}
                 />
             )}
+
+            {/* Job Completion Celebration overlay */}
+            <AnimatePresence>
+                {showCelebration && (
+                    <JobCompletionCelebration
+                        data={{
+                            variant: 'seller',
+                            buyerName: buyerProfile?.full_name || buyerProfile?.company_name || (currentLanguage === 'ar' ? 'العميل' : 'Client'),
+                            buyerAvatar: buyerProfile?.avatar_url || undefined,
+                            amount: typeof (job as any).final_amount === 'number' ? (job as any).final_amount : 0,
+                            title: (job as any).title || (job as any).description || '',
+                            category: (job as any).category || (job as any).service_category || undefined,
+                            date: (job as any).scheduled_for ? new Date((job as any).scheduled_for).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' }) : undefined,
+                            jobId: id || '',
+                            location: (job as any)?.location || undefined,
+                            lat: (job as any)?.latitude || (job as any)?.lat || undefined,
+                            lng: (job as any)?.longitude || (job as any)?.lng || undefined,
+                        }}
+                        currentLanguage={currentLanguage}
+                        onDismiss={() => setShowCelebration(false)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

@@ -12,8 +12,9 @@ export const ProtectedRoute = ({
   allowedRoles,
   requireAuth = true
 }: ProtectedRouteProps) => {
-  const { user, userType, loading } = useAuth();
+  const { user, userType, userTypeLoaded, loading } = useAuth();
 
+  // Wait for auth session to resolve
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -23,9 +24,17 @@ export const ProtectedRoute = ({
   }
 
   if (requireAuth && !user) {
-    // Check if we are in the mobile app context
     const isAppRoute = window.location.pathname.startsWith('/app');
     return <Navigate to={isAppRoute ? "/app/onboarding/login" : "/login"} replace />;
+  }
+
+  // Wait for userType fetch to complete (prevents role-check bypass during async fetch)
+  if (allowedRoles && user && !userTypeLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (allowedRoles && userType && !allowedRoles.includes(userType)) {

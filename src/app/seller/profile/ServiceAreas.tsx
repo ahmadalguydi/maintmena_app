@@ -14,7 +14,7 @@ import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { MAPBOX_STREET_STYLE, MAPBOX_TOKEN } from '@/lib/mapbox';
+import { MAPBOX_TOKEN, getMapStyle } from '@/lib/mapbox';
 import { cn } from '@/lib/utils';
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -335,7 +335,7 @@ export const ServiceAreas = ({ currentLanguage }: ServiceAreasProps) => {
 
     const mapInstance = new mapboxgl.Map({
       container: mapContainer.current,
-      style: MAPBOX_STREET_STYLE,
+      style: getMapStyle(),
       center: initialCenter,
       zoom: getZoomForRadius(radiusKm, initialPoint.lat, mapContainer.current),
       attributionControl: false,

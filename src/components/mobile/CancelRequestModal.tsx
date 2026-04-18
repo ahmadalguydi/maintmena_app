@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, UserX, AlertTriangle } from 'lucide-react';
+import { X, Calendar, UserX, AlertTriangle, CalendarClock, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { SoftCard } from './SoftCard';
@@ -12,6 +12,7 @@ export type CancelReason =
     | 'wrong_service'
     | 'price_too_high'
     | 'provider_issue'
+    | 'change_provider'
     | 'changed_mind'
     | 'other';
 
@@ -20,7 +21,8 @@ interface CancelRequestModalProps {
     isOpen: boolean;
     onClose: () => void;
     onCancel: (reason: CancelReason, wantsDifferentProvider?: boolean) => void;
-    hasProvider?: boolean; // Whether a provider has been assigned
+    onReschedule?: () => void;
+    hasProvider?: boolean;
 }
 
 const content = {
@@ -32,10 +34,12 @@ const content = {
         wrongService: 'الخدمة غير صحيحة',
         priceTooHigh: 'السعر عالي',
         providerIssue: 'مشكلة مع الفني',
+        changeProvider: 'أبي فني ثاني',
         changedMind: 'غيرت رأيي',
         other: 'سبب آخر',
         cancelRequest: 'إلغاء الطلب',
         findDifferent: 'دور لي على فني غيره',
+        rescheduleInstead: 'غيّر الموعد بدال الإلغاء',
         keepRequest: 'الاحتفاظ بالطلب',
         warningTitle: 'هل متأكد؟',
         warningText: 'إذا ألغيت بعد تعيين الفني ممكن تتأثر تجربتك',
@@ -48,22 +52,25 @@ const content = {
         wrongService: 'Wrong service',
         priceTooHigh: 'Price too high',
         providerIssue: 'Issue with provider',
+        changeProvider: 'I want a different provider',
         changedMind: 'Changed my mind',
         other: 'Other reason',
         cancelRequest: 'Cancel Request',
         findDifferent: 'Find Different Provider',
+        rescheduleInstead: 'Reschedule instead of cancelling',
         keepRequest: 'Keep Request',
         warningTitle: 'Are you sure?',
         warningText: 'Cancelling after provider acceptance may affect your experience',
     }
 };
 
-const reasons: { key: CancelReason; icon: string; showFindDifferent?: boolean }[] = [
-    { key: 'wrong_time', icon: '🕐' },
-    { key: 'wrong_service', icon: '🔧' },
+const reasons: { key: CancelReason; icon: string; showFindDifferent?: boolean; showReschedule?: boolean }[] = [
+    { key: 'wrong_time', icon: '🕐', showReschedule: true },
+    { key: 'change_provider', icon: '🔄', showFindDifferent: true },
     { key: 'price_too_high', icon: '💰', showFindDifferent: true },
     { key: 'provider_issue', icon: '👤', showFindDifferent: true },
-    { key: 'found_other', icon: '🔄' },
+    { key: 'wrong_service', icon: '🔧' },
+    { key: 'found_other', icon: '✅' },
     { key: 'changed_mind', icon: '💭' },
     { key: 'other', icon: '📝' },
 ];
@@ -73,6 +80,7 @@ export const CancelRequestModal = ({
     isOpen,
     onClose,
     onCancel,
+    onReschedule,
     hasProvider = false,
 }: CancelRequestModalProps) => {
     const t = content[currentLanguage];
@@ -87,6 +95,7 @@ export const CancelRequestModal = ({
             wrong_service: t.wrongService,
             price_too_high: t.priceTooHigh,
             provider_issue: t.providerIssue,
+            change_provider: t.changeProvider,
             changed_mind: t.changedMind,
             other: t.other,
         };
@@ -202,6 +211,19 @@ export const CancelRequestModal = ({
 
                         {/* Actions */}
                         <div className="flex flex-col gap-2 p-5 border-t border-border/30">
+                            {selectedReasonData?.showReschedule && hasProvider && onReschedule && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        onClose();
+                                        onReschedule();
+                                    }}
+                                    className="w-full border-primary/30 text-primary hover:bg-primary/5"
+                                >
+                                    <CalendarClock size={18} className={cn(isRTL ? "ml-2" : "mr-2")} />
+                                    {t.rescheduleInstead}
+                                </Button>
+                            )}
                             {selectedReasonData?.showFindDifferent && hasProvider && (
                                 <Button
                                     variant="outline"
@@ -209,7 +231,7 @@ export const CancelRequestModal = ({
                                     disabled={!selectedReason}
                                     className="w-full"
                                 >
-                                    <UserX size={18} className={cn(isRTL ? "ml-2" : "mr-2")} />
+                                    <RefreshCw size={18} className={cn(isRTL ? "ml-2" : "mr-2")} />
                                     {t.findDifferent}
                                 </Button>
                             )}

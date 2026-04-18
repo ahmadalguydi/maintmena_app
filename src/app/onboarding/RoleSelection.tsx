@@ -76,7 +76,8 @@ export const RoleSelection = ({ currentLanguage, onToggle }: RoleSelectionProps)
 
   return (
     <div
-      className="min-h-screen bg-background flex flex-col p-6 justify-center"
+      data-native-screen-surface="true"
+      className="min-h-app bg-background flex flex-col p-6 pb-safe-or-4 pt-safe justify-center"
       dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
     >
       {/* Language Toggle */}

@@ -128,7 +128,7 @@ export const AdminReports = ({ currentLanguage }: AdminReportsProps) => {
                 }));
 
             } catch (e) {
-                console.warn('user_reports error:', e);
+                if (import.meta.env.DEV) console.warn('user_reports error:', e);
                 return [];
             }
         },

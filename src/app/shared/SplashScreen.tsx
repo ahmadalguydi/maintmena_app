@@ -28,7 +28,13 @@ export const SplashScreen = () => {
   }, [navigate, loading, user, userType]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-accent to-primary/80">
+    <div
+      data-native-screen-surface="true"
+      data-native-top-surface="#b45309"
+      data-native-bottom-surface="#c67a3a"
+      data-native-tone="dark"
+      className="min-h-app flex items-center justify-center bg-gradient-to-br from-primary via-accent to-primary/80"
+    >
       <div className="text-center px-6">
         <motion.h1
           initial={{ scale: 0.5, opacity: 0 }}

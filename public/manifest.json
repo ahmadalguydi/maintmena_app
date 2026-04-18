@@ -1,0 +1,20 @@
+{
+  "name": "MaintMENA",
+  "short_name": "MaintMENA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f7f4",
+  "theme_color": "#f8f7f4",
+  "icons": [
+    {
+      "src": "https://storage.googleapis.com/gpt-engineer-file-uploads/58avFXkGlXebFRFWQGQlYqeB9VG2/uploads/1760781779745-MaintMENA_Icon_NB.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://storage.googleapis.com/gpt-engineer-file-uploads/58avFXkGlXebFRFWQGQlYqeB9VG2/uploads/1760781779745-MaintMENA_Icon_NB.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

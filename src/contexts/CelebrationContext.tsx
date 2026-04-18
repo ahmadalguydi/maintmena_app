@@ -32,7 +32,7 @@ const CelebrationContext = createContext<CelebrationContextType | null>(null);
 export const useCelebration = () => {
     const context = useContext(CelebrationContext);
     if (!context) {
-        console.warn('[useCelebration] Must be used within CelebrationProvider');
+        if (import.meta.env.DEV) console.warn('[useCelebration] Must be used within CelebrationProvider');
         return { celebrate: () => { } };
     }
     return context;

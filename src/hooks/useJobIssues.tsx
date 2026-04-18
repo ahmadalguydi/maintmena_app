@@ -227,7 +227,7 @@ export function useJobIssuesMap(jobs: JobReference[]) {
                 .not('status', 'in', '("resolved","no_agreement")');
 
             if (error) {
-                console.error('Error fetching job issues map:', error);
+                if (import.meta.env.DEV) console.error('Error fetching job issues map:', error);
                 return new Map<string, IssueStatus>();
             }
 

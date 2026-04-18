@@ -8,6 +8,7 @@ import { GradientHeader } from '@/components/mobile/GradientHeader';
 import { toast } from 'sonner';
 import { Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useKeyboardAvoidance } from '@/hooks/useKeyboardAvoidance';
 
 interface ForgotPasswordProps {
   currentLanguage?: 'en' | 'ar';
@@ -19,6 +20,7 @@ export const ForgotPassword = ({ currentLanguage: propLang, onToggle }: ForgotPa
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const currentLanguage = propLang || (localStorage.getItem('currentLanguage') || 'ar') as 'en' | 'ar';
+  const { containerStyle, isKeyboardVisible } = useKeyboardAvoidance();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +32,7 @@ export const ForgotPassword = ({ currentLanguage: propLang, onToggle }: ForgotPa
 
     setIsLoading(true);
     
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/app/onboarding/reset-password`,
     });
 
@@ -46,7 +48,11 @@ export const ForgotPassword = ({ currentLanguage: propLang, onToggle }: ForgotPa
   };
 
   return (
-    <div className="min-h-screen bg-background" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div
+      className={`min-h-full overflow-y-auto bg-background ${isKeyboardVisible ? 'pb-4' : 'pb-safe-or-4'}`}
+      style={containerStyle}
+      dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
+    >
       <GradientHeader
         title={currentLanguage === 'ar' ? 'نسيت كلمة المرور' : 'Forgot Password'}
         subtitle={currentLanguage === 'ar' ? 'سنرسل لك رابط إعادة التعيين' : "We'll send you a reset link"}
@@ -80,9 +86,11 @@ export const ForgotPassword = ({ currentLanguage: propLang, onToggle }: ForgotPa
               <Input
                 id="email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={currentLanguage === 'ar' ? 'example@email.com' : 'example@email.com'}
+                placeholder="example@email.com"
                 className="text-lg h-12"
               />
             </div>

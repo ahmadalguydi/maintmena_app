@@ -164,7 +164,7 @@ export const MessagingPanel = ({ quoteId, bookingId, quoteTitle, userType, onClo
 
       setMessages(messagesWithSenders);
     } catch (error: unknown) {
-      console.error('Error fetching messages:', error);
+      if (import.meta.env.DEV) console.error('Error fetching messages:', error);
     } finally {
       setLoading(false);
     }

@@ -51,7 +51,7 @@ export function useEducationalData() {
         setContent(grouped);
       }
     } catch (error) {
-      console.error('Error fetching educational content:', error);
+      if (import.meta.env.DEV) console.error('Error fetching educational content:', error);
     } finally {
       setLoading(false);
     }

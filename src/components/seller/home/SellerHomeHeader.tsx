@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { getGreeting } from '@/lib/smartTime';
 import { Bell, MessageCircle, Building2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -14,19 +15,7 @@ export function SellerHomeHeader({ currentLanguage }: SellerHomeHeaderProps) {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Get time-based greeting
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (currentLanguage === 'ar') {
-            if (hour < 12) return 'صباح الخير';
-            if (hour < 17) return 'مساء الخير';
-            return 'مساء الخير';
-        } else {
-            if (hour < 12) return 'Good Morning';
-            if (hour < 17) return 'Good Afternoon';
-            return 'Good Evening';
-        }
-    };
+    const greeting = getGreeting(currentLanguage);
 
     // Fetch user name
     const { data: profile } = useQuery({
@@ -41,7 +30,7 @@ export function SellerHomeHeader({ currentLanguage }: SellerHomeHeaderProps) {
             return data;
         },
         enabled: !!user?.id,
-        staleTime: 300000, // 5 minutes
+        staleTime: 60_000, // 1 minute
     });
 
     // Fetch unread notification count
@@ -83,7 +72,7 @@ export function SellerHomeHeader({ currentLanguage }: SellerHomeHeaderProps) {
                         "text-xs text-muted-foreground",
                         currentLanguage === 'ar' ? 'font-ar-body' : 'font-body'
                     )}>
-                        {getGreeting()}
+                        {greeting}
                     </p>
                     <p className={cn(
                         "text-base font-semibold text-foreground",

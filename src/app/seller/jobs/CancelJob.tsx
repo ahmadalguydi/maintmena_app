@@ -56,7 +56,7 @@ export const CancelJob = ({ currentLanguage }: { currentLanguage: 'en' | 'ar' })
       cancelButton: 'Keep Job',
       successMsg: 'Job cancelled successfully.',
       errorMsg: 'Failed to cancel the job. Please try again.',
-      warning: 'This action cannot be undone. The request will return to the open marketplace.',
+      warning: 'This action cannot be undone. The request will be returned to the dispatch queue for reassignment.',
     },
     ar: {
       title: 'إلغاء المهمة',
@@ -68,7 +68,7 @@ export const CancelJob = ({ currentLanguage }: { currentLanguage: 'en' | 'ar' })
       cancelButton: 'الرجوع للمهمة',
       successMsg: 'تم إلغاء المهمة بنجاح.',
       errorMsg: 'فشل إلغاء المهمة. يرجى المحاولة مرة أخرى.',
-      warning: 'لا يمكن التراجع عن هذا الإجراء. سيعود الطلب إلى سوق الخدمات المفتوح.',
+      warning: 'لا يمكن التراجع عن هذا الإجراء. سيُعاد الطلب إلى قائمة التوزيع لإعادة التعيين.',
     },
   };
 
@@ -77,12 +77,33 @@ export const CancelJob = ({ currentLanguage }: { currentLanguage: 'en' | 'ar' })
   const cancelMutation = useMutation({
     mutationFn: async () => {
       if (!id) throw new Error('Missing job ID');
+      if (!selectedReason) throw new Error('Missing cancellation reason');
+
+      // Check current status - only allow cancellation before work starts
+      const { data: current } = await (supabase as any)
+        .from('maintenance_requests')
+        .select('status')
+        .eq('id', id)
+        .maybeSingle();
+
+      const cancellableStatuses = ['accepted', 'en_route', 'arrived'];
+      if (!current || !cancellableStatuses.includes(current.status)) {
+        throw new Error(currentLanguage === 'ar'
+          ? 'لا يمكن إلغاء هذا الطلب في حالته الحالية'
+          : 'Cannot cancel this job in its current state');
+      }
+
+      const updateData: Record<string, unknown> = {
+        status: 'cancelled',
+        assigned_seller_id: null,
+        cancellation_reason: selectedReason,
+      };
+      if (note.trim()) {
+        updateData.cancellation_note = note.trim();
+      }
       const { error } = await (supabase as unknown as { from: (table: string) => { update: (data: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<{ error: unknown }> } } })
         .from('maintenance_requests')
-        .update({
-          status: 'cancelled',
-          assigned_seller_id: null,
-        })
+        .update(updateData)
         .eq('id', id);
       if (error) throw error;
     },
@@ -132,7 +153,7 @@ export const CancelJob = ({ currentLanguage }: { currentLanguage: 'en' | 'ar' })
       <main className="flex-1 overflow-y-auto">
         <div className="p-5 space-y-6">
           {/* Warning banner */}
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
             <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
             <p
               className={cn(

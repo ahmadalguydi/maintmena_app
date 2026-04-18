@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Route } from 'react-router-dom';
-import { RouteLoader, lazyNamedRoute, lazyRoute } from './routeLoader';
+import { RouteLoader, lazyRoute } from './routeLoader';
 
 export interface RouteProps {
     currentLanguage: 'en' | 'ar';
@@ -22,8 +22,6 @@ const SignupChoice = lazyRoute<RouteProps>(() => import('@/pages/SignupChoice'))
 const SignupConfirmation = lazyRoute<RouteProps>(() => import('@/pages/SignupConfirmation'));
 const Login = lazyRoute<RouteProps>(() => import('@/pages/Login'));
 const Logout = lazyRoute<RouteProps>(() => import('@/pages/Logout'));
-const DensityTest = lazyRoute(() => import('@/pages/DensityTest'));
-const RequestDetail = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/requests/RequestDetail'), 'RequestDetail');
 
 export function publicRoutes({ currentLanguage }: RouteProps) {
     return (
@@ -43,9 +41,6 @@ export function publicRoutes({ currentLanguage }: RouteProps) {
             <Route path="/signup-confirmation" element={<Suspense fallback={<RouteLoader />}><SignupConfirmation currentLanguage={currentLanguage} /></Suspense>} />
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login currentLanguage={currentLanguage} /></Suspense>} />
             <Route path="/logout" element={<Suspense fallback={<RouteLoader />}><Logout currentLanguage={currentLanguage} /></Suspense>} />
-            <Route path="/density-test" element={<Suspense fallback={<RouteLoader />}><DensityTest /></Suspense>} />
-            {/* Mock tracking screen for preview */}
-            <Route path="/request/mock-1" element={<Suspense fallback={<RouteLoader />}><RequestDetail currentLanguage={currentLanguage} /></Suspense>} />
             <Route path="*" element={<Suspense fallback={<RouteLoader />}><NotFound currentLanguage={currentLanguage} /></Suspense>} />
         </>
     );

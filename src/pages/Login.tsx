@@ -119,7 +119,7 @@ const Login = ({
         description: currentLanguage === 'ar' ? 'تم إرسال رابط التحقق مرة أخرى. يرجى التحقق من بريدك الإلكتروني.' : 'Verification link sent! Please check your email.'
       });
     } catch (error: any) {
-      console.error('Resend error:', error);
+      if (import.meta.env.DEV) console.error('Resend error:', error);
       toast({
         title: currentLanguage === 'ar' ? 'خطأ' : 'Error',
         description: currentLanguage === 'ar' ? 'فشل إعادة إرسال البريد الإلكتروني. يرجى المحاولة لاحقاً.' : 'Failed to resend email. Please try again later.',

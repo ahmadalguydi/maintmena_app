@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { identifyUser, trackSignup, trackLogin } from "@/lib/brevoAnalytics";
+import { unregisterPushNotifications } from "@/lib/pushNotifications";
+import { clearPreferences } from "@/lib/preferences";
 
 // Bilingual messages
 const messages = {
@@ -42,6 +44,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   userType: "buyer" | "seller" | "admin" | null;
+  userTypeLoaded: boolean;
   signUp: (
     email: string,
     password: string,
@@ -80,9 +83,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userType, setUserType] = useState<"buyer" | "seller" | "admin" | null>(
     null,
   );
+  const [userTypeLoaded, setUserTypeLoaded] = useState(false);
   const navigate = useNavigate();
   const authResolutionRef = useRef(0);
   const currentUserIdRef = useRef<string | null>(null);
+  const loginAttemptsRef = useRef<{ count: number; firstAttemptAt: number }>({ count: 0, firstAttemptAt: 0 });
 
   const fetchUserType = useCallback(async (
     userId: string,
@@ -128,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setUserType(resolvedUserType);
+    setUserTypeLoaded(true);
     return resolvedUserType;
   }, [fetchUserType]);
 
@@ -150,6 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         authResolutionRef.current += 1;
         setUserType(null);
+        setUserTypeLoaded(true);
       }
       setLoading(false);
     });
@@ -161,9 +168,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (session?.user) {
         void resolveAndSetUserType(session.user.id);
+      } else {
+        setUserTypeLoaded(true);
       }
       setLoading(false);
     }).catch(() => {
+      setUserTypeLoaded(true);
       setLoading(false);
     });
 
@@ -221,6 +231,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               if (import.meta.env.DEV) console.error("Failed to send verification email:", emailError);
               // Don't block signup, just log the error
             }
+          })
+          .catch((err) => {
+            if (import.meta.env.DEV) console.error("Verification email request failed:", err);
           });
 
         // Track signup in Brevo and identify user with additional attributes
@@ -261,21 +274,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const t = messages[language];
 
     try {
-      // Check rate limit before attempting login
-      /* 
-      const { data: canProceed } = await supabase.rpc('check_rate_limit', {
-        p_user_id: null, // null for IP-based rate limiting
-        p_action: 'login_attempt',
-        p_max_attempts: 5,
-        p_window_minutes: 15
-      });
-  
-      if (!canProceed) {
+      // Client-side rate limiting: max 5 attempts per 15 minutes
+      const now = Date.now();
+      const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+      const MAX_ATTEMPTS = 5;
+      if (loginAttemptsRef.current.count >= MAX_ATTEMPTS &&
+          now - loginAttemptsRef.current.firstAttemptAt < RATE_LIMIT_WINDOW_MS) {
         const error = { message: t.tooManyAttempts };
         toast.error(error.message);
         return { error };
       }
-      */
+      if (now - loginAttemptsRef.current.firstAttemptAt >= RATE_LIMIT_WINDOW_MS) {
+        loginAttemptsRef.current = { count: 0, firstAttemptAt: now };
+      }
+      loginAttemptsRef.current.count += 1;
+      if (loginAttemptsRef.current.count === 1) {
+        loginAttemptsRef.current.firstAttemptAt = now;
+      }
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -324,6 +339,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const t = messages[language];
 
     try {
+      await unregisterPushNotifications();
+
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
@@ -334,6 +351,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setSession(null);
       setUserType(null);
+
+      // Clear persisted user preferences to prevent data leaking to next login
+      try {
+        clearPreferences();
+        localStorage.removeItem('selectedRole');
+        localStorage.removeItem('intendedRole');
+        localStorage.removeItem('preferredRole');
+        localStorage.removeItem('pendingAction');
+      } catch {
+        // localStorage may be unavailable (Safari private browsing)
+      }
 
       toast.success(t.signedOut);
 
@@ -356,6 +384,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         loading,
         userType,
+        userTypeLoaded,
         signUp,
         signIn,
         signOut,

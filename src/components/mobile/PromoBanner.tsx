@@ -4,6 +4,7 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface PromoBannerItem {
     id: string;
@@ -20,7 +21,15 @@ interface PromoBannerProps {
     currentLanguage?: 'en' | 'ar';
 }
 
+/** Dark-mode accent colors that mirror the seller smart-tips palette */
+const DARK_ACCENTS = [
+    { bg: '#332921', border: 'rgba(217,169,109,0.15)', accent: 'text-amber-200' },
+    { bg: '#1e2a33', border: 'rgba(130,180,220,0.15)', accent: 'text-sky-200' },
+    { bg: '#1f2e24', border: 'rgba(130,200,150,0.15)', accent: 'text-emerald-200' },
+];
+
 export const PromoBanner = ({ items, currentLanguage = 'en' }: PromoBannerProps) => {
+    const isDark = useDarkMode();
     const [emblaRef, emblaApi] = useEmblaCarousel(
         {
             loop: true,
@@ -52,7 +61,9 @@ export const PromoBanner = ({ items, currentLanguage = 'en' }: PromoBannerProps)
         <div className="relative">
             <div className="overflow-hidden rounded-3xl" ref={emblaRef}>
                 <div className="flex">
-                    {items.map((item, index) => (
+                    {items.map((item, index) => {
+                        const darkAccent = DARK_ACCENTS[index % DARK_ACCENTS.length];
+                        return (
                         <div key={item.id} className="flex-[0_0_100%] min-w-0 px-1">
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -61,16 +72,26 @@ export const PromoBanner = ({ items, currentLanguage = 'en' }: PromoBannerProps)
                                 className={cn(
                                     'relative overflow-hidden rounded-3xl',
                                     'min-h-[160px] p-6',
-                                    item.gradient
+                                    !isDark && item.gradient
                                 )}
+                                style={isDark ? {
+                                    backgroundColor: darkAccent.bg,
+                                    border: `1px solid ${darkAccent.border}`,
+                                } : undefined}
                             >
                                 {/* Content */}
                                 <div className="relative z-10 flex flex-col justify-between h-full">
                                     <div>
-                                        <h3 className="text-xl font-bold text-foreground mb-2">
+                                        <h3 className={cn(
+                                            'text-xl font-bold mb-2',
+                                            isDark ? 'text-white/90' : 'text-foreground'
+                                        )}>
                                             {item.title}
                                         </h3>
-                                        <p className="text-sm text-muted-foreground max-w-[60%]">
+                                        <p className={cn(
+                                            'text-sm max-w-[60%]',
+                                            isDark ? 'text-white/50' : 'text-muted-foreground'
+                                        )}>
                                             {item.description}
                                         </p>
                                     </div>
@@ -80,11 +101,12 @@ export const PromoBanner = ({ items, currentLanguage = 'en' }: PromoBannerProps)
                                         onClick={item.ctaAction}
                                         className={cn(
                                             'mt-4 self-start px-6 py-2.5 rounded-full',
-                                            'bg-foreground/10 hover:bg-foreground/20',
-                                            'text-foreground font-semibold text-sm',
+                                            'font-semibold text-sm',
                                             'transition-all duration-200',
                                             'active:scale-95',
-                                            'border border-foreground/10'
+                                            isDark
+                                                ? 'bg-amber-500 text-amber-950 hover:bg-amber-400 border-none'
+                                                : 'bg-foreground/10 hover:bg-foreground/20 text-foreground border border-foreground/10'
                                         )}
                                     >
                                         {item.ctaText}
@@ -109,7 +131,8 @@ export const PromoBanner = ({ items, currentLanguage = 'en' }: PromoBannerProps)
                                 )}
                             </motion.div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 
@@ -123,8 +146,8 @@ export const PromoBanner = ({ items, currentLanguage = 'en' }: PromoBannerProps)
                             className={cn(
                                 'h-1.5 rounded-full transition-all duration-300',
                                 index === selectedIndex
-                                    ? 'w-6 bg-primary'
-                                    : 'w-1.5 bg-muted-foreground/30'
+                                    ? cn('w-6', isDark ? 'bg-amber-500' : 'bg-primary')
+                                    : cn('w-1.5', isDark ? 'bg-white/15' : 'bg-muted-foreground/30')
                             )}
                         />
                     ))}

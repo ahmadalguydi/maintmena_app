@@ -105,7 +105,7 @@ export const DualResolutionHaltedJobCard = ({
       toast.success(t.approveSuccess);
     },
     onError: (error) => {
-      console.error('Approve resolution error:', error);
+      if (import.meta.env.DEV) console.error('Approve resolution error:', error);
       toast.error('Failed to approve resolution');
     }
   });

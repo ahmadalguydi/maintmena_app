@@ -51,7 +51,7 @@ export const MarkdownImport = ({ language, onImport, onClose }: MarkdownImportPr
         description: `Parsed ${blocks.length} blocks`,
       });
     } catch (error) {
-      console.error('Error parsing markdown:', error);
+      if (import.meta.env.DEV) console.error('Error parsing markdown:', error);
       toast({
         title: 'Parsing error',
         description: 'Failed to parse markdown. Please check the format.',

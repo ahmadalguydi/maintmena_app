@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { GradientHeader } from '@/components/mobile/GradientHeader';
@@ -8,6 +8,7 @@ import { SoftCard } from '@/components/mobile/SoftCard';
 import { Heading2, Heading3, Body, BodySmall, Caption } from '@/components/mobile/Typography';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
     Flag,
     Users,
@@ -29,7 +30,10 @@ import {
     DollarSign,
     MapPin,
     RefreshCw,
+    Sparkles,
+    Sun,
 } from 'lucide-react';
+import { getSeasonalDemandPredictions } from '@/lib/seasonalDemand';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { smartTimeAgo, getGreeting } from '@/lib/smartTime';
@@ -42,6 +46,96 @@ export const AdminHome = ({ currentLanguage }: AdminHomeProps) => {
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
     const isArabic = currentLanguage === 'ar';
+    const queryClient = useQueryClient();
+
+    // ─── Soft Opening Toggle ───
+    const { data: softOpeningEnabled = true, isLoading: softOpeningLoading } = useQuery({
+        queryKey: ['platform-settings', 'soft_opening_enabled'],
+        queryFn: async () => {
+            const { data, error } = await (supabase as unknown as import('@supabase/supabase-js').SupabaseClient)
+                .from('platform_settings')
+                .select('value')
+                .eq('key', 'soft_opening_enabled')
+                .maybeSingle();
+            if (error || !data) return true;
+            return data.value === 'true' || data.value === true;
+        },
+    });
+
+    const softOpeningMutation = useMutation({
+        mutationFn: async (enabled: boolean) => {
+            const { error } = await (supabase as unknown as import('@supabase/supabase-js').SupabaseClient)
+                .from('platform_settings')
+                .upsert(
+                    { key: 'soft_opening_enabled', value: String(enabled) },
+                    { onConflict: 'key' }
+                );
+            if (error) throw error;
+        },
+        onSuccess: (_data, enabled) => {
+            queryClient.setQueryData(['platform-settings', 'soft_opening_enabled'], enabled);
+        },
+    });
+
+    // ─── Dispatch Timer Toggle ───
+    const { data: dispatchTimerEnabled = true, isLoading: dispatchTimerLoading } = useQuery({
+        queryKey: ['platform-settings', 'dispatch_timer_enabled'],
+        queryFn: async () => {
+            const { data, error } = await (supabase as unknown as import('@supabase/supabase-js').SupabaseClient)
+                .from('platform_settings')
+                .select('value')
+                .eq('key', 'dispatch_timer_enabled')
+                .maybeSingle();
+            if (error || !data) return true;
+            return data.value === 'true' || data.value === true;
+        },
+    });
+
+    const dispatchTimerMutation = useMutation({
+        mutationFn: async (enabled: boolean) => {
+            const { error } = await (supabase as unknown as import('@supabase/supabase-js').SupabaseClient)
+                .from('platform_settings')
+                .upsert(
+                    { key: 'dispatch_timer_enabled', value: String(enabled) },
+                    { onConflict: 'key' }
+                );
+            if (error) throw error;
+        },
+        onSuccess: (_data, enabled) => {
+            queryClient.setQueryData(['platform-settings', 'dispatch_timer_enabled'], enabled);
+        },
+    });
+
+    // ─── Seasonal Alerts Toggle ───
+    const { data: seasonalAlertsEnabled = true, isLoading: seasonalAlertsLoading } = useQuery({
+        queryKey: ['platform-settings', 'seasonal_alerts_enabled'],
+        queryFn: async () => {
+            const { data, error } = await (supabase as unknown as import('@supabase/supabase-js').SupabaseClient)
+                .from('platform_settings')
+                .select('value')
+                .eq('key', 'seasonal_alerts_enabled')
+                .maybeSingle();
+            if (error || !data) return true;
+            return data.value === 'true' || data.value === true;
+        },
+    });
+
+    const seasonalAlertsMutation = useMutation({
+        mutationFn: async (enabled: boolean) => {
+            const { error } = await (supabase as unknown as import('@supabase/supabase-js').SupabaseClient)
+                .from('platform_settings')
+                .upsert(
+                    { key: 'seasonal_alerts_enabled', value: String(enabled) },
+                    { onConflict: 'key' }
+                );
+            if (error) throw error;
+        },
+        onSuccess: (_data, enabled) => {
+            queryClient.setQueryData(['platform-settings', 'seasonal_alerts_enabled'], enabled);
+        },
+    });
+
+    const seasonalPredictions = getSeasonalDemandPredictions();
 
     // ─── Platform-wide statistics ───
     const { data: stats, isLoading, refetch: refetchStats } = useQuery({
@@ -182,6 +276,22 @@ export const AdminHome = ({ currentLanguage }: AdminHomeProps) => {
             critical: 'Critical',
             refresh: 'Refresh',
             viewAll: 'View All',
+            softOpening: 'Soft Opening',
+            softOpeningDesc: 'All sellers get Professional tier for free with 0% fees',
+            softOpeningOn: 'Active',
+            softOpeningOff: 'Disabled',
+            dispatchTimer: 'Dispatch Timer',
+            dispatchTimerDesc: 'Limit how long sellers have to accept requests. Turn off when few providers are online.',
+            dispatchTimerOn: 'Active',
+            dispatchTimerOff: 'Disabled',
+            seasonalAlerts: 'Seasonal Alerts',
+            seasonalAlertsDesc: 'Show seasonal service tips to buyers based on weather & events',
+            seasonalOn: 'Active',
+            seasonalOff: 'Disabled',
+            seasonalDemand: 'Seasonal Demand',
+            demandHigh: 'High',
+            demandMedium: 'Medium',
+            demandLow: 'Low',
         },
         ar: {
             title: 'مركز القيادة',
@@ -220,6 +330,22 @@ export const AdminHome = ({ currentLanguage }: AdminHomeProps) => {
             critical: 'حرج',
             refresh: 'تحديث',
             viewAll: 'عرض الكل',
+            softOpening: 'الإفتتاح التجريبي',
+            softOpeningDesc: 'جميع مقدمي الخدمة يحصلون على الباقة الاحترافية مجاناً بدون عمولة',
+            softOpeningOn: 'مفعّل',
+            softOpeningOff: 'معطّل',
+            dispatchTimer: 'مؤقت العروض',
+            dispatchTimerDesc: 'تحديد وقت لقبول الطلبات. أوقفه عند قلة مقدمي الخدمة.',
+            dispatchTimerOn: 'مفعّل',
+            dispatchTimerOff: 'معطّل',
+            seasonalAlerts: 'التنبيهات الموسمية',
+            seasonalAlertsDesc: 'عرض نصائح موسمية للعملاء حسب الطقس والمناسبات',
+            seasonalOn: 'مفعّل',
+            seasonalOff: 'معطّل',
+            seasonalDemand: 'الطلب الموسمي',
+            demandHigh: 'عالي',
+            demandMedium: 'متوسط',
+            demandLow: 'منخفض',
         },
     };
 
@@ -365,6 +491,180 @@ export const AdminHome = ({ currentLanguage }: AdminHomeProps) => {
                     </div>
                 </motion.div>
 
+                {/* ─── Soft Opening Toggle ─── */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.08 }}
+                >
+                    <SoftCard className={cn(
+                        'p-4 border',
+                        softOpeningEnabled
+                            ? 'border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5'
+                            : 'border-border/50'
+                    )}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={cn(
+                                    'w-10 h-10 rounded-xl flex items-center justify-center',
+                                    softOpeningEnabled ? 'bg-amber-500/15' : 'bg-muted'
+                                )}>
+                                    <Sparkles size={20} className={softOpeningEnabled ? 'text-amber-600' : 'text-muted-foreground'} />
+                                </div>
+                                <div>
+                                    <BodySmall lang={currentLanguage} className="font-semibold text-sm">
+                                        {t.softOpening}
+                                    </BodySmall>
+                                    <Caption lang={currentLanguage} className="text-muted-foreground text-[10px] leading-tight max-w-[200px]">
+                                        {t.softOpeningDesc}
+                                    </Caption>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={cn(
+                                    'text-[10px] font-medium',
+                                    softOpeningEnabled ? 'text-amber-600' : 'text-muted-foreground'
+                                )}>
+                                    {softOpeningEnabled ? t.softOpeningOn : t.softOpeningOff}
+                                </span>
+                                <Switch
+                                    checked={softOpeningEnabled}
+                                    onCheckedChange={(checked) => softOpeningMutation.mutate(checked)}
+                                    disabled={softOpeningLoading || softOpeningMutation.isPending}
+                                    className="data-[state=checked]:bg-amber-500"
+                                />
+                            </div>
+                        </div>
+                    </SoftCard>
+                </motion.div>
+
+                {/* ─── Dispatch Timer Toggle ─── */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.085 }}
+                >
+                    <SoftCard className={cn(
+                        'p-4 border',
+                        dispatchTimerEnabled
+                            ? 'border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5'
+                            : 'border-border/50'
+                    )}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={cn(
+                                    'w-10 h-10 rounded-xl flex items-center justify-center',
+                                    dispatchTimerEnabled ? 'bg-violet-500/15' : 'bg-muted'
+                                )}>
+                                    <Clock size={20} className={dispatchTimerEnabled ? 'text-violet-600' : 'text-muted-foreground'} />
+                                </div>
+                                <div>
+                                    <BodySmall lang={currentLanguage} className="font-semibold text-sm">
+                                        {t.dispatchTimer}
+                                    </BodySmall>
+                                    <Caption lang={currentLanguage} className="text-muted-foreground text-[10px] leading-tight max-w-[200px]">
+                                        {t.dispatchTimerDesc}
+                                    </Caption>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={cn(
+                                    'text-[10px] font-medium',
+                                    dispatchTimerEnabled ? 'text-violet-600' : 'text-muted-foreground'
+                                )}>
+                                    {dispatchTimerEnabled ? t.dispatchTimerOn : t.dispatchTimerOff}
+                                </span>
+                                <Switch
+                                    checked={dispatchTimerEnabled}
+                                    onCheckedChange={(checked) => dispatchTimerMutation.mutate(checked)}
+                                    disabled={dispatchTimerLoading || dispatchTimerMutation.isPending}
+                                    className="data-[state=checked]:bg-violet-500"
+                                />
+                            </div>
+                        </div>
+                    </SoftCard>
+                </motion.div>
+
+                {/* ─── Seasonal Alerts Toggle + Demand Predictions ─── */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.09 }}
+                    className="space-y-2.5"
+                >
+                    <SoftCard className={cn(
+                        'p-4 border',
+                        seasonalAlertsEnabled
+                            ? 'border-blue-500/30 bg-gradient-to-r from-blue-500/5 to-cyan-500/5'
+                            : 'border-border/50'
+                    )}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={cn(
+                                    'w-10 h-10 rounded-xl flex items-center justify-center',
+                                    seasonalAlertsEnabled ? 'bg-blue-500/15' : 'bg-muted'
+                                )}>
+                                    <Sun size={20} className={seasonalAlertsEnabled ? 'text-blue-600' : 'text-muted-foreground'} />
+                                </div>
+                                <div>
+                                    <BodySmall lang={currentLanguage} className="font-semibold text-sm">
+                                        {t.seasonalAlerts}
+                                    </BodySmall>
+                                    <Caption lang={currentLanguage} className="text-muted-foreground text-[10px] leading-tight max-w-[200px]">
+                                        {t.seasonalAlertsDesc}
+                                    </Caption>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={cn(
+                                    'text-[10px] font-medium',
+                                    seasonalAlertsEnabled ? 'text-blue-600' : 'text-muted-foreground'
+                                )}>
+                                    {seasonalAlertsEnabled ? t.seasonalOn : t.seasonalOff}
+                                </span>
+                                <Switch
+                                    checked={seasonalAlertsEnabled}
+                                    onCheckedChange={(checked) => seasonalAlertsMutation.mutate(checked)}
+                                    disabled={seasonalAlertsLoading || seasonalAlertsMutation.isPending}
+                                    className="data-[state=checked]:bg-blue-500"
+                                />
+                            </div>
+                        </div>
+                    </SoftCard>
+
+                    {/* Seasonal demand predictions */}
+                    {seasonalAlertsEnabled && (
+                        <SoftCard className="p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <TrendingUp size={14} className="text-primary" />
+                                <Caption lang={currentLanguage} className="font-semibold text-xs text-foreground">
+                                    {t.seasonalDemand}: {isArabic ? seasonalPredictions.labelAr : seasonalPredictions.label}
+                                </Caption>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {seasonalPredictions.hotCategories.map((cat) => (
+                                    <div
+                                        key={cat.key}
+                                        className={cn(
+                                            'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium border',
+                                            cat.demandLevel === 'high'
+                                                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-300'
+                                                : cat.demandLevel === 'medium'
+                                                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-300'
+                                                    : 'bg-slate-50 dark:bg-slate-800/20 border-slate-200 dark:border-slate-700/40 text-slate-600 dark:text-slate-400',
+                                        )}
+                                    >
+                                        <span>{isArabic ? cat.labelAr : cat.label}</span>
+                                        <span className="opacity-60">
+                                            {cat.demandLevel === 'high' ? t.demandHigh : cat.demandLevel === 'medium' ? t.demandMedium : t.demandLow}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </SoftCard>
+                    )}
+                </motion.div>
+
                 {/* ─── Priority Queue ─── */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -384,7 +684,7 @@ export const AdminHome = ({ currentLanguage }: AdminHomeProps) => {
                                 <SoftCard
                                     className={cn(
                                         'p-3.5 cursor-pointer hover:shadow-md transition-all relative overflow-hidden active:scale-[0.97]',
-                                        card.urgent && 'ring-1.5 ring-red-500/20'
+                                        card.urgent && 'ring-1 ring-red-500/30'
                                     )}
                                     onClick={() => navigate(card.path)}
                                 >

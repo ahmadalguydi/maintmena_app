@@ -45,7 +45,7 @@ export function PriceProposalModal({
       currentPrice: 'السعر الحالي',
       newPrice: 'السعر الجديد (ريال)',
       reason: 'سبب التغيير',
-      reasonPlaceholder: 'مثال: مواد إضافية مطلوبة، تغيير في نطاق العمل...',
+      reasonPlaceholder: 'مثال: مواد إضافية مطلوبةٌ تغيير في نطاق العمل...',
       cancel: 'إلغاء',
       submit: 'إرسال الاقتراح',
       quickOptions: 'تعديلات سريعة:'
@@ -164,3 +164,5 @@ export function PriceProposalModal({
     </Dialog>
   );
 }
+
+

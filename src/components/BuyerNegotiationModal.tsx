@@ -62,7 +62,7 @@ export default function BuyerNegotiationModal({
       if (error) throw error;
       setQuote(data);
     } catch (e: any) {
-      console.error('Error fetching quote:', e);
+      if (import.meta.env.DEV) console.error('Error fetching quote:', e);
     }
   };
 

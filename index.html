@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#c2783c" />
+  <meta name="theme-color" content="#f8f7f4" />
 
   <!-- Security Headers -->
   <!-- Note: X-Frame-Options must be set via HTTP headers, not meta tags -->
@@ -15,7 +15,7 @@
 
   <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
+      default-src 'self' capacitor://localhost http://localhost;
   
       script-src
         'self'
@@ -51,6 +51,8 @@
   
       connect-src
         'self'
+        capacitor://localhost
+        http://localhost
         https://*.supabase.co
         wss://*.supabase.co
         https://api.brevo.com
@@ -192,19 +194,8 @@
         "@type": "SoftwareApplication",
         "name": "MaintMENA",
         "applicationCategory": "BusinessApplication",
-        "offers": {
-          "@type": "Offer",
-          "price": "39",
-          "priceCurrency": "USD",
-          "priceValidUntil": "2026-12-31"
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.8",
-          "ratingCount": "127"
-        },
-        "description": "Industrial intelligence platform and marketplace for MENA facilities maintenance",
-        "operatingSystem": "Web",
+        "description": "Find trusted home service providers in Saudi Arabia — compare offers, sign digital contracts, and pay securely.",
+        "operatingSystem": "Android, iOS, Web",
         "author": {
           "@type": "Organization",
           "name": "MaintMENA"
@@ -227,6 +218,15 @@
     content="No more unreliable workers or hidden costs. Find trusted technicians and contractors, compare offers, sign digital contracts, and pay securely." />
   <meta name="twitter:description"
     content="No more unreliable workers or hidden costs. Find trusted technicians and contractors, compare offers, sign digital contracts, and pay securely." />
+
+  <!-- Apply dark mode before first paint to prevent flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme') || 'system';
+      var d = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (d) document.documentElement.classList.add('dark');
+    })();
+  </script>
 </head>
 
 <body>
@@ -243,15 +243,60 @@
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 
-  <!-- Service Worker registration -->
+  <!-- Service Worker registration (web only, not Capacitor native)
+       - Registers /sw.js on load.
+       - Actively checks for an update on every page load so new deploys
+         propagate within one navigation cycle.
+       - When a new SW finishes installing and is waiting, we post
+         SKIP_WAITING so it activates immediately; on controllerchange
+         we reload once to pick up the fresh assets.
+       - Guards against reload loops with a sessionStorage flag. -->
   <script>
-    if ('serviceWorker' in navigator) {
+    (function () {
+      if (!('serviceWorker' in navigator)) return;
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return;
+
+      var reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (reloaded) return;
+        reloaded = true;
+        // Give the new SW a beat to take over, then reload once.
+        window.location.reload();
+      });
+
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').catch(function (err) {
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          // Force an update check on every full page load — cheap and
+          // guarantees we don't sit on a stale SW for days.
+          try { reg.update(); } catch (e) {}
+
+          function promoteWaiting(worker) {
+            if (!worker) return;
+            worker.postMessage({ type: 'SKIP_WAITING' });
+          }
+
+          // If a waiting worker already exists (previous visit installed
+          // a new SW but user didn't close all tabs), promote it now.
+          if (reg.waiting && navigator.serviceWorker.controller) {
+            promoteWaiting(reg.waiting);
+          }
+
+          reg.addEventListener('updatefound', function () {
+            var installing = reg.installing;
+            if (!installing) return;
+            installing.addEventListener('statechange', function () {
+              if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                // A new SW is installed and there's an old controller —
+                // this is the classic "new deploy shipped" case.
+                promoteWaiting(installing);
+              }
+            });
+          });
+        }).catch(function (err) {
           if (typeof console !== 'undefined') console.warn('SW registration failed:', err);
         });
       });
-    }
+    })();
   </script>
 </body>
 

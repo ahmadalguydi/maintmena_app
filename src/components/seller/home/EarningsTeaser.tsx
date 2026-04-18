@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDemandData } from '@/hooks/useDemandData';
-import { useCurrency } from '@/hooks/useCurrency';
 
 interface EarningsTeaserProps {
     currentLanguage: 'en' | 'ar';
@@ -10,7 +9,7 @@ interface EarningsTeaserProps {
 
 export function EarningsTeaser({ currentLanguage }: EarningsTeaserProps) {
     const demandData = useDemandData();
-    const { formatAmount } = useCurrency();
+    const currencyLabel = currentLanguage === 'ar' ? 'ر.س' : 'SAR';
 
     const content = {
         ar: {
@@ -47,14 +46,15 @@ export function EarningsTeaser({ currentLanguage }: EarningsTeaserProps) {
                         ? 'font-ar-display text-primary'
                         : 'font-display text-primary'
                 )}>
-                    SAR {demandData.estimatedEarnings.min} – {demandData.estimatedEarnings.max}
+                    {currencyLabel} {demandData.estimatedEarnings.min} – {demandData.estimatedEarnings.max}
                 </span>
             </div>
 
             {/* Subtext */}
             <p className="text-[10px] text-muted-foreground mt-1">
-                {content[currentLanguage].nextHours} · {content[currentLanguage].basedOn}
+                {content[currentLanguage].nextHours} Â· {content[currentLanguage].basedOn}
             </p>
         </motion.div>
     );
 }
+

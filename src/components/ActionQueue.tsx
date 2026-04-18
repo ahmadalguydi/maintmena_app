@@ -85,7 +85,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
       const groupsMap = new Map<string, GroupedActions>();
 
       // Fetch tracked items
-      const { data: tracked } = await sb
+      const { data: tracked } = await supabase
         .from('tracked_items')
         .select('*')
         .eq('user_id', user.id);
@@ -98,7 +98,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
       let tenderCompletions: { source_id: string; action_key: string; completed: boolean }[] = [];
 
       if (trackedSignalIds.length > 0) {
-        const { data } = await sb
+        const { data } = await supabase
           .from('user_action_items')
           .select('source_id, action_key, completed')
           .eq('user_id', user.id)
@@ -107,7 +107,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
         signalCompletions = data || [];
       }
       if (trackedTenderIds.length > 0) {
-        const { data } = await sb
+        const { data } = await supabase
           .from('user_action_items')
           .select('source_id, action_key, completed')
           .eq('user_id', user.id)
@@ -135,7 +135,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
       });
       // Fetch tracked signals with action items
       if (trackedSignalIds.length > 0) {
-        const { data: signals } = await sb
+        const { data: signals } = await supabase
           .from('signals')
           .select('*')
           .in('id', trackedSignalIds)
@@ -175,7 +175,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
 
       // Fetch tracked tenders with action items
       if (trackedTenderIds.length > 0) {
-        const { data: tenders } = await sb
+        const { data: tenders } = await supabase
           .from('tenders')
           .select('*')
           .in('id', trackedTenderIds)
@@ -252,7 +252,7 @@ export const ActionQueue = ({ currentLanguage }: ActionQueueProps) => {
   const toggleActionComplete = async (group: GroupedActions, actionId: string, completed: boolean) => {
     if (!user) return;
     try {
-      const { error } = await sb
+      const { error } = await supabase
         .from('user_action_items')
         .upsert({
           user_id: user.id,

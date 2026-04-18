@@ -15,28 +15,58 @@ const RoleContext = createContext<RoleContextType | undefined>(undefined);
 export const RoleProvider = ({ children }: { children: ReactNode }) => {
   const { userType, loading } = useAuth();
   const [currentRole, setCurrentRole] = useState<'buyer' | 'seller' | null>(null);
-  const [intendedRole, setIntendedRole] = useState<'buyer' | 'seller' | null>(null);
+  // Initialize intendedRole from localStorage (persists across page refreshes)
+  const [intendedRole, setIntendedRole] = useState<'buyer' | 'seller' | null>(() => {
+    try {
+      const stored = localStorage.getItem('intendedRole');
+      if (stored === 'buyer' || stored === 'seller') return stored;
+    } catch { /* Safari private browsing */ }
+    return null;
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Sync intendedRole to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      if (intendedRole) {
+        localStorage.setItem('intendedRole', intendedRole);
+      } else {
+        localStorage.removeItem('intendedRole');
+      }
+    } catch { /* Safari private browsing */ }
+  }, [intendedRole]);
+
   // Determine available roles based on user type
-  const availableRoles: ('buyer' | 'seller')[] = userType === 'admin' 
-    ? ['buyer', 'seller'] 
-    : userType ? [userType] : [];
+  const availableRoles: ('buyer' | 'seller')[] = userType === 'admin'
+    ? ['buyer', 'seller']
+    : userType ? [userType === 'admin' ? 'buyer' : userType] : [];
 
   // Initialize role from user type - prioritize userType over URL
   useEffect(() => {
     if (!loading && userType) {
-      // Use userType as source of truth
-      const determinedRole: 'buyer' | 'seller' = userType === 'admin' ? 'buyer' : userType;
+      // Admins can access both buyer and seller routes — don't redirect them
+      if (userType === 'admin') {
+        // Determine role from current path for admins
+        if (location.pathname.startsWith('/app/seller')) {
+          setCurrentRole('seller');
+        } else {
+          setCurrentRole('buyer');
+        }
+        return;
+      }
+
+      const determinedRole: 'buyer' | 'seller' = userType;
       setCurrentRole(determinedRole);
-      
-      // Redirect if user is on wrong role's routes
-      if (userType === 'seller' && location.pathname.includes('/app/buyer')) {
-        const correctedPath = location.pathname.replace('/app/buyer', '/app/seller');
+
+      // Only redirect if user is on the EXACT wrong role's base routes
+      // Use startsWith with exact path segments to avoid false matches
+      // e.g., /app/buyer-feedback should NOT be rewritten
+      if (userType === 'seller' && location.pathname.startsWith('/app/buyer/')) {
+        const correctedPath = location.pathname.replace('/app/buyer/', '/app/seller/');
         navigate(correctedPath, { replace: true });
-      } else if ((userType === 'buyer' || userType === 'admin') && location.pathname.includes('/app/seller')) {
-        const correctedPath = location.pathname.replace('/app/seller', '/app/buyer');
+      } else if (userType === 'buyer' && location.pathname.startsWith('/app/seller/')) {
+        const correctedPath = location.pathname.replace('/app/seller/', '/app/buyer/');
         navigate(correctedPath, { replace: true });
       }
     }

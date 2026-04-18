@@ -7,7 +7,7 @@ const Footer = ({ currentLanguage }: FooterProps) => {
     en: {
       tagline: 'Verified pros. Clear pricing. Jobs done right.',
       subtitle: 'Home & Project Services',
-      copyright: '© 2024 MaintMENA. All rights reserved.',
+      copyright: '© 2025 MaintMENA. All rights reserved.',
       nav: [
         { label: 'How It Works', href: '#brief' },
         { label: 'Categories', href: '#board' },
@@ -23,7 +23,7 @@ const Footer = ({ currentLanguage }: FooterProps) => {
     ar: {
       tagline: 'محترفون موثقون. أسعار واضحة. عمل صحيح.',
       subtitle: 'خدمات المنازل والمشاريع',
-      copyright: '© 2024 مينت مينا. كل الحقوق محفوظة.',
+      copyright: '© 2025 مينت مينا. كل الحقوق محفوظة.',
       nav: [
         { label: 'كيف يعمل', href: '#brief' },
         { label: 'الفئات', href: '#board' },

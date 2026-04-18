@@ -214,7 +214,7 @@ export const BuyerProfile = ({ currentLanguage }: BuyerProfileProps) => {
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                {lang === 'en' ? '🇺🇸 EN' : '🇸🇦 AR'}
+                {lang === 'en' ? '🇺🇸 EN' : '🇸🇦 عربي'}
               </button>
             ))}
           </div>

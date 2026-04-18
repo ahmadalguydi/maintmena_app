@@ -281,7 +281,7 @@ export function SubscriptionManagementModal({
       setIsConfirmDialogOpen(false);
       onClose();
     } catch (error) {
-      console.error('Error processing subscription change:', error);
+      if (import.meta.env.DEV) console.error('Error processing subscription change:', error);
     } finally {
       setProcessing(false);
     }

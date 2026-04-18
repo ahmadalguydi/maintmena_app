@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Clock, Timer, Navigation2, Zap, ChevronRight, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MAPBOX_TOKEN } from '@/lib/mapbox';
+import { localizeCategory, localizeTiming } from '@/lib/translations';
+import { getSubcategoryLabel } from '@/lib/serviceCategories';
 
 interface OpportunityCardProps {
     currentLanguage: 'en' | 'ar';
@@ -96,18 +98,29 @@ export const OpportunityCard = React.forwardRef<HTMLDivElement, OpportunityCardP
     const isUrgent = urgency === 'urgent';
     const isAsap = urgency === 'asap' || timing?.toLowerCase().includes('earliest') || timing?.toLowerCase().includes('asap');
 
-    // Calculate time remaining for timer badge
-    const getTimeRemaining = () => {
+    // Live countdown timer — ticks every second
+    const calcTimeRemaining = useCallback(() => {
         if (!expiresAt) return null;
-        const now = new Date();
-        const diff = expiresAt.getTime() - now.getTime();
+        const diff = expiresAt.getTime() - Date.now();
         if (diff <= 0) return null;
         const minutes = Math.floor(diff / 60000);
         const seconds = Math.floor((diff % 60000) / 1000);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    };
+    }, [expiresAt]);
 
-    const timeRemaining = getTimeRemaining();
+    const [timeRemaining, setTimeRemaining] = useState(calcTimeRemaining);
+
+    useEffect(() => {
+        if (!expiresAt) return;
+        // Update immediately in case expiresAt prop changed
+        setTimeRemaining(calcTimeRemaining());
+        const interval = setInterval(() => {
+            const remaining = calcTimeRemaining();
+            setTimeRemaining(remaining);
+            if (!remaining) clearInterval(interval);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [expiresAt, calcTimeRemaining]);
 
     const handleMapToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -264,10 +277,10 @@ export const OpportunityCard = React.forwardRef<HTMLDivElement, OpportunityCardP
                             "font-bold text-lg text-foreground leading-tight mb-1",
                             currentLanguage === 'ar' ? 'font-ar-display' : 'font-display'
                         )}>
-                            {title}
+                            {localizeCategory(title, currentLanguage)}
                         </h3>
                         {subCategory && (
-                            <p className="text-[15px] font-semibold text-foreground/80">{subCategory}</p>
+                            <p className="text-[15px] font-semibold text-foreground/80">{getSubcategoryLabel(subCategory, currentLanguage)}</p>
                         )}
                         {description && (
                             <p className="text-[13.5px] text-muted-foreground mt-1 line-clamp-2 leading-snug">
@@ -321,7 +334,7 @@ export const OpportunityCard = React.forwardRef<HTMLDivElement, OpportunityCardP
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="h-4 w-4 shrink-0 text-primary/70" strokeWidth={1.5} />
                             <span className={cn(currentLanguage === 'ar' ? 'font-ar-body' : 'font-body')}>
-                                {timing}
+                                {localizeTiming(timing, currentLanguage)}
                             </span>
                         </div>
                     )}
@@ -396,3 +409,5 @@ export const OpportunityCard = React.forwardRef<HTMLDivElement, OpportunityCardP
 });
 
 OpportunityCard.displayName = 'OpportunityCard';
+
+

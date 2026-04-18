@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { insertNotificationAndSendPush } from "../_shared/push.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,8 +87,7 @@ serve(async (req) => {
           })
           .eq('id', booking.id);
 
-        // Create notification
-        await supabase.from('notifications').insert({
+        await insertNotificationAndSendPush(supabase, {
           user_id: booking.buyer_id,
           title: 'Job Auto-Closed',
           message: 'Your job was auto-closed without warranty activation due to no confirmation.',
@@ -103,8 +103,7 @@ serve(async (req) => {
       if (currentNudgeIndex < nudgeSequence.length) {
         const nextNudge = nudgeSequence[currentNudgeIndex];
         if (hoursSinceComplete >= nextNudge.hours) {
-          // Send nudge notification
-          await supabase.from('notifications').insert({
+          await insertNotificationAndSendPush(supabase, {
             user_id: booking.buyer_id,
             title: 'Confirm Work Complete',
             message: nextNudge.message_en,
@@ -141,7 +140,7 @@ serve(async (req) => {
           })
           .eq('id', request.id);
 
-        await supabase.from('notifications').insert({
+        await insertNotificationAndSendPush(supabase, {
           user_id: request.buyer_id,
           title: 'Job Auto-Closed',
           message: 'Your job was auto-closed without warranty activation due to no confirmation.',
@@ -156,7 +155,7 @@ serve(async (req) => {
       if (currentNudgeIndex < nudgeSequence.length) {
         const nextNudge = nudgeSequence[currentNudgeIndex];
         if (hoursSinceComplete >= nextNudge.hours) {
-          await supabase.from('notifications').insert({
+          await insertNotificationAndSendPush(supabase, {
             user_id: request.buyer_id,
             title: 'Confirm Work Complete',
             message: nextNudge.message_en,

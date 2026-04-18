@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Navigation, Check, Play, MoreVertical, CheckCircle2, ChevronUp, UserRound } from 'lucide-react';
+import { MapPin, Phone, Navigation, Check, Play, MoreVertical, CheckCircle2, ChevronUp, UserRound, Camera, ShieldCheck, CameraIcon } from 'lucide-react';
+import { useHaptics } from '@/hooks/useHaptics';
+import { localizeCategory } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -318,7 +320,7 @@ export function MissionHeroCard({
               currentLanguage === 'ar' ? 'font-ar-display' : 'font-display',
             )}
           >
-            {serviceType || 'Service'}
+            {localizeCategory(serviceType, currentLanguage)}
           </h2>
           {description ? (
             <p

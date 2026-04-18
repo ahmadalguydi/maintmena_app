@@ -1,9 +1,9 @@
 import { toast } from "sonner";
 
-export const checkLocation = async (targetLat: number, targetLng: number, maxDistanceMeters: number = 200): Promise<boolean> => {
+export const checkLocation = async (targetLat: number, targetLng: number, maxDistanceMeters: number = 200, language: 'en' | 'ar' = 'en'): Promise<boolean> => {
     return new Promise((resolve) => {
         if (!navigator.geolocation) {
-            console.warn("Geolocation not supported");
+            if (import.meta.env.DEV) console.warn("Geolocation not supported");
             resolve(true); // Fallback if no GPS
             return;
         }
@@ -25,16 +25,24 @@ export const checkLocation = async (targetLat: number, targetLng: number, maxDis
                 const d = R * c; // in metres
 
                 if (d > maxDistanceMeters) {
-                    toast.error(`You are ${Math.round(d)}m away. You must be within ${maxDistanceMeters}m to start the job.`);
+                    toast.error(
+                        language === 'ar'
+                            ? `أنت على بُعد ${Math.round(d)} م. يجب أن تكون ضمن ${maxDistanceMeters} م لبدء العمل.`
+                            : `You are ${Math.round(d)}m away. You must be within ${maxDistanceMeters}m to start the job.`
+                    );
                     resolve(false);
                 } else {
                     resolve(true);
                 }
             },
             (error) => {
-                console.error("Geolocation error:", error);
-                toast.error('Could not verify location. Assuming onsite (Dev/Error Mode).');
-                resolve(true); // Allow in dev/error
+                if (import.meta.env.DEV) console.error("Geolocation error:", error);
+                toast.info(
+                    language === 'ar'
+                        ? 'تعذّر التحقق من موقعك — تأكد أنك في الموقع قبل البدء'
+                        : 'Location unavailable — please ensure you are on-site before starting'
+                );
+                resolve(true); // Allow on error
             }
         );
     });

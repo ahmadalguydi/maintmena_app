@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BellRing, CheckCircle2, ChevronDown, ChevronRight, Clock, MapPin, MessageCircle, Pencil, Phone, ShieldCheck, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LazyServiceLocationMap } from '@/components/maps/LazyServiceLocationMap';
+import { getSubcategoryLabel } from '@/lib/serviceCategories';
 
 interface RequestSummaryCardProps {
   currentLanguage: 'en' | 'ar';
@@ -263,7 +264,7 @@ export const RequestSummaryCard = ({
             </h3>
             {subIssue ? (
               <p className={cn('mt-0.5 truncate text-sm font-medium text-foreground/70', isRTL ? 'font-ar-body' : '')}>
-                {subIssue}
+                {getSubcategoryLabel(subIssue, currentLanguage)}
               </p>
             ) : null}
             {description && !subIssue ? (
@@ -332,7 +333,7 @@ export const RequestSummaryCard = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ type: 'spring', damping: 24, stiffness: 300 }}
-              className="overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-white via-white to-primary/[0.03]"
+              className="overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-white via-white to-primary/[0.03] dark:from-card dark:via-card dark:to-primary/[0.03]"
               style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}
             >
               {/* Thin status strip + label */}
@@ -409,7 +410,7 @@ export const RequestSummaryCard = ({
                       </>
                     ) : null}
                     <span className={cn('text-[12px] font-medium text-muted-foreground', isRTL ? 'font-ar-body' : '')}>
-                      {isRTL ? 'محترف موثوق' : 'Trusted Pro'}
+                      {isRTL ? 'اضغط لعرض الملف' : 'Tap to view profile'}
                     </span>
                   </div>
                 </div>

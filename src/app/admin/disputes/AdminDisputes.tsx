@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GradientHeader } from '@/components/mobile/GradientHeader';
 import { SoftCard } from '@/components/mobile/SoftCard';
@@ -24,6 +24,7 @@ import {
     Clock,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/serviceCategories';
 
@@ -31,9 +32,6 @@ interface AdminDisputesProps {
     currentLanguage: 'en' | 'ar';
 }
 
-export const AdminDisputes = ({ currentLanguage }: AdminDisputesProps) => {
-    const navigate = useNavigate();
-    const isArabic = currentLanguage === 'ar';
 interface DisputeSellerProfile {
     full_name: string | null;
     email: string | null;
@@ -57,7 +55,13 @@ interface HaltedJob {
     buyer: DisputeBuyerProfile | null;
 }
 
+export const AdminDisputes = ({ currentLanguage }: AdminDisputesProps) => {
+    const navigate = useNavigate();
+    const isArabic = currentLanguage === 'ar';
+    const currencyLabel = isArabic ? 'ر.س' : 'SAR';
+
     const [selectedDispute, setSelectedDispute] = useState<HaltedJob | null>(null);
+    const queryClient = useQueryClient();
 
     const { data: haltedJobs, isLoading } = useQuery({
         queryKey: ['admin-halted-jobs'],
@@ -92,10 +96,34 @@ interface HaltedJob {
 
                 return enriched;
             } catch (e) {
-                console.warn('Error fetching halted jobs:', e);
+                if (import.meta.env.DEV) console.warn('Error fetching halted jobs:', e);
                 return [];
             }
         },
+    });
+
+    const resolveMutation = useMutation({
+        mutationFn: async ({ id, action }: { id: string; action: 'resolve' | 'dismiss' }) => {
+            const update: Record<string, unknown> = { halted: false };
+            if (action === 'resolve') update.status = 'completed';
+            else if (action === 'dismiss') update.status = 'cancelled';
+
+            const { error } = await supabase
+                .from('maintenance_requests')
+                .update(update)
+                .eq('id', id);
+            if (error) throw error;
+        },
+        onSuccess: (_, { action }) => {
+            queryClient.invalidateQueries({ queryKey: ['admin-halted-jobs'] });
+            toast.success(
+                isArabic
+                    ? (action === 'resolve' ? 'تم حل النزاع' : 'تم رفض النزاع')
+                    : (action === 'resolve' ? 'Dispute resolved' : 'Dispute dismissed')
+            );
+            setSelectedDispute(null);
+        },
+        onError: () => toast.error(isArabic ? 'حدث خطأ' : 'An error occurred'),
     });
 
     const content = {
@@ -242,7 +270,7 @@ interface HaltedJob {
                                 {selectedDispute.budget && (
                                     <div className="p-3 bg-muted rounded-xl flex items-center justify-between">
                                         <Caption lang={currentLanguage} className="text-muted-foreground">{t.price}</Caption>
-                                        <BodySmall lang={currentLanguage}>{selectedDispute.budget} SAR</BodySmall>
+                                        <BodySmall lang={currentLanguage}>{selectedDispute.budget} {currencyLabel}</BodySmall>
                                     </div>
                                 )}
                                 <div className="p-3 bg-muted rounded-xl flex items-center justify-between">
@@ -264,13 +292,16 @@ interface HaltedJob {
                                 <Button
                                     variant="outline"
                                     className="flex-1"
-                                    onClick={() => setSelectedDispute(null)}
+                                    disabled={resolveMutation.isPending}
+                                    onClick={() => resolveMutation.mutate({ id: selectedDispute.id, action: 'dismiss' })}
                                 >
                                     <XCircle size={16} className={isArabic ? 'ml-2' : 'mr-2'} />
                                     {t.dismiss}
                                 </Button>
                                 <Button
                                     className="flex-1"
+                                    disabled={resolveMutation.isPending}
+                                    onClick={() => resolveMutation.mutate({ id: selectedDispute.id, action: 'resolve' })}
                                 >
                                     <CheckCircle size={16} className={isArabic ? 'ml-2' : 'mr-2'} />
                                     {t.resolve}
@@ -283,3 +314,4 @@ interface HaltedJob {
         </div>
     );
 };
+

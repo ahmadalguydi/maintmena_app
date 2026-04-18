@@ -124,7 +124,7 @@ const BookingRequestModal = ({
             return;
           }
         } catch (e) {
-          console.error('Failed to parse saved booking data');
+          if (import.meta.env.DEV) console.error('Failed to parse saved booking data');
         }
       }
 
@@ -487,3 +487,5 @@ const BookingRequestModal = ({
 };
 
 export default BookingRequestModal;
+
+

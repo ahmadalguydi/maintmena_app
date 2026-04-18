@@ -76,7 +76,7 @@ export const ReviewComposer = ({
     <div className={cn('space-y-5', compact && 'space-y-4')} dir={isArabic ? 'rtl' : 'ltr'}>
       <div
         className={cn(
-          compact ? 'rounded-2xl border border-border/60 bg-background/80 p-4' : 'rounded-[28px] border border-primary/15 bg-gradient-to-br from-primary/8 via-background to-amber-50/70 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.06)]',
+          compact ? 'rounded-2xl border border-border/60 bg-background/80 p-4' : 'rounded-[28px] border border-primary/15 bg-gradient-to-br from-primary/8 via-background to-amber-50/70 dark:to-card p-5 shadow-[0_14px_40px_rgba(0,0,0,0.06)]',
         )}
       >
         <div className="flex items-start justify-between gap-4">
@@ -119,8 +119,8 @@ export const ReviewComposer = ({
                 className={cn(
                   'rounded-2xl border p-2.5 transition-all',
                   active
-                    ? 'border-amber-300 bg-amber-50 shadow-sm'
-                    : 'border-border/60 bg-background hover:border-amber-200 hover:bg-amber-50/60',
+                    ? 'border-amber-300 dark:border-amber-600/40 bg-amber-50 dark:bg-amber-500/15 shadow-sm'
+                    : 'border-border/60 bg-background hover:border-amber-200 dark:hover:border-amber-700/40 hover:bg-amber-50/60 dark:hover:bg-amber-500/10',
                 )}
               >
                 <Star

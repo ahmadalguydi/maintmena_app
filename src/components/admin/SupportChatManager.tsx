@@ -97,7 +97,7 @@ export const SupportChatManager = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching chats:', error);
+      if (import.meta.env.DEV) console.error('Error fetching chats:', error);
       return;
     }
 
@@ -112,7 +112,7 @@ export const SupportChatManager = () => {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching messages:', error);
+      if (import.meta.env.DEV) console.error('Error fetching messages:', error);
       return;
     }
 
@@ -136,7 +136,7 @@ export const SupportChatManager = () => {
 
       setInputMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      if (import.meta.env.DEV) console.error('Error sending message:', error);
       toast({
         title: 'Error',
         description: 'Failed to send message',
@@ -164,7 +164,7 @@ export const SupportChatManager = () => {
         setMessages([]);
       }
     } catch (error) {
-      console.error('Error closing chat:', error);
+      if (import.meta.env.DEV) console.error('Error closing chat:', error);
       toast({
         title: 'Error',
         description: 'Failed to close chat',

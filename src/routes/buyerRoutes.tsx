@@ -15,6 +15,7 @@ const BuyerEditProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/pr
 // History removed — Activity screen covers this. Route redirects below.
 const VendorProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/explore/VendorProfile'), 'VendorProfile');
 const MessagesHub = lazyRoute<RouteProps>(() => import('@/app/shared/MessagesHub'));
+const RescheduleJob = lazyNamedRoute<RouteProps>(() => import('@/app/seller/jobs/RescheduleJob'), 'RescheduleJob');
 
 export function buyerRoutes({ currentLanguage }: RouteProps) {
     return (
@@ -68,6 +69,13 @@ export function buyerRoutes({ currentLanguage }: RouteProps) {
                 <ProtectedRoute allowedRoles={['buyer']}>
                     <Suspense fallback={<RouteLoader />}>
                         <MessagesHub currentLanguage={currentLanguage} />
+                    </Suspense>
+                </ProtectedRoute>
+            } />
+<Route path="/app/buyer/request/:id/reschedule" element={
+                <ProtectedRoute allowedRoles={['buyer']}>
+                    <Suspense fallback={<RouteLoader />}>
+                        <RescheduleJob currentLanguage={currentLanguage} />
                     </Suspense>
                 </ProtectedRoute>
             } />

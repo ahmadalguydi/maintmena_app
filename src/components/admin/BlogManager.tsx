@@ -54,7 +54,7 @@ export const BlogManager = () => {
       if (error) throw error;
       setBlogs(data || []);
     } catch (error) {
-      console.error('Error loading blogs:', error);
+      if (import.meta.env.DEV) console.error('Error loading blogs:', error);
       toast({
         title: 'Error',
         description: 'Failed to load blogs',
@@ -83,7 +83,7 @@ export const BlogManager = () => {
 
       loadBlogs();
     } catch (error) {
-      console.error('Error deleting blog:', error);
+      if (import.meta.env.DEV) console.error('Error deleting blog:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete blog',

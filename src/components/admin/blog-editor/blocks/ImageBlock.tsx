@@ -66,7 +66,7 @@ export const ImageBlock = ({ block, onUpdate }: ImageBlockProps) => {
         description: 'Image uploaded successfully',
       });
     } catch (error: any) {
-      console.error('Error uploading image:', error);
+      if (import.meta.env.DEV) console.error('Error uploading image:', error);
       toast({
         title: 'Upload failed',
         description: error.message || 'Failed to upload image. Please check your connection and try again.',

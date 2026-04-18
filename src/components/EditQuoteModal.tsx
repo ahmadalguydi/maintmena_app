@@ -91,7 +91,7 @@ export default function EditQuoteModal({ quote, isOpen, onClose, onSuccess }: Ed
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error updating quote:', error);
+      if (import.meta.env.DEV) console.error('Error updating quote:', error);
       toast.error('Failed to update quote');
     } finally {
       setIsSubmitting(false);
@@ -247,3 +247,5 @@ export default function EditQuoteModal({ quote, isOpen, onClose, onSuccess }: Ed
     </Dialog>
   );
 }
+
+

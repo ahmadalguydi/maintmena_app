@@ -1,4 +1,5 @@
-import { Bell, MessageCircle, MapPin, UserPlus } from 'lucide-react';
+﻿import { Bell, MessageCircle, MapPin, UserPlus } from 'lucide-react';
+import { getGreeting } from '@/lib/smartTime';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SAUDI_CITIES_BILINGUAL } from '@/lib/saudiCities';
 
@@ -34,6 +36,7 @@ export const AppHeader = ({
   const { user, userType } = useAuth();
   const { profile, getAvatarUrl, isLoading: isProfileLoading } = useProfile(user?.id);
   const { unreadCount } = useNotifications({ includeList: false });
+  const isDark = useDarkMode();
 
   // Determine current route context (buyer or seller) based on URL
   const isInSellerRoutes = routeLocation.pathname.startsWith('/app/seller');
@@ -58,20 +61,7 @@ export const AppHeader = ({
       .join('، ');
   })();
 
-  const getGreeting = () => {
-    if (greeting) return greeting;
-
-    const hour = new Date().getHours();
-    if (currentLanguage === 'ar') {
-      if (hour < 12) return 'صباح الخير';
-      if (hour < 18) return 'مساء الخير';
-      return 'مساء الخير';
-    } else {
-      if (hour < 12) return 'Good morning';
-      if (hour < 18) return 'Good afternoon';
-      return 'Good evening';
-    }
-  };
+  const greetingText = greeting ?? getGreeting(currentLanguage);
 
   const displayName = userName ||
     (currentLanguage === 'ar' ? (profile as any)?.full_name_ar : profile?.full_name) ||
@@ -85,14 +75,18 @@ export const AppHeader = ({
   };
 
   return (
-    <motion.header 
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: -100, opacity: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50"
+    <motion.header
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -100, opacity: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        data-native-app-header="true"
+        data-native-top-surface={isDark ? '#121212' : '#ffffff'}
+        data-native-tone={isDark ? 'dark' : 'light'}
+        className="sticky top-0 z-40 border-b border-border/50 bg-background/95 shadow-sm backdrop-blur-xl"
     >
-      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="bg-background/95 pt-safe-top">
+            <div className="px-4 py-3 flex items-center justify-between">
         {/* Left: Avatar + Greeting (or Sign Up for guests) */}
         <div className="flex items-center gap-3">
           {isGuestBuyer ? (
@@ -131,7 +125,7 @@ export const AppHeader = ({
                   'text-sm text-muted-foreground font-medium',
                   currentLanguage === 'ar' ? 'font-ar-body' : 'font-body'
                 )}>
-                  {getGreeting()}
+                  {greetingText}
                 </span>
                 <span className={cn(
                   'text-base font-bold text-foreground',
@@ -212,6 +206,7 @@ export const AppHeader = ({
               <MessageCircle size={20} className="text-foreground" />
             </button>
           )}
+          </div>
         </div>
       </div>
     </motion.header>

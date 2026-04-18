@@ -19,10 +19,10 @@ export const SoftCard = ({ children, className, onClick, animate = true }: SoftC
         onClick={onClick}
         className={cn(
           'bg-background rounded-3xl p-4',
-          'shadow-[0_8px_30px_rgb(0,0,0,0.04)]',
+          'shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)]',
           'border border-border/30',
           'transition-all duration-300',
-          onClick && 'cursor-pointer hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] active:scale-[0.98]',
+          onClick && 'cursor-pointer hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_12px_40px_rgb(0,0,0,0.3)] active:scale-[0.98]',
           className
         )}
       >
@@ -36,10 +36,10 @@ export const SoftCard = ({ children, className, onClick, animate = true }: SoftC
       onClick={onClick}
       className={cn(
         'bg-background rounded-3xl p-4',
-        'shadow-[0_8px_30px_rgb(0,0,0,0.04)]',
+        'shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)]',
         'border border-border/30',
         'transition-all duration-300',
-        onClick && 'cursor-pointer hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] active:scale-[0.98]',
+        onClick && 'cursor-pointer hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_12px_40px_rgb(0,0,0,0.3)] active:scale-[0.98]',
         className
       )}
     >

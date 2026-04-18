@@ -39,7 +39,7 @@ const SignupConfirmation = ({ currentLanguage }: SignupConfirmationProps) => {
           return;
         }
       } catch (e) {
-        console.error('Error parsing pending action:', e);
+        if (import.meta.env.DEV) console.error('Error parsing pending action:', e);
       }
     }
     // Default: go to appropriate home based on user type

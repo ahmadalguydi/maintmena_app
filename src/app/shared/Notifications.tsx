@@ -1,26 +1,27 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { format, isToday, isYesterday } from 'date-fns';
-import { ar, enUS } from 'date-fns/locale';
-import { Bell, Check, RefreshCw } from 'lucide-react';
+import { RefreshCw, Bell, BellOff, Check, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+
 import { SoftCard } from '@/components/mobile/SoftCard';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Body, BodySmall, Caption, Heading2, Heading3 } from '@/components/mobile/Typography';
+import { Body, BodySmall, Heading2, Heading3 } from '@/components/mobile/Typography';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
-import { getNotificationPresentation, getNotificationTarget, type AppNotification } from '@/lib/notifications';
+import { getNotificationTarget, type AppNotification } from '@/lib/notifications';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { SwipeableNotificationItem } from '@/components/mobile/SwipeableNotificationItem';
+import { isToday, isYesterday } from 'date-fns';
 
 export default function Notifications() {
-  const { userType } = useAuth();
+  const { userType, user } = useAuth();
   const navigate = useNavigate();
-  const currentLanguage = (
-    localStorage.getItem('preferredLanguage') ||
-    localStorage.getItem('currentLanguage') ||
-    'ar'
-  ) as 'en' | 'ar';
+  const queryClient = useQueryClient();
+  const currentLanguage = (localStorage.getItem('preferredLanguage') || localStorage.getItem('currentLanguage') || 'ar') as 'en' | 'ar';
 
   const {
     notifications,
@@ -29,12 +30,26 @@ export default function Notifications() {
     error,
     markAsRead,
     markAllAsRead,
+    deleteOne,
+    deleteAll,
     isMarkingAllRead,
+    isDeletingAll,
   } = useNotifications();
 
   const effectiveUserType = userType === 'seller' ? 'seller' : 'buyer';
+  const isRTL = currentLanguage === 'ar';
 
-  // Group notifications by time period
+  const handleRefresh = useCallback(async () => {
+    if (!user) return;
+    await queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
+    await queryClient.invalidateQueries({ queryKey: ['notifications-unread', user.id] });
+  }, [user, queryClient]);
+
+  const { containerRef, isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+  });
+
   const groupNotifications = (items: AppNotification[]) => {
     const today: AppNotification[] = [];
     const yesterday: AppNotification[] = [];
@@ -46,9 +61,9 @@ export default function Notifications() {
       else earlier.push(n);
     }
     const groups: Array<{ label: string; items: AppNotification[] }> = [];
-    if (today.length) groups.push({ label: currentLanguage === 'ar' ? 'اليوم' : 'Today', items: today });
-    if (yesterday.length) groups.push({ label: currentLanguage === 'ar' ? 'أمس' : 'Yesterday', items: yesterday });
-    if (earlier.length) groups.push({ label: currentLanguage === 'ar' ? 'سابقاً' : 'Earlier', items: earlier });
+    if (today.length) groups.push({ label: isRTL ? 'اليوم' : 'Today', items: today });
+    if (yesterday.length) groups.push({ label: isRTL ? 'أمس' : 'Yesterday', items: yesterday });
+    if (earlier.length) groups.push({ label: isRTL ? 'سابقاً' : 'Earlier', items: earlier });
     return groups;
   };
 
@@ -59,51 +74,83 @@ export default function Notifications() {
     if (!notification.read) {
       await markAsRead(notification.id);
     }
-
     navigate(getNotificationTarget(notification, effectiveUserType));
   };
 
   return (
-    <div className="min-h-app bg-background pb-24" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-app bg-background pb-24" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex min-h-app flex-col px-4 pt-safe pb-6">
+        
+        {/* Header Section */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <Heading2 lang={currentLanguage} className="text-foreground">
-              {currentLanguage === 'ar' ? 'الإشعارات' : 'Notifications'}
+              {isRTL ? 'الإشعارات' : 'Notifications'}
             </Heading2>
             {unreadCount > 0 && (
-              <BodySmall lang={currentLanguage} className="mt-1 text-muted-foreground">
-                {currentLanguage === 'ar'
-                  ? `${unreadCount} إشعار جديد`
-                  : `${unreadCount} new notification${unreadCount > 1 ? 's' : ''}`}
-              </BodySmall>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                  {unreadCount}
+                </span>
+                <BodySmall lang={currentLanguage} className="font-medium text-muted-foreground">
+                  {isRTL ? 'إشعار جديد' : 'new'}
+                </BodySmall>
+              </div>
             )}
           </div>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => void markAllAsRead()}
-              disabled={isMarkingAllRead}
-              className="min-h-[44px] text-primary"
-            >
-              <Check size={16} className="mr-2" />
-              {currentLanguage === 'ar' ? 'تعليم الكل كمقروء' : 'Mark all read'}
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void markAllAsRead()}
+                disabled={isMarkingAllRead}
+                className="h-10 w-10 p-0 text-primary rounded-full bg-primary/5 shrink-0"
+              >
+                <CheckCircle2 size={20} />
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void deleteAll()}
+                disabled={isDeletingAll}
+                className="h-10 w-10 p-0 text-red-500 rounded-full bg-red-500/5 shrink-0"
+              >
+                <BellOff size={18} />
+              </Button>
+            )}
+          </div>
         </div>
 
-        <ScrollArea className="min-h-0 flex-1">
+        {/* Pull to Refresh Indicator */}
+        <div 
+          className="flex justify-center transition-all duration-200 overflow-hidden"
+          style={{ height: pullDistance > 0 ? pullDistance : isRefreshing ? 60 : 0 }}
+        >
+          <div className="flex flex-col items-center justify-end pb-4">
+            <RefreshCw 
+              size={24} 
+              className={cn("text-primary/70", isRefreshing && "animate-spin")} 
+              style={{ transform: `rotate(${progress * 180}deg)`, opacity: Math.max(0.2, progress) }}
+            />
+          </div>
+        </div>
+
+        <ScrollArea viewportRef={containerRef} className="min-h-0 flex-1">
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-4 pt-2">
               {[1, 2, 3, 4, 5].map((index) => (
-                <SoftCard key={index} className="p-4">
-                  <div className="flex gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-full" />
-                      <Skeleton className="h-3 w-1/2" />
+                <SoftCard key={index} className="p-4 rounded-3xl">
+                  <div className="flex gap-4">
+                    <Skeleton className="h-12 w-12 rounded-2xl" />
+                    <div className="flex-1 space-y-3 py-1">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-5 w-1/2 rounded-md" />
+                        <Skeleton className="h-4 w-12 rounded-md" />
+                      </div>
+                      <Skeleton className="h-4 w-3/4 rounded-md" />
                     </div>
                   </div>
                 </SoftCard>
@@ -111,91 +158,62 @@ export default function Notifications() {
             </div>
           ) : error ? (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-16 text-center">
-              <RefreshCw size={48} className="mx-auto mb-4 text-muted-foreground/40" />
+              <RefreshCw size={56} className="mx-auto mb-5 text-muted-foreground/30" />
               <Heading3 lang={currentLanguage} className="mb-2 text-foreground">
-                {currentLanguage === 'ar' ? 'تعذر تحميل الإشعارات' : 'Unable to load notifications'}
+                {isRTL ? 'تعذر تحميل الإشعارات' : 'Unable to load'}
               </Heading3>
-              <Body lang={currentLanguage} className="mx-auto mb-4 max-w-sm text-muted-foreground">
-                {currentLanguage === 'ar'
-                  ? 'حدثت مشكلة أثناء تحميل الإشعارات. حاول مرة أخرى.'
-                  : 'Something went wrong while loading notifications. Try again.'}
+              <Body lang={currentLanguage} className="mx-auto mb-6 max-w-[240px] text-muted-foreground text-sm">
+                {isRTL
+                  ? 'يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.'
+                  : 'Please check your connection and try again.'}
               </Body>
-              <Button onClick={() => window.location.reload()}>
-                {currentLanguage === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+              <Button size="lg" className="rounded-2xl" onClick={handleRefresh}>
+                {isRTL ? 'إعادة المحاولة' : 'Retry'}
               </Button>
             </motion.div>
-          ) : notifications.length === 0 ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-16 text-center">
-              <Bell size={64} className="mx-auto mb-4 text-muted-foreground/30" />
-              <Heading3 lang={currentLanguage} className="mb-2 text-foreground">
-                {currentLanguage === 'ar' ? 'لا توجد إشعارات' : 'No Notifications'}
+          ) : notifications.filter(n => n.notification_type !== 'new_message').length === 0 ? (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-20 text-center flex flex-col items-center">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted/30 mb-6">
+                <Bell size={40} className="text-muted-foreground/40" />
+              </div>
+              <Heading3 lang={currentLanguage} className="mb-3 text-foreground">
+                {isRTL ? 'أنت على اطلاع دائم!' : "You're all caught up!"}
               </Heading3>
-              <Body lang={currentLanguage} className="text-muted-foreground">
-                {currentLanguage === 'ar'
-                  ? 'ستظهر هنا جميع تحديثات الطلبات والرسائل.'
-                  : 'Request and conversation updates will appear here.'}
+              <Body lang={currentLanguage} className="text-muted-foreground max-w-[260px] text-center">
+                {isRTL
+                  ? 'سيتم عرض جميع التحديثات المتعلقة بالطلبات والرسائل هنا.'
+                  : 'Updates related to your requests and messages will appear here.'}
               </Body>
             </motion.div>
           ) : (
-            <div className="space-y-5">
-              {groupNotifications(notifications).map((group) => (
+            <div className="space-y-6 pt-2">
+              {groupNotifications(notifications.filter(n => n.notification_type !== 'new_message')).map((group) => (
                 <div key={group.label}>
                   <p className={cn(
-                    'text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1',
-                    currentLanguage === 'ar' ? 'font-ar-body' : 'font-body',
+                    'text-[13px] font-bold text-muted-foreground/80 tracking-wide mb-3 px-2',
+                    isRTL ? 'font-ar-body' : 'font-body',
                   )}>
                     {group.label}
                   </p>
-                  <div className="space-y-2">
-                    <AnimatePresence>
-                      {group.items.map((notification, index) => {
-                        const presentation = getNotificationPresentation(notification, currentLanguage);
-                        return (
-                          <motion.div
-                            key={notification.id}
-                            initial={{ opacity: 0, x: currentLanguage === 'ar' ? 20 : -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.04 }}
-                          >
-                            <SoftCard
-                              onClick={() => void handleNotificationClick(notification.id)}
-                              className={cn(
-                                'cursor-pointer p-4 transition-all hover:shadow-md',
-                                !notification.read && 'border-primary/20 bg-primary/[0.03]',
-                              )}
-                            >
-                              <div className="flex gap-3">
-                                <div className={cn(
-                                  'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl',
-                                  !notification.read ? 'bg-primary/8' : 'bg-muted/50',
-                                )}>
-                                  {presentation.icon}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="mb-0.5 flex items-start justify-between gap-2">
-                                    <Body lang={currentLanguage} className="line-clamp-1 font-semibold text-foreground">
-                                      {presentation.title}
-                                    </Body>
-                                    {!notification.read && (
-                                      <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                                    )}
-                                  </div>
-                                  <BodySmall lang={currentLanguage} className="line-clamp-2 text-muted-foreground">
-                                    {presentation.message}
-                                  </BodySmall>
-                                  <Caption lang={currentLanguage} className="mt-1.5 text-muted-foreground/70">
-                                    {format(
-                                      new Date(notification.created_at),
-                                      currentLanguage === 'ar' ? 'h:mm a' : 'h:mm a',
-                                      { locale: currentLanguage === 'ar' ? ar : enUS },
-                                    )}
-                                  </Caption>
-                                </div>
-                              </div>
-                            </SoftCard>
-                          </motion.div>
-                        );
-                      })}
+                  <div className="space-y-0 relative">
+                    <AnimatePresence mode="popLayout">
+                      {group.items.map((notification, index) => (
+                        <motion.div
+                          key={notification.id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                          transition={{ delay: index * 0.03, type: "spring", stiffness: 300, damping: 25 }}
+                        >
+                          <SwipeableNotificationItem
+                            notification={notification}
+                            currentLanguage={currentLanguage}
+                            onClick={handleNotificationClick}
+                            onDelete={(id) => deleteOne(id)}
+                          />
+                        </motion.div>
+                      ))}
                     </AnimatePresence>
                   </div>
                 </div>

@@ -203,7 +203,7 @@ export const BulkMarkdownBlogUpload = ({ onClose, onSuccess }: BulkMarkdownBlogU
       
       toast.success(`${blogs.length} blog${blogs.length !== 1 ? 's' : ''} parsed successfully`);
     } catch (error) {
-      console.error('Error parsing blogs:', error);
+      if (import.meta.env.DEV) console.error('Error parsing blogs:', error);
       toast.error('Failed to parse markdown content');
     } finally {
       setIsProcessing(false);
@@ -273,7 +273,7 @@ export const BulkMarkdownBlogUpload = ({ onClose, onSuccess }: BulkMarkdownBlogU
             message: 'Created successfully',
           });
         } catch (error: any) {
-          console.error('Error creating blog:', error);
+          if (import.meta.env.DEV) console.error('Error creating blog:', error);
           results.failed++;
           
           let errorMessage = 'Failed to create';
@@ -308,7 +308,7 @@ export const BulkMarkdownBlogUpload = ({ onClose, onSuccess }: BulkMarkdownBlogU
         toast.error(`Failed to import ${results.failed} blog${results.failed !== 1 ? 's' : ''}`);
       }
     } catch (error: any) {
-      console.error('Error processing import:', error);
+      if (import.meta.env.DEV) console.error('Error processing import:', error);
       toast.error(error.message || 'Failed to import blogs');
     } finally {
       setIsProcessing(false);

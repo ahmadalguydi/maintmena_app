@@ -177,7 +177,7 @@ const BookingResponseModal = ({
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Counter proposal error:', error);
+      if (import.meta.env.DEV) console.error('Counter proposal error:', error);
       const errorMessage = error.message.includes('check constraint')
         ? 'Database constraint error. Please contact support.'
         : error.message;
@@ -286,7 +286,7 @@ const BookingResponseModal = ({
             {booking?.requires_deposit && (
               <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-900">
                 <p className="text-xs text-blue-900 dark:text-blue-100">
-                  ℹ️ This booking requires a deposit. MaintMENA will hold the deposit
+                  â„¹ï¸ This booking requires a deposit. MaintMENA will hold the deposit
                   securely until service completion.
                 </p>
               </div>
@@ -383,7 +383,7 @@ const BookingResponseModal = ({
               <CardContent className="pt-6">
                 <p className="text-center text-muted-foreground">
                   {currentLanguage === 'ar'
-                    ? 'بإرسال هذا العرض، فإنك توافق على شروط الحجز كما هي مقترحة.'
+                    ? 'بإرسال هذا العرضٌ فإنك توافق على شروط الحجز كما هي مقترحة.'
                     : 'By sending this offer, you agree to the booking terms as proposed.'}
                 </p>
               </CardContent>
@@ -495,3 +495,5 @@ const BookingResponseModal = ({
 };
 
 export default BookingResponseModal;
+
+

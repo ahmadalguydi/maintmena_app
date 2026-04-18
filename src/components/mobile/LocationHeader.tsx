@@ -3,6 +3,7 @@ import { MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHaptics } from '@/hooks/useHaptics';
 import { LazyLocationPickerMap } from './LazyLocationPickerMap';
+import { cn } from '@/lib/utils';
 
 interface LocationHeaderProps {
     currentLanguage: 'en' | 'ar';
@@ -13,6 +14,8 @@ interface LocationHeaderProps {
         lng: number | null;
     };
     onLocationChange: (location: LocationHeaderProps['location']) => void;
+    /** When true, highlights the header to indicate location is required */
+    required?: boolean;
 }
 
 const content = {
@@ -38,6 +41,7 @@ export const LocationHeader = ({
     currentLanguage,
     location,
     onLocationChange,
+    required = false,
 }: LocationHeaderProps) => {
     const { vibrate } = useHaptics();
     const [isMapOpen, setIsMapOpen] = useState(false);
@@ -57,19 +61,35 @@ export const LocationHeader = ({
         vibrate('medium'); // Changed from 'success' to 'medium'
     };
 
+    const isLocationSet = !!(location.address || location.city || location.lat !== null);
+    const showRequired = required && !isLocationSet;
+
     return (
         <>
             <motion.div
                 layout
-                className="flex items-center justify-between py-2 mb-4 bg-muted/30 rounded-2xl px-4 border border-border/50"
+                className={cn(
+                    "flex items-center justify-between py-2 mb-4 rounded-2xl px-4 border",
+                    showRequired
+                        ? "bg-orange-50 border-orange-400 dark:bg-orange-950/30 dark:border-orange-600 animate-pulse"
+                        : "bg-muted/30 border-border/50"
+                )}
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center",
+                        showRequired ? "bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400" : "bg-primary/10 text-primary"
+                    )}>
                         <MapPin size={20} />
                     </div>
                     <div>
-                        <span className="text-xs text-muted-foreground block mb-0.5">
-                            {t.yourLocation}
+                        <span className={cn(
+                            "text-xs block mb-0.5",
+                            showRequired ? "text-orange-600 dark:text-orange-400 font-medium" : "text-muted-foreground"
+                        )}>
+                            {showRequired
+                                ? (currentLanguage === 'ar' ? 'يرجى تحديد الموقع أولاً' : 'Location required')
+                                : t.yourLocation}
                         </span>
                         <h3 className="font-semibold text-sm line-clamp-1 max-w-[200px]">
                             {location.address || location.city || t.notSet}

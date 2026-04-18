@@ -10,7 +10,7 @@ const Privacy = ({ currentLanguage }: PrivacyProps) => {
     en: {
       title: "Privacy Policy",
       subtitle: "How we collect, use, and protect your information",
-      lastUpdated: "Last updated: September 2024",
+      lastUpdated: "Last updated: April 2026",
       sections: [
         {
           icon: Eye,
@@ -52,7 +52,7 @@ const Privacy = ({ currentLanguage }: PrivacyProps) => {
     ar: {
       title: "سياسة الخصوصية", 
       subtitle: "كيف نجمع ونستخدم ونحمي معلوماتك",
-      lastUpdated: "آخر تحديث: سبتمبر 2024",
+      lastUpdated: "آخر تحديث: أبريل 2026",
       sections: [
         {
           icon: Eye,

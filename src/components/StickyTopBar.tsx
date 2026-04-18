@@ -17,7 +17,6 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { NotificationBell } from '@/components/NotificationBell';
-import { CurrencySwitcher } from '@/components/CurrencySwitcher';
 
 interface StickyTopBarProps {
   currentLanguage: 'en' | 'ar';
@@ -392,28 +391,10 @@ const StickyTopBar = ({ currentLanguage, onLanguageToggle }: StickyTopBarProps) 
                           <div className="flex-1">
                             <div className="font-medium px-[10px]">{currentLanguage === 'ar' ? 'الإعدادات' : 'Settings'}</div>
                             <div className="text-sm opacity-70 text-muted-foreground px-[10px]">
-                              {currentLanguage === 'ar' ? 'إعدادات الحساب' : 'Account settings'}
+                              {currentLanguage === 'ar' ? 'إدارات الحساب' : 'Account settings'}
                             </div>
                           </div>
                         </Link>
-                      </motion.div>
-                      <motion.div
-                        key="currency"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: (globalNavItems.length + 2) * 0.08 }}
-                      >
-                        <div className="p-4 rounded-lg border border-rule">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="font-medium text-ink">{currentLanguage === 'ar' ? 'العملة' : 'Currency'}</div>
-                              <div className="text-sm opacity-70 text-muted-foreground">
-                                {currentLanguage === 'ar' ? 'اختر عملتك المفضلة' : 'Choose your preferred currency'}
-                              </div>
-                            </div>
-                            <CurrencySwitcher />
-                          </div>
-                        </div>
                       </motion.div>
                     </>
                   )}

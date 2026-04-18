@@ -27,7 +27,7 @@ const KEYS = {
 } as const;
 
 export type Language   = 'en' | 'ar';
-export type Currency   = 'SAR' | 'USD' | 'EUR';
+export type Currency   = 'SAR';
 export type DateFormat = 'gregorian' | 'hijri';
 export type Theme      = 'light' | 'dark' | 'system';
 export type UserType   = 'buyer' | 'seller' | 'admin';
@@ -95,19 +95,13 @@ export function setHapticsEnabled(enabled: boolean): void {
 // ── Currency (localStorage only — not critical) ───────────────────────────────
 
 export function getCurrency(): Currency {
-  const v = storage.getItem(KEYS.currency);
-  if (v === 'SAR' || v === 'USD' || v === 'EUR') return v;
-  const lv = storage.getItem('preferred_currency');
-  if (lv === 'SAR' || lv === 'USD' || lv === 'EUR') {
-    setCurrency(lv);
-    return lv;
-  }
+  setCurrency('SAR');
   return 'SAR';
 }
 
-export function setCurrency(currency: Currency): void {
-  storage.setItem(KEYS.currency, currency);
-  for (const k of KEYS.legacyCurrency) storage.setItem(k, currency);
+export function setCurrency(_currency: Currency): void {
+  storage.setItem(KEYS.currency, 'SAR');
+  for (const k of KEYS.legacyCurrency) storage.setItem(k, 'SAR');
 }
 
 // ── Date format ───────────────────────────────────────────────────────────────

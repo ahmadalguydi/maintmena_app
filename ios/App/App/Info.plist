@@ -45,5 +45,15 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>MaintMENA needs camera access to take photos of maintenance issues and upload proof of work completion.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MaintMENA needs photo library access to upload images of maintenance issues, portfolio work, and certifications.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>MaintMENA needs permission to save photos to your library.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MaintMENA uses your location to show nearby service providers and help sellers navigate to job sites.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

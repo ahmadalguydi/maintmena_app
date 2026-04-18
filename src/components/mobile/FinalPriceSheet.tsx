@@ -34,9 +34,13 @@ export function FinalPriceSheet({
 
     const handleSubmit = () => {
         const numPrice = parseFloat(price);
-        if (!isNaN(numPrice) && numPrice > 0) {
-            onSubmit(numPrice);
+        if (isNaN(numPrice) || numPrice <= 0) return;
+        if (numPrice > 100000) {
+            // Max 100,000 SAR for any single job
+            return;
         }
+        // Round to 2 decimal places
+        onSubmit(Math.round(numPrice * 100) / 100);
     };
 
     const content = {
@@ -134,6 +138,11 @@ export function FinalPriceSheet({
                                             )}
                                         />
                                     </div>
+                                    {parseFloat(price) > 100000 && (
+                                        <Caption lang={currentLanguage} className="text-destructive mt-1">
+                                            {currentLanguage === 'ar' ? 'السعر يتجاوز الحد الأقصى (100,000 ر.س)' : 'Price exceeds maximum (100,000 SAR)'}
+                                        </Caption>
+                                    )}
                                 </div>
 
                                 {/* Trust Banner */}

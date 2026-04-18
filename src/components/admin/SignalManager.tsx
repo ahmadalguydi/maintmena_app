@@ -286,13 +286,13 @@ export function SignalManager({ onUpdate }: { onUpdate: () => void }) {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Estimated Value (in USD)</label>
+              <label className="text-sm font-medium mb-2 block">Estimated Value (SAR)</label>
               <Input
                 value={formData.estimated_value}
                 onChange={(e) => setFormData({ ...formData, estimated_value: e.target.value })}
-                placeholder="$500K or 500000"
+                placeholder="500K or 500000"
               />
-              <p className="text-xs text-muted-foreground mt-1">Enter in USD - will be converted for users</p>
+              <p className="text-xs text-muted-foreground mt-1">Enter the amount in Saudi Riyals.</p>
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Deadline</label>

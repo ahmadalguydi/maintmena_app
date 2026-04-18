@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
 import { useRole } from '@/contexts/RoleContext';
-import { ArrowLeft, CheckCircle2, XCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { ProgressBar } from '@/components/mobile/ProgressBar';
 import { signupSchema } from '@/lib/validationSchemas';
 import { handleError } from '@/lib/errorHandler';
@@ -27,7 +27,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
   const { intendedRole } = useRole();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const { containerStyle } = useKeyboardAvoidance();
+  const { containerStyle, isKeyboardVisible } = useKeyboardAvoidance();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -191,11 +191,14 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
                 full_address: pendingAddress.full_address,
                 is_default: true
               });
+            // Only remove after successful sync
+            localStorage.removeItem('pendingGuestAddress');
           }
-          localStorage.removeItem('pendingGuestAddress');
+          // If newUser is null (email confirmation required), keep pendingGuestAddress
+          // so it can be synced after the user confirms their email and logs in
         }
       } catch (e) {
-        console.error('Failed to sync guest address:', e);
+        if (import.meta.env.DEV) console.error('Failed to sync guest address:', e);
       }
 
       // Check for pending action and redirect accordingly
@@ -208,28 +211,34 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
 
           if (pendingAction.returnPath) {
             // Redirect to the original screen (booking, request, navigation, etc.)
+            setLoading(false);
             navigate(pendingAction.returnPath);
             return;
           } else if (pendingAction.type === 'request') {
             // Fallback for request type without returnPath
+            setLoading(false);
             navigate('/app/buyer/requests/new');
             return;
           }
         } catch (e) {
-          console.error('Failed to parse pending action');
+          if (import.meta.env.DEV) console.error('Failed to parse pending action');
         }
       }
-      navigate('/app/signup-success', { state: { userType: intendedRole } });
+      navigate('/app/signup-success', { state: { userType: intendedRole }, replace: true });
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-app bg-background flex flex-col p-6 pb-safe-or-4 pt-safe" style={containerStyle} dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div
+      className={`min-h-full overflow-y-auto bg-background flex flex-col p-6 pt-safe ${isKeyboardVisible ? 'pb-4' : 'pb-safe-or-4'}`}
+      style={containerStyle}
+      dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
+    >
       {/* Header with Back Button and Language Toggle */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={handleBack} className="flex items-center gap-2 text-muted-foreground">
-          <ArrowLeft size={20} />
+          {currentLanguage === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
         </button>
 
         <LanguageToggle language={currentLanguage} onToggle={onToggle} />
@@ -241,7 +250,7 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
         key={step}
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full"
+        className={`flex w-full max-w-md mx-auto flex-1 flex-col ${isKeyboardVisible ? 'justify-start pt-4' : 'justify-center'}`}
       >
         <h2 className="text-2xl font-bold mb-6">
           {step === 1 && t.step1.title}
@@ -253,11 +262,13 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
           {step === 1 && (
             <>
               <div className="space-y-2">
-                <Label>{t.step1.name}</Label>
+                <Label htmlFor="full-name">{t.step1.name}</Label>
                 <Input
+                  id="full-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="h-12 text-base"
+                  autoComplete="name"
                   required
                 />
               </div>
@@ -268,11 +279,11 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
                   value={formData.accountType}
                   onValueChange={(value: 'individual' | 'company') => setFormData({ ...formData, accountType: value })}
                 >
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <RadioGroupItem value="individual" id="individual" />
                     <Label htmlFor="individual">{t.step1.individual}</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <RadioGroupItem value="company" id="company" />
                     <Label htmlFor="company">{t.step1.company}</Label>
                   </div>
@@ -284,12 +295,15 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
           {step === 2 && (
             <>
               <div className="space-y-2">
-                <Label>{t.step2.email}</Label>
+                <Label htmlFor="signup-email">{t.step2.email}</Label>
                 <Input
+                  id="signup-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="h-12 text-base"
+                  autoComplete="email"
+                  inputMode="email"
                   required
                 />
               </div>
@@ -300,14 +314,17 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
                   <span className="text-muted-foreground text-xs">({t.step2.optional})</span>
                 </Label>
                 <Input
+                  id="signup-phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9+\-]/g, '');
+                    const value = e.target.value.replace(/[^0-9+\-\s()]/g, '');
                     setFormData({ ...formData, phone: value });
                   }}
                   placeholder="+966"
                   className="h-12 text-base"
+                  autoComplete="tel"
+                  inputMode="tel"
                 />
               </div>
 

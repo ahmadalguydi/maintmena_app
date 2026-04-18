@@ -132,7 +132,7 @@ export default function BlogPost({ currentLanguage }: BlogPostProps) {
         blocks_ar: (item.blocks_ar as unknown) as Block[] | undefined,
       })) || []);
     } catch (error) {
-      console.error('Error fetching blog:', error);
+      if (import.meta.env.DEV) console.error('Error fetching blog:', error);
       toast.error(isRTL ? 'خطأ في تحميل المقال' : 'Error loading article');
     } finally {
       setLoading(false);

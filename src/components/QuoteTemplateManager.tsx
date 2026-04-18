@@ -129,7 +129,7 @@ export const QuoteTemplateManager = ({
         setCustomSections(custom);
       }
     } catch (error: any) {
-      console.error('Error fetching template:', error);
+      if (import.meta.env.DEV) console.error('Error fetching template:', error);
     }
   };
 
@@ -182,7 +182,7 @@ export const QuoteTemplateManager = ({
       toast.success(currentLanguage === 'ar' ? 'تم حفظ القالب بنجاح!' : 'Template saved successfully!');
       onClose();
     } catch (error: any) {
-      console.error('Error saving template:', error);
+      if (import.meta.env.DEV) console.error('Error saving template:', error);
       toast.error(currentLanguage === 'ar' ? 'فشل حفظ القالب' : 'Failed to save template');
     } finally {
       setLoading(false);

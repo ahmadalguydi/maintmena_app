@@ -1,6 +1,6 @@
 import { Suspense, lazy, type ComponentType, useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Zap, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { Plus, Zap, ArrowLeft, ArrowRight, Loader2, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,7 +17,9 @@ import { JobTrackingCard } from '@/components/mobile/JobTrackingCard';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { useJobIssuesMap, IssueStatus } from '@/hooks/useJobIssues';
+import { useDispatchActions } from '@/hooks/useDispatchActions';
 import { SearchHero } from '@/components/mobile/SearchHero';
+import { getSeasonalTips } from '@/lib/seasonalDemand';
 import { StickySearchBar } from '@/components/mobile/StickySearchBar';
 import { ActiveRequestCard, RequestStatus, ActiveRequest } from '@/components/mobile/ActiveRequestCard';
 import { ReviewComposer } from '@/components/reviews/ReviewComposer';
@@ -100,7 +102,35 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
   const [reviewText, setReviewText] = useState('');
   const searchHeroRef = useRef<HTMLDivElement>(null);
   const countedReviewPromptKeyRef = useRef<string | null>(null);
+  const [seasonalTipDismissed, setSeasonalTipDismissed] = useState(() => {
+    try { return sessionStorage.getItem('maintmena:seasonal-tip-dismissed') === '1'; } catch { return false; }
+  });
   const currentLanguage = propLanguage || (localStorage.getItem('preferredLanguage') as 'en' | 'ar') || 'ar';
+  const currencyLabel = currentLanguage === 'ar' ? 'ر.س' : 'SAR';
+
+  // Check if seasonal alerts are enabled by admin
+  const { data: seasonalAlertsEnabled = true } = useQuery({
+    queryKey: ['platform-settings', 'seasonal_alerts_enabled'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'seasonal_alerts_enabled')
+        .maybeSingle();
+      if (error || !data) return true;
+      return data.value === 'true' || data.value === true;
+    },
+    staleTime: 60_000, // 1 min cache
+  });
+
+  const seasonalTips = useMemo(() => getSeasonalTips(), []);
+  const topSeasonalTip = seasonalTips[0] || null;
+
+  // Expire stale dispatches on page load (best-effort cleanup)
+  const { expireStaleDispatches } = useDispatchActions();
+  useEffect(() => {
+    expireStaleDispatches();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch buyer's open/accepted/in_progress requests for the ActiveRequestCards
   const {
@@ -133,14 +163,13 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
           full_name: string | null;
           company_name: string | null;
           avatar_url: string | null;
-          phone: string | null;
         }
       >();
       if (sellerIds.length > 0) {
-        const sellerProfiles = await executeSupabaseQuery<{ id: string; full_name: string | null; company_name: string | null; avatar_url: string | null; phone: string | null; }[]>(
+        const sellerProfiles = await executeSupabaseQuery<{ id: string; full_name: string | null; company_name: string | null; avatar_url: string | null; }[]>(
           () => supabase
             .from('profiles')
-            .select('id, full_name, company_name, avatar_url, phone')
+            .select('id, full_name, company_name, avatar_url')
             .in('id', sellerIds),
           {
             context: 'buyer-home-seller-profiles',
@@ -181,12 +210,12 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
         // Compute estimated price from seller_pricing or final_amount
         let estimatedPrice: string | undefined;
         if (req.final_amount) {
-          estimatedPrice = `${req.final_amount} SAR`;
+          estimatedPrice = `${req.final_amount} ${currencyLabel}`;
         } else if (req.seller_pricing) {
           try {
             const p = typeof req.seller_pricing === 'object' ? req.seller_pricing : JSON.parse(req.seller_pricing);
-            if (p?.type === 'fixed' && p?.fixedPrice) estimatedPrice = `${p.fixedPrice} SAR`;
-            else if (p?.type === 'range' && p?.minPrice) estimatedPrice = `${p.minPrice}–${p.maxPrice} SAR`;
+            if (p?.type === 'fixed' && p?.fixedPrice) estimatedPrice = `${p.fixedPrice} ${currencyLabel}`;
+            else if (p?.type === 'range' && p?.minPrice) estimatedPrice = `${p.minPrice}–${p.maxPrice} ${currencyLabel}`;
             else if (p?.type === 'inspection') estimatedPrice = currentLanguage === 'ar' ? 'بعد المعاينة' : 'After inspection';
           } catch {
             // seller_pricing is not valid JSON — skip price estimate
@@ -610,8 +639,44 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
           />
         </div>
 
+        {/* Seasonal Tip */}
+        {seasonalAlertsEnabled && topSeasonalTip && !seasonalTipDismissed && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            className="relative rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/5 via-background to-primary/5 dark:from-primary/10 dark:via-card dark:to-primary/10 p-4 shadow-sm"
+          >
+            <button
+              onClick={() => {
+                setSeasonalTipDismissed(true);
+                try { sessionStorage.setItem('maintmena:seasonal-tip-dismissed', '1'); } catch {}
+              }}
+              className="absolute top-3 right-3 rtl:right-auto rtl:left-3 h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+            >
+              <X size={14} />
+            </button>
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => handleSearchClick(topSeasonalTip.category)}
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xl">
+                {topSeasonalTip.icon}
+              </div>
+              <div className="min-w-0 flex-1 pr-6 rtl:pr-0 rtl:pl-6">
+                <p className={cn('text-sm font-bold text-foreground', currentLanguage === 'ar' ? 'font-ar-heading' : 'font-heading')}>
+                  {currentLanguage === 'ar' ? topSeasonalTip.titleAr : topSeasonalTip.title}
+                </p>
+                <p className={cn('text-xs text-muted-foreground mt-0.5', currentLanguage === 'ar' ? 'font-ar-body' : 'font-body')}>
+                  {currentLanguage === 'ar' ? topSeasonalTip.descriptionAr : topSeasonalTip.description}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {hasBuyerHomeDataError && (
-          <div className="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="rounded-3xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
             <div className="flex items-center justify-between gap-3">
               <span>
                 {currentLanguage === 'ar'
@@ -747,7 +812,7 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="space-y-3">
-            <div className="inline-flex w-max items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <div className="inline-flex w-max items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
               {reviewPromptCopy.badge}
             </div>
             <DialogTitle className={cn(currentLanguage === 'ar' ? 'font-ar-heading text-right' : 'font-heading')}>
@@ -794,3 +859,5 @@ export const BuyerHome = ({ currentLanguage: propLanguage }: BuyerHomeProps) => 
     </div>
   );
 };
+
+

@@ -202,18 +202,48 @@ export const getSubcategoryByKey = (subKey: string): { category: ServiceCategory
   return undefined;
 };
 
+import { localizeCategory } from './translations';
+
 // Get category label
 export const getCategoryLabel = (key: string, lang: 'en' | 'ar' = 'en'): string => {
   const category = getCategoryByKey(key);
-  if (!category) return key;
+  if (!category) return localizeCategory(key, lang);
   return lang === 'ar' ? category.ar : category.en;
 };
 
 // Get subcategory label
-export const getSubcategoryLabel = (key: string, lang: 'en' | 'ar' = 'en'): string => {
-  const result = getSubcategoryByKey(key);
-  if (!result) return key;
-  return lang === 'ar' ? result.subcategory.ar : result.subcategory.en;
+export const getSubcategoryLabel = (rawString: string | undefined | null, lang: 'en' | 'ar' = 'en'): string => {
+  if (!rawString) return '';
+  const searchKey = rawString.toLowerCase().trim();
+  
+  // 1. Try exact exact key lookup first
+  const exactMatch = getSubcategoryByKey(searchKey);
+  if (exactMatch) return lang === 'ar' ? exactMatch.subcategory.ar : exactMatch.subcategory.en;
+
+  // 2. Try to find by matching the English or Arabic string directly
+  for (const cat of getAllCategories()) {
+    if (!cat.subcategories) continue;
+    for (const sub of cat.subcategories) {
+      if (sub.en.toLowerCase() === searchKey || sub.ar.toLowerCase() === searchKey) {
+        return lang === 'ar' ? sub.ar : sub.en;
+      }
+    }
+  }
+
+  // 3. Fuzzy keyword fallback for common raw DB payloads
+  if (lang === 'ar') {
+    if (searchKey.includes('install')) return 'تركيب';
+    if (searchKey.includes('repair')) return 'إصلاح';
+    if (searchKey.includes('maintain') || searchKey.includes('maintenance')) return 'صيانة';
+    if (searchKey.includes('clean')) return 'تنظيف';
+    if (searchKey.includes('leak')) return 'تسريب';
+    if (searchKey.includes('wire') || searchKey.includes('wiring')) return 'تمديدات';
+    if (searchKey.includes('paint')) return 'دهان';
+    if (searchKey.includes('mount')) return 'تركيب وتثبيت';
+  }
+
+  // 4. Return as is if we have absolutely nothing
+  return rawString;
 };
 
 // Get category icon

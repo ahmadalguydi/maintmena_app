@@ -112,7 +112,7 @@ export const LeaveReviewModal = ({
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      console.error('Error submitting review:', error);
+      if (import.meta.env.DEV) console.error('Error submitting review:', error);
       toast.error(currentLanguage === 'ar' ? 'فشل إرسال التقييم' : 'Failed to submit review');
     } finally {
       setSubmitting(false);
@@ -128,7 +128,7 @@ export const LeaveReviewModal = ({
         dir={isArabic ? 'rtl' : 'ltr'}
       >
         {/* Colourful header strip */}
-        <div className="bg-gradient-to-br from-amber-50 via-background to-primary/5 px-6 pt-6 pb-4 border-b border-border/40">
+        <div className="bg-gradient-to-br from-amber-50 dark:from-amber-950/20 via-background to-primary/5 px-6 pt-6 pb-4 border-b border-border/40">
           <DialogHeader>
             <DialogTitle className={cn(
               'text-xl font-bold text-foreground',

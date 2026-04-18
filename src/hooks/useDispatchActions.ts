@@ -18,6 +18,16 @@ function haversineDistance(
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function isValidCoordinate(lat: number | null, lng: number | null): boolean {
+    if (lat == null || lng == null) return false;
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+function isWithinSaudiArabia(lat: number, lng: number): boolean {
+    // Approximate bounding box for Saudi Arabia + neighboring Gulf states
+    return lat >= 16.0 && lat <= 32.5 && lng >= 34.5 && lng <= 56.0;
+}
+
 interface DispatchResult {
     sessionId: string | null;
     eligibleCount: number;
@@ -35,8 +45,12 @@ interface AcceptResult {
 export function useDispatchActions() {
     const { user } = useAuth();
 
+    /** Estimated job duration in hours by default (used for schedule conflict checks). */
+    const DEFAULT_JOB_DURATION_HOURS = 3;
+
     /**
      * Find eligible online sellers for a category, rank by distance, and dispatch.
+     * Now supports smart timeouts and schedule conflict prevention.
      */
     const triggerDispatch = async (
         jobId: string,
@@ -44,21 +58,40 @@ export function useDispatchActions() {
         category: string,
         buyerLat: number | null,
         buyerLng: number | null,
-        waveSize = 3
+        waveSize = 3,
+        options?: {
+            isScheduled?: boolean;
+            scheduledFor?: string | null;
+        }
     ): Promise<DispatchResult> => {
         try {
+            const isScheduled = options?.isScheduled ?? false;
+            const scheduledFor = options?.scheduledFor ?? null;
+
+            // Validate coordinates
+            if (buyerLat != null && buyerLng != null) {
+                if (!isValidCoordinate(buyerLat, buyerLng)) {
+                    return { sessionId: null, eligibleCount: 0, error: 'Invalid coordinates' };
+                }
+            }
+
+            // Prevent scheduling in the past
+            if (isScheduled && scheduledFor) {
+                const scheduledTime = new Date(scheduledFor).getTime();
+                if (scheduledTime < Date.now() - 5 * 60 * 1000) { // 5 min grace
+                    return { sessionId: null, eligibleCount: 0, error: 'Cannot schedule a request in the past' };
+                }
+            }
+
             // 1. Query ALL sellers who have deliberately set is_online = true.
-            //    is_online is a persistent DB column — sellers who toggled online and then
-            //    closed the app still have is_online=true until they explicitly go offline.
-            //    This means a "logged out" seller who was online IS eligible.
             const { data: sellers, error: sellersError } = await (supabase as any)
                 .from('profiles')
                 .select('id, location_lat, location_lng, services_pricing, service_categories, is_online, user_type, service_radius_km')
-                .eq('user_type', 'seller')   // profiles uses user_type, not role
+                .eq('user_type', 'seller')
                 .eq('is_online', true);
 
             if (sellersError) {
-                console.error('Error fetching sellers:', sellersError);
+                if (import.meta.env.DEV) console.error('Error fetching sellers:', sellersError);
                 return { sessionId: null, eligibleCount: 0, error: sellersError.message };
             }
 
@@ -66,15 +99,11 @@ export function useDispatchActions() {
                 return { sessionId: null, eligibleCount: 0, error: 'No online sellers found' };
             }
 
-            // 2. Filter by category capability using flexible matching:
-            //    - services_pricing[].serviceType  (normalised key)
-            //    - service_categories[]            (direct category key array)
-            //    Also filter by service_radius_km when buyer location is available.
+            // 2. Filter by category capability and service radius
             const normalize = (s: string) => s.toLowerCase().replace(/[\s-]+/g, '_');
             const categoryNorm = normalize(category);
 
             const eligible = sellers.filter((s: any) => {
-                // Service radius check — skip if no buyer location or seller hasn't set a radius
                 if (buyerLat != null && buyerLng != null) {
                     const radiusKm: number | null = s.service_radius_km ?? null;
                     if (radiusKm != null && radiusKm > 0 && s.location_lat && s.location_lng) {
@@ -83,13 +112,11 @@ export function useDispatchActions() {
                     }
                 }
 
-                // Check service_categories array (simple string array on the profile)
                 const cats: string[] = Array.isArray(s.service_categories)
                     ? s.service_categories.filter(Boolean)
                     : [];
                 if (cats.some((c: string) => normalize(c) === categoryNorm)) return true;
 
-                // Check services_pricing (JSONB array — may use { serviceType } or { category })
                 const pricing: any[] = Array.isArray(s.services_pricing) ? s.services_pricing : [];
                 return pricing.some(
                     (p: any) => (p.enabled || p.available) && (
@@ -103,10 +130,65 @@ export function useDispatchActions() {
                 return { sessionId: null, eligibleCount: 0, error: 'No sellers available for this category' };
             }
 
-            // 3. Rank by distance (if buyer location is available)
+            // 3. Filter out sellers with conflicting active jobs
+            const eligibleIds = eligible.map((s: any) => s.id as string);
+            let availableIds = new Set(eligibleIds);
+
+            // Fetch sellers who have active ASAP jobs (mission mode) — they should not get
+            // new ASAP requests. For scheduled requests, they CAN receive them as long as
+            // the scheduled time doesn't conflict.
+            const { data: busySellers } = await (supabase as any)
+                .from('maintenance_requests')
+                .select('assigned_seller_id, status, preferred_start_date, urgency')
+                .in('assigned_seller_id', eligibleIds)
+                .in('status', ['accepted', 'en_route', 'arrived', 'in_progress']);
+
+            if (busySellers && busySellers.length > 0) {
+                for (const job of busySellers) {
+                    const sellerId = job.assigned_seller_id as string;
+                    const jobIsAsap = !job.preferred_start_date || job.urgency === 'high' || job.urgency === 'emergency';
+                    const jobStatus = job.status as string;
+                    const inMissionMode = ['en_route', 'arrived', 'in_progress'].includes(jobStatus);
+
+                    if (!isScheduled) {
+                        // ASAP request: exclude sellers currently in mission mode
+                        if (inMissionMode) {
+                            availableIds.delete(sellerId);
+                        }
+                    } else if (scheduledFor) {
+                        // Scheduled request: check for time conflicts
+                        const newStart = new Date(scheduledFor).getTime();
+                        const newEnd = newStart + DEFAULT_JOB_DURATION_HOURS * 3600 * 1000;
+
+                        if (job.preferred_start_date) {
+                            const existingStart = new Date(job.preferred_start_date).getTime();
+                            const existingEnd = existingStart + DEFAULT_JOB_DURATION_HOURS * 3600 * 1000;
+                            // Check overlap: new job overlaps with existing job's time window
+                            if (newStart < existingEnd && newEnd > existingStart) {
+                                availableIds.delete(sellerId);
+                            }
+                        } else if (inMissionMode && jobIsAsap) {
+                            // Seller is in an active ASAP job — if the scheduled time is
+                            // within the next few hours, there could be a conflict
+                            const hoursUntilScheduled = (newStart - Date.now()) / 3600000;
+                            if (hoursUntilScheduled < DEFAULT_JOB_DURATION_HOURS) {
+                                availableIds.delete(sellerId);
+                            }
+                        }
+                    }
+                }
+            }
+
+            const filteredEligible = eligible.filter((s: any) => availableIds.has(s.id));
+
+            if (filteredEligible.length === 0) {
+                return { sessionId: null, eligibleCount: 0, error: 'No available sellers for this time slot' };
+            }
+
+            // 4. Rank by distance (if buyer location is available)
             let ranked: string[];
             if (buyerLat != null && buyerLng != null) {
-                ranked = eligible
+                ranked = filteredEligible
                     .map((s: any) => ({
                         id: s.id as string,
                         distance:
@@ -117,13 +199,12 @@ export function useDispatchActions() {
                     .sort((a, b) => a.distance - b.distance)
                     .map((s) => s.id);
             } else {
-                // No buyer location — shuffle for fairness
-                ranked = eligible
+                ranked = filteredEligible
                     .map((s: any) => s.id as string)
                     .sort(() => Math.random() - 0.5);
             }
 
-            // 4. Call start_job_dispatch RPC
+            // 5. Call start_job_dispatch RPC (server-side handles status transition)
             if (!jobId) {
                 return { sessionId: null, eligibleCount: 0, error: 'Invalid job ID' };
             }
@@ -132,10 +213,12 @@ export function useDispatchActions() {
                 p_job_type: jobType,
                 p_seller_ids: ranked,
                 p_wave_size: waveSize,
+                p_is_scheduled: isScheduled,
+                p_scheduled_for: scheduledFor || null,
             });
 
             if (rpcError) {
-                console.error('Dispatch RPC error:', rpcError);
+                if (import.meta.env.DEV) console.error('Dispatch RPC error:', rpcError);
                 return { sessionId: null, eligibleCount: 0, error: rpcError.message };
             }
 
@@ -144,8 +227,25 @@ export function useDispatchActions() {
                 eligibleCount: Math.min(ranked.length, waveSize),
             };
         } catch (err: any) {
-            console.error('triggerDispatch error:', err);
+            if (import.meta.env.DEV) console.error('triggerDispatch error:', err);
             return { sessionId: null, eligibleCount: 0, error: err.message };
+        }
+    };
+
+    /**
+     * Expire stale dispatch sessions that have timed out.
+     * Call this periodically (e.g., on buyer home load) to clean up stuck dispatches.
+     */
+    const expireStaleDispatches = async (): Promise<number> => {
+        try {
+            const { data, error } = await (supabase as any).rpc('expire_stale_dispatch_sessions');
+            if (error) {
+                if (import.meta.env.DEV) console.error('expire_stale_dispatch_sessions error:', error);
+                return 0;
+            }
+            return (data as number) || 0;
+        } catch {
+            return 0;
         }
     };
 
@@ -166,7 +266,7 @@ export function useDispatchActions() {
             });
 
             if (error) {
-                console.error('accept_job_offer RPC error:', error);
+                if (import.meta.env.DEV) console.error('accept_job_offer RPC error:', error);
                 return { accepted: false, error: error.message };
             }
 
@@ -182,7 +282,7 @@ export function useDispatchActions() {
 
             return { accepted: true, jobId: job_id, jobType: job_type };
         } catch (err: any) {
-            console.error('acceptOffer error:', err);
+            if (import.meta.env.DEV) console.error('acceptOffer error:', err);
             return { accepted: false, error: err.message };
         }
     };
@@ -205,20 +305,21 @@ export function useDispatchActions() {
                 .eq('id', offerId);
 
             if (error) {
-                console.error('declineOffer error:', error);
+                if (import.meta.env.DEV) console.error('declineOffer error:', error);
                 return false;
             }
             return true;
         } catch (err) {
-            console.error('declineOffer error:', err);
+            if (import.meta.env.DEV) console.error('declineOffer error:', err);
             return false;
         }
     };
 
     /**
-     * Catch-up dispatch for a seller who just came online (or just loaded the app while online).
+     * Catch-up dispatch for a seller who just came online (or just left mission mode).
      * Finds unassigned open requests matching the seller's categories/radius that they haven't
      * received an offer for yet, then fires individual dispatch waves so they can see the jobs.
+     * Now also checks for schedule conflicts with the seller's existing accepted jobs.
      */
     const catchUpDispatch = async (): Promise<{ dispatched: number }> => {
         if (!user?.id) return { dispatched: 0 };
@@ -236,7 +337,7 @@ export function useDispatchActions() {
             // 2. Fetch open/unassigned requests (limit 20 to avoid spam)
             const { data: requests, error: requestsError } = await (supabase as any)
                 .from('maintenance_requests')
-                .select('id, category, latitude, longitude, status')
+                .select('id, category, latitude, longitude, status, preferred_start_date, urgency')
                 .in('status', ['open', 'submitted', 'matching', 'dispatching'])
                 .is('assigned_seller_id', null)
                 .limit(20);
@@ -255,7 +356,24 @@ export function useDispatchActions() {
                 (existingOffers ?? []).map((o: any) => o.job_id as string)
             );
 
-            // 4. Category/radius filter (reuse same logic as triggerDispatch)
+            // 4. Fetch seller's accepted/active jobs to check schedule conflicts
+            const { data: sellerJobs } = await (supabase as any)
+                .from('maintenance_requests')
+                .select('status, preferred_start_date, urgency')
+                .eq('assigned_seller_id', user.id)
+                .in('status', ['accepted', 'en_route', 'arrived', 'in_progress']);
+
+            const sellerActiveJobs = (sellerJobs ?? []) as {
+                status: string;
+                preferred_start_date: string | null;
+                urgency: string | null;
+            }[];
+
+            const isSellerInMissionMode = sellerActiveJobs.some(
+                j => ['en_route', 'arrived', 'in_progress'].includes(j.status)
+            );
+
+            // 5. Category/radius/schedule-conflict filter
             const normalize = (s: string) => s.toLowerCase().replace(/[\s-]+/g, '_');
             const cats: string[] = Array.isArray(profile.service_categories)
                 ? profile.service_categories.filter(Boolean)
@@ -265,6 +383,24 @@ export function useDispatchActions() {
 
             const matched = requests.filter((req: any) => {
                 if (alreadyOfferedIds.has(req.id)) return false;
+
+                // If seller is in mission mode, skip ASAP requests (they'll get them when done)
+                const reqIsAsap = !req.preferred_start_date || req.urgency === 'high' || req.urgency === 'emergency';
+                if (isSellerInMissionMode && reqIsAsap) return false;
+
+                // Schedule conflict check for scheduled requests
+                if (req.preferred_start_date) {
+                    const newStart = new Date(req.preferred_start_date).getTime();
+                    const newEnd = newStart + DEFAULT_JOB_DURATION_HOURS * 3600 * 1000;
+
+                    for (const existing of sellerActiveJobs) {
+                        if (existing.preferred_start_date) {
+                            const existStart = new Date(existing.preferred_start_date).getTime();
+                            const existEnd = existStart + DEFAULT_JOB_DURATION_HOURS * 3600 * 1000;
+                            if (newStart < existEnd && newEnd > existStart) return false;
+                        }
+                    }
+                }
 
                 // Radius check
                 if (radiusKm != null && radiusKm > 0 && profile.location_lat && profile.location_lng && req.latitude && req.longitude) {
@@ -285,7 +421,7 @@ export function useDispatchActions() {
 
             if (matched.length === 0) return { dispatched: 0 };
 
-            // 5. Dispatch up to 5 at a time, fire-and-forget individual waves
+            // 6. Dispatch up to 5 at a time
             const batch = matched.slice(0, 5);
             let dispatched = 0;
             await Promise.all(
@@ -310,5 +446,5 @@ export function useDispatchActions() {
         }
     };
 
-    return { triggerDispatch, acceptOffer, declineOffer, catchUpDispatch };
+    return { triggerDispatch, acceptOffer, declineOffer, catchUpDispatch, expireStaleDispatches };
 }

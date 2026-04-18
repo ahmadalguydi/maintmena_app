@@ -111,7 +111,7 @@ export function useBriefData() {
         setTenders([]);
       }
     } catch (error) {
-      console.error('Error fetching brief data:', error);
+      if (import.meta.env.DEV) console.error('Error fetching brief data:', error);
     } finally {
       setLoading(false);
     }

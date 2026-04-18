@@ -60,7 +60,7 @@ export default function Blog({ currentLanguage }: BlogProps) {
       if (error) throw error;
       setBlogs(data || []);
     } catch (error) {
-      console.error('Error fetching blogs:', error);
+      if (import.meta.env.DEV) console.error('Error fetching blogs:', error);
     } finally {
       setLoading(false);
     }

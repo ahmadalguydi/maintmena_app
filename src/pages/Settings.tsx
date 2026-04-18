@@ -122,7 +122,7 @@ const Settings = ({
       onConflict: 'id'
     }).select().single();
     if (error) {
-      console.error('Error ensuring profile exists:', error);
+      if (import.meta.env.DEV) console.error('Error ensuring profile exists:', error);
       return null;
     }
     return data;
@@ -178,7 +178,7 @@ const Settings = ({
         });
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      if (import.meta.env.DEV) console.error('Error loading profile:', error);
       toast({
         title: currentLanguage === 'ar' ? 'خطأ' : 'Error',
         description: currentLanguage === 'ar' ? 'فشل تحميل الملف الشخصي' : 'Failed to load profile',
@@ -266,7 +266,7 @@ const Settings = ({
         description: currentLanguage === 'ar' ? 'تم تحديث معلومات الحساب بنجاح' : 'Profile updated successfully'
       });
     } catch (error: any) {
-      console.error('Profile update error:', error);
+      if (import.meta.env.DEV) console.error('Profile update error:', error);
       toast({
         title: currentLanguage === 'ar' ? 'خطأ' : 'Error',
         description: error.message || (currentLanguage === 'ar' ? 'فشل تحديث الملف الشخصي' : 'Failed to update profile'),
@@ -530,7 +530,7 @@ const Settings = ({
                       });
                       (e.target as HTMLFormElement).reset();
                     } catch (error) {
-                      console.error('Error updating email:', error);
+                      if (import.meta.env.DEV) console.error('Error updating email:', error);
                       toast({
                         title: currentLanguage === 'ar' ? 'خطأ' : 'Error',
                         description: currentLanguage === 'ar' ? 'فشل تحديث البريد الإلكتروني. حاول مرة أخرى.' : 'Failed to update email. Please try again.',

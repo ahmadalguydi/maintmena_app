@@ -93,6 +93,7 @@ export const JobTrackingCard = ({
 }: JobTrackingCardProps) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const currencyLabel = currentLanguage === 'ar' ? 'ر.س' : 'SAR';
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [showPhotoProof, setShowPhotoProof] = useState(false);
@@ -192,7 +193,7 @@ export const JobTrackingCard = ({
       toast.success(t.statusUpdated);
     },
     onError: (error) => {
-      console.error("Status update error:", error);
+      if (import.meta.env.DEV) console.error("Status update error:", error);
       toast.error("Failed to update status");
     },
   });
@@ -225,7 +226,7 @@ export const JobTrackingCard = ({
       .eq("id", jobId);
 
     if (error) {
-      console.error("Completion error:", error);
+      if (import.meta.env.DEV) console.error("Completion error:", error);
       toast.error("Failed to mark complete");
       return;
     }
@@ -268,7 +269,7 @@ export const JobTrackingCard = ({
       const { error } = await (supabase as any).from("maintenance_requests").update(updateData).eq("id", jobId);
 
       if (error) {
-        console.error("[JobTrackingCard] Completion error:", error);
+        if (import.meta.env.DEV) console.error("[JobTrackingCard] Completion error:", error);
         toast.error(currentLanguage === "ar" ? "فشل تأكيد الإكتمال" : "Failed to confirm completion");
         return;
       }
@@ -294,7 +295,7 @@ export const JobTrackingCard = ({
 
       navigate(`/app/buyer/request/${jobId}?focusReview=1`);
     } catch (err) {
-      console.error("[JobTrackingCard] Unexpected error:", err);
+      if (import.meta.env.DEV) console.error("[JobTrackingCard] Unexpected error:", err);
       toast.error(currentLanguage === "ar" ? "حدث خطأ غير متوقع" : "An unexpected error occurred");
     }
   };
@@ -316,7 +317,7 @@ export const JobTrackingCard = ({
       .eq("id", jobId);
 
     if (error) {
-      console.error("Report issue error:", error);
+      if (import.meta.env.DEV) console.error("Report issue error:", error);
       toast.error("Failed to report issue");
       return;
     }
@@ -337,7 +338,7 @@ export const JobTrackingCard = ({
         await sendNotifications(adminNotifications);
       }
     } catch (notifError) {
-      console.error("Admin notification error:", notifError);
+      if (import.meta.env.DEV) console.error("Admin notification error:", notifError);
     }
 
     queryClient.invalidateQueries({ queryKey: ["request-detail", jobId] });
@@ -448,7 +449,7 @@ export const JobTrackingCard = ({
                   {currentLanguage === 'ar' ? 'السعر' : 'Price'}
                 </Label>
                 <BodySmall lang={currentLanguage} className="font-medium">
-                  {price.toLocaleString()} SAR
+                  {price.toLocaleString()} {currencyLabel}
                 </BodySmall>
               </div>
             </div>
@@ -672,3 +673,4 @@ export const JobTrackingCard = ({
     </SoftCard>
   );
 };
+

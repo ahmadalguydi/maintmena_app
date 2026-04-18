@@ -87,7 +87,7 @@ export const HaltedJobCard = ({
       toast.success(t.resolveSuccess);
     },
     onError: (error) => {
-      console.error('Resolve error:', error);
+      if (import.meta.env.DEV) console.error('Resolve error:', error);
       toast.error('Failed to resolve job');
     }
   });

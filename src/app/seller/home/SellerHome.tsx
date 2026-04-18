@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ import { useSellerHomeState } from '@/hooks/useSellerHomeState';
 import { useDispatchActions } from '@/hooks/useDispatchActions';
 import { useOpportunities } from '@/hooks/useOpportunities';
 import { useSellerEarnings } from '@/hooks/useSellerEarnings';
+import { sendNotification } from '@/lib/notifications';
 
 // Shared components
 import { SellerHomeHeader } from '@/components/seller/home/SellerHomeHeader';
@@ -25,6 +26,10 @@ import { SellerHomeOnline } from '../../../components/seller/home/SellerHomeOnli
 
 // State C: Mission Mode
 import { SellerHomeMissionMode } from '@/components/seller/home/SellerHomeMissionMode';
+import type { JobCompletionData } from '@/components/seller/home/SellerHomeMissionMode';
+
+// Celebration overlay
+import { JobCompletionCelebration } from '@/components/mobile/JobCompletionCelebration';
 
 // State D: Scheduled
 import { SellerHomeScheduled } from '@/components/seller/home/SellerHomeScheduled';
@@ -65,11 +70,16 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
         timeOnline,
         isLoading,
         profileCompleteness,
+        enterFocusMode,
+        exitFocusMode,
+        isFocusMode,
+        isFocusLocked,
     } = useSellerHomeState();
 
     // Local UI state
     const [serviceRadius, setServiceRadius] = useState(5);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [celebrationData, setCelebrationData] = useState<JobCompletionData | null>(null);
 
     // Load actual service radius from seller profile
     const { data: profileRadius } = useQuery({
@@ -115,6 +125,21 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
 
     // Dispatch actions
     const { acceptOffer, declineOffer, catchUpDispatch } = useDispatchActions();
+
+    // Catch up on outstanding offers when seller leaves mission mode (job completes)
+    const prevActiveJobRef = useRef<typeof activeJob>(activeJob);
+    useEffect(() => {
+        const hadActiveJob = !!prevActiveJobRef.current;
+        prevActiveJobRef.current = activeJob;
+        // If seller just left mission mode (activeJob went from non-null to null) and is still online
+        if (hadActiveJob && !activeJob && isOnline && user?.id) {
+            catchUpDispatch().then(({ dispatched }) => {
+                if (dispatched > 0) {
+                    queryClient.invalidateQueries({ queryKey: ['seller-opportunities', user.id] });
+                }
+            }).catch(() => {});
+        }
+    }, [activeJob, isOnline, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
     const { opportunities, refetch: refetchOpportunities } = useOpportunities();
 
     const primeAcceptedJobState = async (
@@ -261,8 +286,24 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
 
         const onSuccess = async () => {
             try {
+                // Determine buyer_id to send notification
+                const { data: reqData } = await supabase
+                    .from('maintenance_requests')
+                    .select('buyer_id')
+                    .eq('id', selectedOpportunityId)
+                    .maybeSingle();
+
                 await primeAcceptedJobState(selectedOpportunityId, opp);
                 toast.success(currentLanguage === 'ar' ? 'تم قبول الطلب بنجاح!' : 'Job accepted successfully!');
+
+                if (reqData?.buyer_id) {
+                    sendNotification({
+                        userId: reqData.buyer_id,
+                        type: 'job_accepted',
+                        contentId: selectedOpportunityId,
+                    });
+                }
+
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (err) {
                 if (import.meta.env.DEV) console.error('[SellerHome] Failed to prime accepted job state:', err);
@@ -380,13 +421,21 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
                 );
 
             case 'C':
-                if (!activeJob) return null;
+                if (!activeJob) return (
+                    <div className="flex items-center justify-center py-16">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+                    </div>
+                );
                 return (
                     <SellerHomeMissionMode
                         currentLanguage={currentLanguage}
                         activeJob={activeJob}
                         nextJob={scheduledJobs[0]}
                         todayEarnings={todayEarnings}
+                        isFocusMode={isFocusMode}
+                        isFocusLocked={isFocusLocked}
+                        onExitFocusMode={exitFocusMode}
+                        onJobCompleted={(data) => setCelebrationData(data)}
                     />
                 );
 
@@ -401,11 +450,16 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
                         onAcceptOpportunity={handleAcceptOpportunity}
                         onJoinWaitlist={handleJoinWaitlist}
                         onEditPrice={handleEditPrice}
+                        onEnterFocusMode={enterFocusMode}
                     />
                 );
 
             default:
-                return null;
+                return (
+                    <div className="flex items-center justify-center py-16">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+                    </div>
+                );
         }
     };
 
@@ -460,14 +514,14 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
 
                 {/* Main Content */}
                 <div className="px-5 pt-4">
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="popLayout">
                         <motion.div
                             key={state}
-                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -20, scale: 0.98 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                             transition={{
-                                duration: 0.35,
+                                duration: 0.2,
                                 ease: [0.4, 0, 0.2, 1]
                             }}
                         >
@@ -510,6 +564,28 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
                 }}
                 buyerName={currentLanguage === 'ar' ? 'العميل' : 'the customer'}
             />
+
+            {/* Job Completion Celebration — rendered at SellerHome level so it survives mission mode unmount */}
+            <AnimatePresence>
+                {celebrationData && (
+                    <JobCompletionCelebration
+                        data={{
+                            variant: 'seller',
+                            buyerName: celebrationData.buyerName || (currentLanguage === 'ar' ? 'العميل' : 'Client'),
+                            buyerAvatar: celebrationData.buyerAvatar,
+                            amount: celebrationData.amount,
+                            title: celebrationData.title || '',
+                            category: celebrationData.category,
+                            jobId: celebrationData.jobId,
+                            location: celebrationData.location,
+                            lat: celebrationData.lat,
+                            lng: celebrationData.lng,
+                        }}
+                        currentLanguage={currentLanguage}
+                        onDismiss={() => setCelebrationData(null)}
+                    />
+                )}
+            </AnimatePresence>
         </>
     );
 };

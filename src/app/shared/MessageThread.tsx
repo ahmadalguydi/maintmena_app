@@ -74,8 +74,12 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
   const [uploading, setUploading] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [messageLimit, setMessageLimit] = useState(50);
+  const [isOtherTyping, setIsOtherTyping] = useState(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingBroadcast = useRef(0);
   const isSeller = currentRole === 'seller';
-  const { containerStyle: keyboardStyle } = useKeyboardAvoidance(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { containerStyle: keyboardStyle, isKeyboardVisible } = useKeyboardAvoidance(0);
 
   // Thread ID for localStorage key
   const threadId = requestId || '';
@@ -116,15 +120,23 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
         }
       );
       
+      // Verify user is a participant before returning messages
+      if (data && data.length > 0 && user?.id) {
+        const isParticipant = data.some(m => m.sender_id === user.id || m.receiver_id === user.id);
+        if (!isParticipant) return [];
+      }
+
       // Sort ascending for proper chat order
       return [...(data || [])].map(msg => ({
         ...msg,
         payload: msg.payload ? (msg.payload as unknown as MessagePayload) : undefined
-      })).sort((a, b) => 
+      })).sort((a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       ) as Message[];
     },
     enabled: !!requestId,
+    staleTime: 10_000,
+    refetchInterval: 15_000, // Fallback polling in case realtime subscription drops
     // SEAMLESS TRANSITION: Use the seeded placeholder data if available
     placeholderData: (previousData) => previousData,
   });
@@ -141,7 +153,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
     if (!requestId || isSupabaseRelationKnownUnavailable('messages')) return;
 
     const channel = supabase
-      .channel('messages-realtime')
+      .channel(`messages-${requestId}`)
       .on(
         'postgres_changes',
         {
@@ -181,9 +193,48 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
     };
   }, [queryClient, requestId, messageLimit]);
 
+  // ─── Typing indicator via Supabase broadcast ───
+  useEffect(() => {
+    if (!requestId || !user?.id) return;
+
+    const typingChannel = supabase.channel(`typing-${requestId}`);
+
+    typingChannel
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (payload?.userId !== user.id) {
+          setIsOtherTyping(true);
+          // Clear after 3s of no typing events
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = setTimeout(() => setIsOtherTyping(false), 3000);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(typingChannel);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [requestId, user?.id]);
+
+  // Broadcast typing event (throttled to once per 2s)
+  const broadcastTyping = () => {
+    if (!requestId || !user?.id) return;
+    const now = Date.now();
+    if (now - lastTypingBroadcast.current < 2000) return;
+    lastTypingBroadcast.current = now;
+    supabase.channel(`typing-${requestId}`).send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { userId: user.id },
+    });
+  };
+
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll the container, not just the sentinel into view
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   // Mark messages as read
@@ -214,12 +265,15 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({ content, payload }: { content: string; payload?: MessagePayload }) => {
+      if (!user?.id) {
+        throw new Error(currentLanguage === 'ar' ? 'يجب تسجيل الدخول أولاً' : 'Please sign in first');
+      }
       if (isSupabaseRelationKnownUnavailable('messages')) {
         throw new Error(currentLanguage === 'ar' ? 'خدمة الرسائل غير متاحة حالياً' : 'Messaging is currently unavailable');
       }
 
       const messageData: Record<string, unknown> = {
-        sender_id: user!.id,
+        sender_id: user.id,
         content,
         request_id: requestId,
       };
@@ -239,11 +293,12 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       return data;
     },
     onMutate: async (newMsg) => {
+       if (!user?.id) return;
        await queryClient.cancelQueries({ queryKey: ['messages', requestId, messageLimit] });
        const previousMessages = queryClient.getQueryData<Message[]>(['messages', requestId, messageLimit]);
        const optimisticMsg: Message = {
          id: `temp-${Date.now()}`,
-         sender_id: user!.id,
+         sender_id: user.id,
          content: newMsg.content,
          created_at: new Date().toISOString(),
          is_read: false,
@@ -274,7 +329,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
   });
 
   const handleSend = () => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || !user?.id) return;
     sendMessageMutation.mutate({ content: messageText });
   };
 
@@ -416,9 +471,17 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
     return null;
   };
 
-  const quickReplies = currentLanguage === 'ar'
-    ? ['شكراً', 'موافق', 'سأراجع', 'متى يمكنك البدء؟']
-    : ['Thanks', 'Agreed', 'Will review', 'When can you start?'];
+  // ─── Role-specific quick replies ───
+  const quickReplies = useMemo(() => {
+    if (isSeller) {
+      return currentLanguage === 'ar'
+        ? ['أنا في الطريق', 'وصلت', 'أحتاج معلومات إضافية', 'سأرسل السعر', 'تم الإصلاح', 'شكراً لك']
+        : ["I'm on my way", 'I have arrived', 'I need more details', "I'll send the price", 'Job is done', 'Thank you'];
+    }
+    return currentLanguage === 'ar'
+      ? ['شكراً', 'موافق', 'متى ستصل؟', 'كم التكلفة؟', 'أرسل لي الموقع', 'تم، شكراً']
+      : ['Thanks', 'Agreed', 'When will you arrive?', 'How much will it cost?', 'Send me your location', 'Done, thanks'];
+  }, [isSeller, currentLanguage]);
 
   const content_text = {
     en: {
@@ -438,7 +501,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
   const ct = content_text[currentLanguage];
 
   return (
-    <div className="flex h-app min-h-app flex-col bg-background" style={keyboardStyle} dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex h-[100dvh] flex-col bg-background overflow-hidden" style={keyboardStyle} dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
       <GradientHeader
         title={ct.title}
         showBack={true}
@@ -478,12 +541,12 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       />
 
       {/* Messages */}
-      <motion.div 
+      <motion.div
+        ref={scrollContainerRef}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="flex-1 overflow-y-auto px-6 py-6 pb-2" 
-        style={keyboardStyle}
+        className="flex-1 overflow-y-auto overscroll-contain px-6 py-6 pb-2"
       >
         {messages && messages.length >= messageLimit && (
           <div className="flex justify-center mb-6">
@@ -540,6 +603,18 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
           );
         })}
         </div>
+        {/* Typing indicator */}
+        {isOtherTyping && (
+          <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="bg-muted rounded-3xl rounded-bl-md px-4 py-3 shadow-sm border border-border/40">
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0ms]" />
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:150ms]" />
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </motion.div>
 
@@ -562,7 +637,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       </div>
 
       {/* Input */}
-      <div className="border-t border-border/30 bg-background px-6 py-4 pb-safe-or-4">
+      <div className={`border-t border-border/30 bg-background px-6 py-4 ${isKeyboardVisible ? 'pb-4' : 'pb-safe-or-4'}`}>
         <div className="flex gap-2 items-center">
           {/* Attachment buttons */}
           <div className="flex gap-1">
@@ -591,7 +666,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
 
           <Input
             value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
+            onChange={(e) => { setMessageText(e.target.value); broadcastTyping(); }}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder={ct.typePlaceholder}
             className="flex-1 h-12 rounded-full"

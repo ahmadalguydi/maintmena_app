@@ -34,7 +34,6 @@ export function JobCompletionCodeModal({
             subtitle: "أدخل الرمز المكون من 6 أرقام من شاشة العميل.",
             submit: "تأكيد الرمز",
             cancel: "إلغاء",
-            scanQr: "مسح رمز QR",
             secure: "يضمن هذا الرمز رضا العميل",
         },
         en: {
@@ -42,7 +41,6 @@ export function JobCompletionCodeModal({
             subtitle: "Enter the 6-digit completion code shown on the customer's screen.",
             submit: "Verify Code",
             cancel: "Cancel",
-            scanQr: "Scan QR Code",
             secure: "This code ensures customer satisfaction",
         }
     };

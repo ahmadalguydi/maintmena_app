@@ -280,10 +280,43 @@ export async function fetchSellerAssignedActiveRequests(sellerId: string): Promi
   );
 }
 
+/** Valid status transitions — prevents backward or invalid state jumps. */
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  open: ['submitted', 'dispatching', 'cancelled'],
+  submitted: ['dispatching', 'no_seller_found', 'cancelled'],
+  dispatching: ['accepted', 'no_seller_found', 'cancelled'],
+  no_seller_found: ['dispatching', 'cancelled'], // can re-dispatch
+  accepted: ['en_route', 'cancelled'],
+  en_route: ['arrived', 'cancelled'],
+  arrived: ['in_progress', 'cancelled'],
+  in_progress: ['seller_marked_complete', 'disputed'],
+  seller_marked_complete: ['completed', 'disputed'],
+  completed: ['closed'],
+  closed: [], // terminal
+  cancelled: [], // terminal
+  disputed: ['in_progress', 'cancelled', 'closed'],
+};
+
 export async function updateRequestStatus(
   requestId: string,
   status: string,
 ): Promise<void> {
+  // Fetch current status to validate transition
+  const { data: current } = await db
+    .from('maintenance_requests')
+    .select('status')
+    .eq('id', requestId)
+    .maybeSingle();
+
+  if (current?.status) {
+    const allowed = VALID_TRANSITIONS[current.status as string];
+    if (allowed && !allowed.includes(status)) {
+      throw new Error(
+        `Invalid status transition: ${current.status} → ${status}`
+      );
+    }
+  }
+
   const { error } = await db
     .from('maintenance_requests')
     .update({

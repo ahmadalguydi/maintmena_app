@@ -78,7 +78,7 @@ export const AdminIssues = ({ currentLanguage }: AdminIssuesProps) => {
 
             const { data, error } = await query;
             if (error) {
-                console.error('Error fetching issues:', error);
+                if (import.meta.env.DEV) console.error('Error fetching issues:', error);
                 return [];
             }
             return data as JobIssue[];

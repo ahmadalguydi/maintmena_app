@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { ProfileCompleteness } from '@/components/seller/home/SellerSetupChecklist';
 import { REFETCH_INTERVAL, GC_TIME } from '@/lib/queryConfig';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
@@ -12,6 +12,8 @@ import {
   toCanonicalRequest,
   CanonicalRequestRow,
 } from '@/lib/maintenanceRequest';
+
+const FOCUS_LOCK_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
 
 interface OnlineStatusRow { is_online: boolean | null; went_online_at: string | null; }
 interface ProfileDataRow {
@@ -61,10 +63,13 @@ interface ScheduledJob {
   description?: string;
   scheduled_start_at: string;
   buyer_name?: string;
+  buyer_phone?: string;
   location?: string;
   lat?: number;
   lng?: number;
   commitment_type: 'soft' | 'hard';
+  budget?: number;
+  buyer_id?: string;
 }
 
 interface SellerHomeStateResult {
@@ -77,6 +82,14 @@ interface SellerHomeStateResult {
   lastOpportunityAt: Date | null;
   isLoading: boolean;
   profileCompleteness: ProfileCompleteness;
+  /** Enter focus/mission mode for a scheduled job */
+  enterFocusMode: (jobId: string) => void;
+  /** Exit focus mode (returns to scheduled view) */
+  exitFocusMode: () => void;
+  /** Whether the seller is in voluntary focus mode for a scheduled job */
+  isFocusMode: boolean;
+  /** Whether focus mode is auto-locked (<=30 min before scheduled time, cannot exit) */
+  isFocusLocked: boolean;
 }
 
 const QUIET_MARKET_THRESHOLD_MS = 3 * 60 * 1000;
@@ -274,7 +287,7 @@ export function useSellerHomeState(): SellerHomeStateResult {
               'id, status, description, preferred_start_date, category, location, city, latitude, longitude, budget, buyer_id, seller_marked_complete, buyer_marked_complete, buyer_price_approved',
             )
             .eq('assigned_seller_id', user.id)
-            .in('status', ['accepted', 'in_progress', 'en_route', 'arrived'])
+            .in('status', ['accepted', 'in_progress', 'en_route', 'arrived', 'seller_marked_complete'])
             .order('preferred_start_date', { ascending: true, nullsFirst: true }),
         {
           context: 'seller-active-job',
@@ -349,6 +362,22 @@ export function useSellerHomeState(): SellerHomeStateResult {
       if (!user?.id) return [];
 
       const jobs = await fetchSellerScheduledJobs(user.id);
+
+      // Fetch buyer phones for all scheduled jobs
+      const buyerIds = [...new Set(jobs.map((j) => j.buyer_id).filter(Boolean))];
+      let buyerPhoneMap = new Map<string, string>();
+      if (buyerIds.length > 0) {
+        const buyerProfiles = await executeSupabaseQuery<{ id: string; phone: string | null }[]>(
+          () =>
+            supabase
+              .from('profiles')
+              .select('id, phone')
+              .in('id', buyerIds) as any,
+          { context: 'seller-scheduled-buyer-phones', fallbackData: [], relationName: 'profiles' },
+        );
+        buyerPhoneMap = new Map(buyerProfiles.map((p) => [p.id, p.phone || '']));
+      }
+
       return jobs.map((job) => ({
         id: job.id,
         type: 'request',
@@ -356,10 +385,12 @@ export function useSellerHomeState(): SellerHomeStateResult {
         description: job.description,
         scheduled_start_at: job.scheduled_for || job.created_at,
         buyer_name: job.buyer_name,
+        buyer_phone: buyerPhoneMap.get(job.buyer_id) || undefined,
         location: job.location,
         lat: job.lat,
         lng: job.lng,
         commitment_type: 'hard' as const,
+        buyer_id: job.buyer_id,
       }));
     },
     enabled: !!user?.id,
@@ -369,25 +400,103 @@ export function useSellerHomeState(): SellerHomeStateResult {
     refetchInterval: REFETCH_INTERVAL.ACTIVE_JOB,
   });
 
+  // ── Focus Mode (voluntary mission mode for scheduled jobs) ───────────
+  const [focusedJobId, setFocusedJobId] = useState<string | null>(null);
+
+  const focusedScheduledJob = useMemo(
+    () => (focusedJobId ? scheduledJobsRaw.find((j) => j.id === focusedJobId) ?? null : null),
+    [focusedJobId, scheduledJobsRaw],
+  );
+
+  // Auto-lock: check if any scheduled job is within 30 min
+  const autoLockJobId = useMemo(() => {
+    const now = Date.now();
+    for (const job of scheduledJobsRaw) {
+      const scheduledTime = new Date(job.scheduled_start_at).getTime();
+      if (!isNaN(scheduledTime) && scheduledTime - now <= FOCUS_LOCK_THRESHOLD_MS && scheduledTime - now > -60 * 60 * 1000) {
+        return job.id;
+      }
+    }
+    return null;
+  }, [scheduledJobsRaw]);
+
+  // Auto-enter focus mode when a job is within 30min
+  useEffect(() => {
+    if (autoLockJobId && !activeJob) {
+      setFocusedJobId(autoLockJobId);
+    }
+  }, [autoLockJobId, activeJob]);
+
+  const isFocusMode = !activeJob && !!focusedScheduledJob;
+  const isFocusLocked = isFocusMode && focusedJobId === autoLockJobId;
+
+  // Convert focused scheduled job to ActiveJob format for MissionMode
+  const focusedAsActiveJob: ActiveJob | null = useMemo(() => {
+    if (!focusedScheduledJob) return null;
+    return {
+      id: focusedScheduledJob.id,
+      type: 'request',
+      status: 'accepted',
+      lifecycle: 'seller_assigned',
+      scheduled_start_at: focusedScheduledJob.scheduled_start_at,
+      service_type: focusedScheduledJob.service_type,
+      description: focusedScheduledJob.description,
+      buyer_name: focusedScheduledJob.buyer_name,
+      buyer_phone: focusedScheduledJob.buyer_phone,
+      location: focusedScheduledJob.location,
+      location_lat: focusedScheduledJob.lat,
+      location_lng: focusedScheduledJob.lng,
+      budget: focusedScheduledJob.budget || 0,
+    };
+  }, [focusedScheduledJob]);
+
+  const effectiveActiveJob = activeJob || focusedAsActiveJob;
+
+  const enterFocusMode = useCallback((jobId: string) => {
+    setFocusedJobId(jobId);
+  }, []);
+
+  const exitFocusMode = useCallback(() => {
+    // Cannot exit if auto-locked
+    if (focusedJobId === autoLockJobId) return;
+    setFocusedJobId(null);
+  }, [focusedJobId, autoLockJobId]);
+
+  // Clear focus mode when there's a real active job (seller started moving)
+  useEffect(() => {
+    if (activeJob && focusedJobId) {
+      setFocusedJobId(null);
+    }
+  }, [activeJob, focusedJobId]);
+
   const timeOnline = wentOnlineAt
     ? Math.floor((new Date().getTime() - wentOnlineAt.getTime()) / (1000 * 60))
     : 0;
 
+  // Filter out the focused job from the scheduled list to avoid duplication
+  const displayScheduledJobs = isFocusMode
+    ? scheduledJobsRaw.filter((j) => j.id !== focusedJobId)
+    : scheduledJobsRaw;
+
   return {
     state: deriveSellerHomeState({
       forcedState: getForcedSellerHomeState(),
-      hasActiveJob: !!activeJob,
+      hasActiveJob: !!effectiveActiveJob,
       isOnline,
-      scheduledJobsCount: scheduledJobsRaw.length,
+      scheduledJobsCount: displayScheduledJobs.length,
       lastOpportunityAt,
     }),
     isOnline,
     setIsOnline,
-    activeJob,
-    scheduledJobs: scheduledJobsRaw,
+    activeJob: effectiveActiveJob,
+    scheduledJobs: displayScheduledJobs,
     timeOnline,
     lastOpportunityAt,
     isLoading: onlineStatusLoading || activeJobLoading || scheduledJobsLoading,
     profileCompleteness,
+    enterFocusMode,
+    exitFocusMode,
+    isFocusMode,
+    isFocusLocked,
   };
 }

@@ -6,6 +6,7 @@ import { MessageSquare, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { sendNotification } from '@/lib/notifications';
 
 interface RevisionRequestModalProps {
     open: boolean;
@@ -84,7 +85,7 @@ export default function RevisionRequestModal({
 
             // Send notification to seller
             if (sellerId) {
-                await supabase.from('notifications').insert({
+                await sendNotification({
                     user_id: sellerId,
                     title: currentLanguage === 'ar' ? 'طلب تعديل على عرضك' : 'Revision Requested',
                     message: message.trim().substring(0, 200),
@@ -98,7 +99,7 @@ export default function RevisionRequestModal({
             onOpenChange(false);
             onSuccess?.();
         } catch (error: any) {
-            console.error('Revision request error:', error);
+            if (import.meta.env.DEV) console.error('Revision request error:', error);
             toast.error(t.error);
         } finally {
             setSubmitting(false);

@@ -1,8 +1,30 @@
 /**
- * Utility functions for smart time formatting and greetings
+ * smartTime.ts — Time formatting utilities
+ *
+ * Provides bilingual (EN/AR) relative time formatting with correct Arabic
+ * plural forms, and a time-based greeting helper used across the app.
  */
 
-export function smartTimeAgo(dateInput: Date | string | number, currentLanguage: 'en' | 'ar'): string {
+// ── Arabic plural helper ───────────────────────────────────────────────────────
+
+function arabicPlural(
+  value: number,
+  singular: string,
+  dual: string,
+  plural: string,
+): string {
+  if (value === 1) return singular;
+  if (value === 2) return dual;
+  if (value >= 3 && value <= 10) return `${value} ${plural}`;
+  return `${value} ${singular}`;
+}
+
+// ── smartTimeAgo — relative past time ─────────────────────────────────────────
+
+export function smartTimeAgo(
+  dateInput: Date | string | number,
+  currentLanguage: 'en' | 'ar',
+): string {
   const date = new Date(dateInput);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -13,17 +35,23 @@ export function smartTimeAgo(dateInput: Date | string | number, currentLanguage:
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return currentLanguage === 'ar' ? `منذ ${diffInMinutes} دقيقة` : `${diffInMinutes}m ago`;
+    return currentLanguage === 'ar'
+      ? `منذ ${arabicPlural(diffInMinutes, 'دقيقة', 'دقيقتين', 'دقائق')}`
+      : `${diffInMinutes}m ago`;
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return currentLanguage === 'ar' ? `منذ ${diffInHours} ساعة` : `${diffInHours}h ago`;
+    return currentLanguage === 'ar'
+      ? `منذ ${arabicPlural(diffInHours, 'ساعة', 'ساعتين', 'ساعات')}`
+      : `${diffInHours}h ago`;
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
-    return currentLanguage === 'ar' ? `منذ ${diffInDays} يوم` : `${diffInDays}d ago`;
+    return currentLanguage === 'ar'
+      ? `منذ ${arabicPlural(diffInDays, 'يوم', 'يومين', 'أيام')}`
+      : `${diffInDays}d ago`;
   }
 
   return date.toLocaleDateString(currentLanguage === 'ar' ? 'ar-SA' : 'en-US', {
@@ -32,14 +60,65 @@ export function smartTimeAgo(dateInput: Date | string | number, currentLanguage:
   });
 }
 
+// ── smartTimeUntil — relative future time ─────────────────────────────────────
+
+/**
+ * Returns a human-readable string for how far in the future a date is.
+ * Useful for displaying scheduled job countdowns ("in 2 hours", "في ساعتين").
+ */
+export function smartTimeUntil(
+  dateInput: Date | string | number,
+  currentLanguage: 'en' | 'ar',
+): string {
+  const date = new Date(dateInput);
+  const now = new Date();
+  const diffInSeconds = Math.floor((date.getTime() - now.getTime()) / 1000);
+
+  if (diffInSeconds <= 0) {
+    return currentLanguage === 'ar' ? 'الآن' : 'Now';
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return currentLanguage === 'ar'
+      ? `خلال ${arabicPlural(diffInMinutes, 'دقيقة', 'دقيقتين', 'دقائق')}`
+      : `in ${diffInMinutes}m`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return currentLanguage === 'ar'
+      ? `خلال ${arabicPlural(diffInHours, 'ساعة', 'ساعتين', 'ساعات')}`
+      : `in ${diffInHours}h`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) {
+    return currentLanguage === 'ar'
+      ? `خلال ${arabicPlural(diffInDays, 'يوم', 'يومين', 'أيام')}`
+      : `in ${diffInDays}d`;
+  }
+
+  return date.toLocaleDateString(currentLanguage === 'ar' ? 'ar-SA' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+// ── getGreeting — time-of-day greeting ────────────────────────────────────────
+
+/**
+ * Returns a localised greeting based on the current hour.
+ * Used in AppHeader, SellerHomeHeader, and AdminHome.
+ */
 export function getGreeting(currentLanguage: 'en' | 'ar'): string {
   const hour = new Date().getHours();
 
   if (hour < 12) {
     return currentLanguage === 'ar' ? 'صباح الخير' : 'Good morning';
-  } else if (hour < 18) {
-    return currentLanguage === 'ar' ? 'مساء الخير' : 'Good afternoon';
-  } else {
-    return currentLanguage === 'ar' ? 'مساء الخير' : 'Good evening';
   }
+  if (hour < 17) {
+    return currentLanguage === 'ar' ? 'مساء الخير' : 'Good afternoon';
+  }
+  return currentLanguage === 'ar' ? 'مساء الخير' : 'Good evening';
 }

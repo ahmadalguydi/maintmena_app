@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { EditJobPriceSheet } from './EditJobPriceSheet';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -22,12 +23,12 @@ interface UpcomingJobBannerProps {
     lng?: number;
     buyerName?: string;
     buyerPhone?: string;
-    sellerPricing?: any;
+    sellerPricing?: unknown;
     commitmentType: 'soft' | 'hard';
     distance?: number;
     onEdit?: () => void;
     onCancel?: () => void;
-    onEditPrice?: (jobId: string, pricing: any) => void;
+    onEditPrice?: (jobId: string, pricing: unknown) => void;
     onMessage?: () => void;
     onCall?: () => void;
     onClick?: () => void;
@@ -116,7 +117,7 @@ export function UpcomingJobBanner({
             client: 'العميل',
             contact: 'تواصل',
             readyToGo: 'حان وقت البداية!',
-            prepareAlert: 'استعد — على وشك البدء',
+            prepareAlert: 'استعد ـ” على وشك البدء',
             cancel: 'إلغاء المهمة',
             reschedule: 'إعادة جدولة',
             editDetails: 'تعديل السعر',
@@ -192,7 +193,7 @@ export function UpcomingJobBanner({
         if (scheduledDate!.toDateString() === todayStr) return `${t.today}, ${timeStr}`;
         if (scheduledDate!.toDateString() === tmrw.toDateString()) return `${t.tomorrow}, ${timeStr}`;
         try {
-            return format(scheduledDate!, 'EEE, MMM d · h:mm a', { locale: isRTL ? ar : enUS });
+            return format(scheduledDate!, 'EEE, MMM d Â· h:mm a', { locale: isRTL ? ar : enUS });
         } catch { return timeStr; }
     }, [scheduledDate, now, isRTL, t, isValidDate]);
 
@@ -233,11 +234,41 @@ export function UpcomingJobBanner({
     };
     const s = urgencyStyles[urgency];
 
+    // Set Reminder — schedules a browser Notification 30 min before the job
+    const handleSetReminder = useCallback(async () => {
+        if (!isValidDate || diffMs === null) {
+            toast.info(isRTL ? 'لا يوجد موعد محدد' : 'No scheduled time set');
+            return;
+        }
+        if (!('Notification' in window)) {
+            toast.info(isRTL ? 'الإشعارات غير مدعومة على هذا الجهاز' : 'Notifications not supported on this device');
+            return;
+        }
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            toast.info(isRTL ? 'يرجى السماح بالإشعارات من إعدادات المتصفح' : 'Allow notifications in browser settings to use reminders');
+            return;
+        }
+        const reminderMs = diffMs - 30 * 60 * 1000;
+        if (reminderMs <= 0) {
+            toast.info(isRTL ? 'الموعد قريب جداً للتذكير' : 'Job is starting too soon to set a reminder');
+            return;
+        }
+        window.setTimeout(() => {
+            // eslint-disable-next-line no-new
+            new Notification(isRTL ? '⏰ تذكير: موعد عمل' : '⏰ Upcoming job reminder', {
+                body: isRTL ? 'موعدك يبدأ خلال 30 دقيقة' : 'Your job starts in 30 minutes',
+                icon: '/icons/icon-192x192.png',
+            });
+        }, reminderMs);
+        toast.success(isRTL ? 'تم ضبط التذكير قبل 30 دقيقة من الموعد' : 'Reminder set — you\'ll be notified 30 min before');
+    }, [isValidDate, diffMs, isRTL]);
+
     // Menu items
     const menuItems = [
         { icon: Edit3, label: t.editDetails, action: () => setShowEditSheet(true), color: 'text-foreground' },
         { icon: Calendar, label: t.reschedule, action: onReschedule, color: 'text-foreground' },
-        { icon: Bell, label: t.setReminder, action: () => { }, color: 'text-foreground' },
+        { icon: Bell, label: t.setReminder, action: () => { void handleSetReminder(); }, color: 'text-foreground' },
         { icon: Ban, label: t.cancel, action: onCancel, color: 'text-red-600 dark:text-red-400' },
     ];
 
@@ -254,7 +285,7 @@ export function UpcomingJobBanner({
             )}
             dir={isRTL ? 'rtl' : 'ltr'}
         >
-            {/* ═══ Expandable Map Header ═══ */}
+            {/* â•â•â• Expandable Map Header â•â•â• */}
             <motion.div
                 className={cn(
                     "relative overflow-hidden cursor-pointer bg-gradient-to-br",
@@ -370,7 +401,7 @@ export function UpcomingJobBanner({
                 </AnimatePresence>
             </motion.div>
 
-            {/* ═══ Content ═══ */}
+            {/* â•â•â• Content â•â•â• */}
             <div className="p-5">
                 {/* Row 1: Service icon + info + three dots */}
                 <div className="flex items-start gap-3.5 mb-3">
@@ -620,3 +651,5 @@ export function UpcomingJobBanner({
         </motion.div>
     );
 }
+
+

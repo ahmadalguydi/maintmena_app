@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Zap, Briefcase, Clock, MapPin, BadgeCheck, Image as ImageIcon, X, Heart, Navigation, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Heading3, Heading2, Body, BodySmall, Caption } from "@/components/mobile/Typography";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { BottomSheet } from "@/components/mobile/BottomSheet";
@@ -140,7 +141,7 @@ export const BuyerExplore = ({ currentLanguage }: BuyerExploreProps) => {
     },
     staleTime: STALE_TIME.DYNAMIC,
     gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: true
   });
 
   const saveMutation = useMutation({

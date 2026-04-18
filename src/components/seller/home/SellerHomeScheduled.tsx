@@ -32,6 +32,7 @@ interface SellerHomeScheduledProps {
     onAcceptOpportunity: (id: string) => void;
     onJoinWaitlist?: (id: string) => void;
     onEditPrice?: (jobId: string, pricing: any) => void;
+    onEnterFocusMode?: (jobId: string) => void;
 }
 
 export function SellerHomeScheduled({
@@ -43,6 +44,7 @@ export function SellerHomeScheduled({
     onAcceptOpportunity,
     onJoinWaitlist,
     onEditPrice,
+    onEnterFocusMode,
 }: SellerHomeScheduledProps) {
     const navigate = useNavigate();
     const { waitlistedOpportunities } = useOpportunities();
@@ -131,7 +133,7 @@ export function SellerHomeScheduled({
                                         buyerName={job.buyer_name}
                                         buyerPhone={job.buyer_phone}
                                         commitmentType={job.commitment_type}
-                                        onEnterFocusMode={() => navigate(`/app/seller/job/${job.id}`)}
+                                        onEnterFocusMode={() => onEnterFocusMode?.(job.id)}
                                         onMessage={() => navigate(`/app/messages/thread?request=${job.id}`)}
                                         onReschedule={() => navigate(`/app/seller/job/${job.id}/reschedule`)}
                                         onCancel={() => navigate(`/app/seller/job/${job.id}/cancel`)}

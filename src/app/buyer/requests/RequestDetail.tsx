@@ -46,6 +46,12 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
+import { JobCompletionCelebration } from '@/components/mobile/JobCompletionCelebration';
+import { RescheduleApprovalBanner } from '@/components/mobile/RescheduleApprovalBanner';
+import { useRescheduleRequest } from '@/hooks/useRescheduleRequest';
+import { CancelRequestModal, type CancelReason } from '@/components/mobile/CancelRequestModal';
+import { useDispatchActions } from '@/hooks/useDispatchActions';
+import { EditRequestSheet } from '@/components/mobile/EditRequestSheet';
 
 interface RequestDetailProps {
     currentLanguage: 'en' | 'ar';
@@ -110,12 +116,21 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
     const [isApprovingPrice, setIsApprovingPrice] = useState(false);
     const [localPriceApproved, setLocalPriceApproved] = useState(false);
     const [reviewSubmitted, setReviewSubmitted] = useState(false);
+    const [showCelebration, setShowCelebration] = useState(false);
+    const celebrationFiredRef = useRef<Record<string, boolean>>({});
     const [rating, setRating] = useState(0);
     const [hoveredRating, setHoveredRating] = useState(0);
     const [reviewText, setReviewText] = useState('');
     const [isEditingReview, setIsEditingReview] = useState(false);
     const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const [showCancelSheet, setShowCancelSheet] = useState(false);
+    const [isChangingProvider, setIsChangingProvider] = useState(false);
+    const [showEditSheet, setShowEditSheet] = useState(false);
     const reviewSectionRef = useRef<HTMLDivElement | null>(null);
+    const { triggerDispatch } = useDispatchActions();
+
+    const { reschedule: pendingReschedule } = useRescheduleRequest(id);
 
     const { data: request, isLoading } = useQuery({
         queryKey: ['request-tracking', id],
@@ -158,7 +173,8 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
             return row;
         },
         enabled: !!id,
-        refetchInterval: 5000, // Poll to catch status changes from seller
+        staleTime: 10_000,
+        refetchInterval: 15_000,
     });
 
     const canonicalRequest = !isMock
@@ -217,6 +233,35 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
         ? { ...activeRequest, lifecycle: 'seller_marked_complete', completionState: 'seller_marked_complete' as const }
         : activeRequest;
 
+    // Realtime subscription — invalidate query whenever this request changes in DB
+    useEffect(() => {
+        if (!id || isMock) return;
+
+        const channel = supabase
+            .channel(`request-detail-${id}`)
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'maintenance_requests', filter: `id=eq.${id}` },
+                () => {
+                    queryClient.invalidateQueries({ queryKey: ['request-tracking', id] });
+                }
+            )
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [id, isMock, queryClient]);
+
+    // Track when job gets officially closed (e.g., via seller code entry) to show celebration to buyer
+    useEffect(() => {
+        if (!request || !id) return;
+        const isOfficiallyClosed = request.status === 'closed' || request.status === 'completed';
+        // Only show if it is closed, and we haven't already fired it in this session
+        if (isOfficiallyClosed && !celebrationFiredRef.current[id]) {
+            celebrationFiredRef.current[id] = true;
+            setShowCelebration(true);
+        }
+    }, [request?.status, id]);
+
     // Auto-open price approval sheet when seller marks complete
     useEffect(() => {
         if (requiresFinalApproval && !showPriceApproval) {
@@ -234,9 +279,11 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
             // Only mark approved in local state after the DB write succeeds
             setLocalPriceApproved(true);
             setShowPriceApproval(false);
+            if (id) celebrationFiredRef.current[id] = true;
+            setShowCelebration(true);
             queryClient.invalidateQueries({ queryKey: ['request-tracking', id] });
         } catch (err) {
-            console.error('[RequestDetail] Failed to save price approval:', err);
+            if (import.meta.env.DEV) console.error('[RequestDetail] Failed to save price approval:', err);
             toast.error(isArabic ? 'حدث خطأ أثناء حفظ الموافقة' : 'Failed to save approval, please try again');
             // Keep the sheet open so the buyer can retry
             setIsApprovingPrice(false);
@@ -481,9 +528,14 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
             dateStr = format(date, 'EEEE, d MMMM', { locale: isArabic ? ar : enUS });
 
             const hours = date.getHours();
-            if (hours >= 5 && hours < 12) timeStr = t.morning;
-            else if (hours >= 12 && hours < 17) timeStr = t.afternoon;
-            else timeStr = t.evening;
+            const minutes = date.getMinutes();
+            if (hours !== 0 || minutes !== 0) {
+                timeStr = date.toLocaleTimeString(isArabic ? 'ar-SA' : 'en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                });
+            }
         } else if (request?.description) {
             const dateMatch = request.description.match(/Preferred Date: ([\w\s\(\)\-]+)/i);
             if (dateMatch && !dateMatch[1].toLowerCase().includes('asap')) {
@@ -495,10 +547,18 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
 
             const timeMatch = request.description.match(/Time Window: (\w+)/i);
             if (timeMatch) {
-                const window = timeMatch[1].toLowerCase();
-                if (window === 'morning') timeStr = t.morning;
-                else if (window === 'afternoon') timeStr = t.afternoon;
-                else if (window === 'evening') timeStr = t.evening;
+                const slotTimeMap: Record<string, string> = { morning: '09:00', afternoon: '13:00', evening: '17:00' };
+                const slotTime = slotTimeMap[timeMatch[1].toLowerCase()];
+                if (slotTime) {
+                    const [h, m] = slotTime.split(':').map(Number);
+                    const d = new Date();
+                    d.setHours(h, m, 0, 0);
+                    timeStr = d.toLocaleTimeString(isArabic ? 'ar-SA' : 'en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                    });
+                }
             }
         }
 
@@ -532,8 +592,8 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
             .maybeSingle();
 
         if (error || !cancelledRequest || cancelledRequest.status !== 'cancelled') {
-            toast.error(currentLanguage === 'ar' ? 'ÙØ´Ù„ Ø¥Ù„ØºØ§Ø¡ Ø§Ù„Ø·Ù„Ø¨' : 'Failed to cancel request');
-            console.error('Cancel error:', error || new Error('No request row was updated during cancellation'));
+            toast.error(currentLanguage === 'ar' ? 'فشل إلغاء الطلب' : 'Failed to cancel request');
+            if (import.meta.env.DEV) console.error('Cancel error:', error || new Error('No request row was updated during cancellation'));
             return;
         }
 
@@ -589,9 +649,116 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleCancel = async () => {
-        if (confirm(t.deleteConfirm)) {
-            return handleConfirmedCancellation();
+    const handleCancel = () => {
+        // If provider is assigned, show the detailed cancel sheet with reasons
+        if (request?.assigned_seller_id) {
+            setShowCancelSheet(true);
+        } else {
+            // No provider yet — simple confirmation
+            setShowCancelConfirm(true);
+        }
+    };
+
+    const handleCancelWithReason = async (reason: CancelReason, wantsDifferentProvider?: boolean) => {
+        if (wantsDifferentProvider && id && user?.id && request) {
+            // Change provider flow: cancel current assignment, re-dispatch
+            setIsChangingProvider(true);
+            try {
+                const previousSellerId = request.assigned_seller_id;
+
+                // Unassign current seller and set to dispatching for re-dispatch
+                const { error } = await (supabase as any)
+                    .from('maintenance_requests')
+                    .update({
+                        assigned_seller_id: null,
+                        status: 'dispatching',
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', id)
+                    .eq('buyer_id', user.id);
+
+                if (error) throw error;
+
+                // Invalidate old seller's caches
+                if (previousSellerId) {
+                    queryClient.invalidateQueries({ queryKey: ['seller-active-job', previousSellerId] });
+                    queryClient.invalidateQueries({ queryKey: ['seller-active-jobs', previousSellerId] });
+                }
+
+                // Re-trigger dispatch to find a new provider
+                await triggerDispatch(
+                    id,
+                    'request',
+                    request.category || 'general',
+                    request.latitude ?? null,
+                    request.longitude ?? null,
+                    3,
+                );
+
+                queryClient.invalidateQueries({ queryKey: ['request-tracking', id] });
+                queryClient.invalidateQueries({ queryKey: ['buyer-dispatch-requests'] });
+                queryClient.invalidateQueries({ queryKey: ['buyer-activity'] });
+
+                toast.success(isArabic ? 'ندور لك على فني ثاني...' : 'Finding a new provider for you...');
+            } catch {
+                toast.error(isArabic ? 'فشل تغيير الفني' : 'Failed to change provider');
+            } finally {
+                setIsChangingProvider(false);
+                setShowCancelSheet(false);
+            }
+        } else {
+            // Standard cancellation
+            setShowCancelSheet(false);
+            void handleConfirmedCancellation();
+        }
+    };
+
+    const handleEditSave = async (updates: {
+        location: { lat: number; lng: number; address: string; city: string };
+        timeMode: 'asap' | 'scheduled';
+        scheduledDate: Date | null;
+        scheduledTimeSlot: 'morning' | 'afternoon' | 'evening' | null;
+        description: string;
+        photos: string[];
+    }) => {
+        if (!id || !user?.id) return;
+        try {
+            const patch: Record<string, unknown> = {
+                description: updates.description.trim(),
+                city: updates.location.city,
+                latitude: updates.location.lat,
+                longitude: updates.location.lng,
+                location: updates.location.address,
+                updated_at: new Date().toISOString(),
+            };
+            if (isArabic) {
+                patch.description_ar = updates.description.trim();
+            }
+            if (updates.timeMode === 'scheduled' && updates.scheduledDate) {
+                const slotMap: Record<string, string> = { morning: '09:00', afternoon: '13:00', evening: '17:00' };
+                const timeStr = updates.scheduledTimeSlot ? slotMap[updates.scheduledTimeSlot] : '09:00';
+                const dateISO = updates.scheduledDate.toISOString().split('T')[0];
+                patch.preferred_start_date = new Date(`${dateISO}T${timeStr}:00`).toISOString();
+                patch.urgency = 'scheduled';
+            } else {
+                patch.urgency = 'asap';
+                patch.preferred_start_date = null;
+            }
+            if (updates.photos?.length) {
+                patch.photos = updates.photos;
+            }
+            const { error } = await (supabase as any)
+                .from('maintenance_requests')
+                .update(patch)
+                .eq('id', id)
+                .eq('buyer_id', user.id);
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ['request-tracking', id] });
+            queryClient.invalidateQueries({ queryKey: ['buyer-dispatch-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['buyer-activity'] });
+            toast.success(isArabic ? 'تم تحديث الطلب' : 'Request updated');
+        } catch {
+            toast.error(isArabic ? 'فشل تحديث الطلب' : 'Failed to update request');
         }
     };
 
@@ -607,7 +774,13 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
         );
     }
 
-    if (!request) return null;
+    if (!request) return (
+        <div className="min-h-screen bg-background" dir={isArabic ? 'rtl' : 'ltr'}>
+            <div className="flex items-center justify-center py-24">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+            </div>
+        </div>
+    );
 
     const category = getCategoryInfo(request.category);
     const { dateStr, timeStr } = getDateTimeInfo();
@@ -680,7 +853,7 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                         </div>
                         {!isCancelled && activeBuyerActions.canEdit && !buyerMarkedComplete ? (
                             <button
-                                onClick={() => navigate(`/app/buyer/request/${id}/edit`)}
+                                onClick={() => setShowEditSheet(true)}
                                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground transition-colors hover:bg-muted active:scale-90"
                             >
                                 <Edit2 className="h-4 w-4" />
@@ -721,7 +894,7 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                             </div>
                         </div>
                     ) : isCancelled ? (
-                        <div className="mx-4 mb-4 overflow-hidden rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                        <div className="mx-4 mb-4 overflow-hidden rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/20 p-4">
                             <div className="flex items-start gap-3">
                                 <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-500" />
                                 <div>
@@ -816,6 +989,28 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
 
                             <TimelineTracker steps={getTimelineSteps(timelineRequest, t)} />
 
+                            {/* Pending Reschedule Approval (from seller) */}
+                            {pendingReschedule && !pendingReschedule.isOwnRequest && (
+                                <RescheduleApprovalBanner
+                                    currentLanguage={currentLanguage}
+                                    requestId={id!}
+                                    newDate={pendingReschedule.newDate}
+                                    newTimeSlot={pendingReschedule.newTimeSlot ?? undefined}
+                                    requesterName={pendingReschedule.requesterName}
+                                    viewerRole="buyer"
+                                />
+                            )}
+
+                            {/* Pending Reschedule (own request - waiting for approval) */}
+                            {pendingReschedule && pendingReschedule.isOwnRequest && (
+                                <div className="rounded-2xl border border-primary/20 bg-primary/5 dark:bg-primary/10 px-4 py-3 flex items-center gap-2.5">
+                                    <Calendar className="h-4 w-4 text-primary shrink-0" />
+                                    <p className={cn("text-sm text-primary font-medium", isArabic ? 'font-ar-body' : '')}>
+                                        {isArabic ? 'طلب إعادة الجدولة بانتظار موافقة الفني' : 'Reschedule request waiting for provider approval'}
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Completion code */}
                             <AnimatePresence>
                                 {buyerPriceApproved && !buyerMarkedComplete && completionCode && (
@@ -856,7 +1051,7 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.94 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center space-y-2"
+                                        className="rounded-2xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20 p-5 text-center space-y-2"
                                     >
                                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 shadow-md shadow-emerald-500/30">
                                             <CheckCircle2 size={22} className="text-white" />
@@ -884,13 +1079,13 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ type: 'spring', stiffness: 300, damping: 24, delay: 0.15 }}
-                            className="scroll-mt-24 overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+                            className="scroll-mt-24 overflow-hidden rounded-3xl border border-amber-200 dark:border-amber-900/40 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-card shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
                         >
-                            <div className="flex items-center gap-3 border-b border-amber-200/60 px-5 py-4">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                            <div className="flex items-center gap-3 border-b border-amber-200/60 dark:border-amber-800/30 px-5 py-4">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/15">
                                     <Star size={18} className="fill-amber-400 text-amber-500" />
                                 </div>
-                                <p className={cn('text-[15px] font-bold text-amber-900', isArabic ? 'font-ar-heading' : 'font-heading')}>
+                                <p className={cn('text-[15px] font-bold text-amber-900 dark:text-amber-100', isArabic ? 'font-ar-heading' : 'font-heading')}>
                                     {existingReview && !isEditingReview
                                         ? (isArabic ? 'تم حفظ تقييمك' : 'Your review is saved')
                                         : (isArabic ? 'قيّم تجربتك' : 'Rate your experience')}
@@ -909,7 +1104,7 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                                             <button
                                                 type="button"
                                                 onClick={() => setIsEditingReview(true)}
-                                                className={cn('rounded-full border border-amber-200 bg-background px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50', isArabic ? 'font-ar-body' : '')}
+                                                className={cn('rounded-full border border-amber-200 dark:border-amber-800/40 bg-background px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20', isArabic ? 'font-ar-body' : '')}
                                             >
                                                 {isArabic ? 'تعديل' : 'Edit'}
                                             </button>
@@ -1032,6 +1227,26 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                 <div className="h-6" />
             </div>
 
+            {/* Fixed: Reschedule button (only when provider is assigned, not in final stages) */}
+            {!isCancelled && request?.assigned_seller_id && activeBuyerActions.canCancel && !requiresFinalApproval && !buyerMarkedComplete && !pendingReschedule && (
+                <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center px-6 pointer-events-none">
+                    <motion.button
+                        initial={{ y: 100 }}
+                        animate={{ y: 0 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 25, delay: 0.4 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => navigate(`/app/buyer/request/${id}/reschedule`)}
+                        className={cn(
+                            'pointer-events-auto flex w-full max-w-sm items-center justify-center gap-2.5 rounded-[28px] border border-border/40 bg-white/90 py-3.5 text-sm font-bold text-foreground shadow-md backdrop-blur-xl transition-all hover:bg-muted dark:bg-card/90',
+                            isArabic ? 'font-ar-heading' : 'font-heading',
+                        )}
+                    >
+                        <Calendar className="h-4 w-4" />
+                        {isArabic ? 'طلب إعادة جدولة' : 'Request Reschedule'}
+                    </motion.button>
+                </div>
+            )}
+
             {/* Fixed: Cancel button */}
             {!isCancelled && activeBuyerActions.canCancel && (
                 <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6 pointer-events-none">
@@ -1070,6 +1285,82 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                     </motion.button>
                 </div>
             )}
+
+            {/* Cancel Confirmation Dialog */}
+            <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+                <DialogContent className="sm:max-w-md" dir={isArabic ? 'rtl' : 'ltr'}>
+                    <DialogHeader>
+                        <DialogTitle className={cn(isArabic ? 'font-ar-heading text-right' : 'font-heading')}>
+                            {isArabic ? 'تأكيد الإلغاء' : 'Confirm Cancellation'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <p className={cn('text-sm text-muted-foreground', isArabic ? 'font-ar-body text-right' : '')}>
+                        {t.deleteConfirm}
+                    </p>
+                    <div className={cn('flex gap-3 pt-2', isArabic && 'flex-row-reverse')}>
+                        <button
+                            onClick={() => setShowCancelConfirm(false)}
+                            className="flex-1 rounded-full border border-border py-2.5 text-sm font-semibold text-foreground"
+                        >
+                            {isArabic ? 'تراجع' : 'Go Back'}
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowCancelConfirm(false);
+                                void handleConfirmedCancellation();
+                            }}
+                            className="flex-1 rounded-full bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground"
+                        >
+                            {t.cancelRequest}
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Cancel Reason Bottom Sheet (when provider is assigned) */}
+            <CancelRequestModal
+                currentLanguage={currentLanguage}
+                isOpen={showCancelSheet}
+                onClose={() => setShowCancelSheet(false)}
+                onCancel={handleCancelWithReason}
+                onReschedule={() => navigate(`/app/buyer/request/${id}/reschedule`)}
+                hasProvider={Boolean(request?.assigned_seller_id)}
+            />
+
+            {/* Edit Request Bottom Sheet */}
+            <EditRequestSheet
+                isOpen={showEditSheet}
+                currentLanguage={currentLanguage}
+                onClose={() => setShowEditSheet(false)}
+                onSave={handleEditSave}
+                initialData={{
+                    location: {
+                        lat: request?.latitude ?? 24.7136,
+                        lng: request?.longitude ?? 46.6753,
+                        address: request?.location || '',
+                        city: request?.city || '',
+                    },
+                    timeMode: request?.urgency === 'scheduled' ? 'scheduled' : 'asap',
+                    scheduledDate: request?.preferred_start_date ? new Date(request.preferred_start_date) : null,
+                    scheduledTimeSlot: (() => {
+                        if (!request?.preferred_start_date) return null;
+                        const h = new Date(request.preferred_start_date).getHours();
+                        if (h <= 11) return 'morning';
+                        if (h <= 15) return 'afternoon';
+                        return 'evening';
+                    })(),
+                    description: (() => {
+                        const desc = isArabic && request?.description_ar ? request.description_ar : request?.description || '';
+                        return desc.split(/(?:Preferred Date:|Time Window:)/i)[0]
+                            .replace(/\s?\[Flexible Date\]/g, '')
+                            .replace(/\s?\[Flexible Time\]/g, '')
+                            .replace(/\s?\[تاريخ مرن\]/g, '')
+                            .replace(/\s?\[وقت مرن\]/g, '')
+                            .trim();
+                    })(),
+                    photos: request?.photos || [],
+                }}
+            />
 
             <PriceApprovalSheet
                 isOpen={showPriceApproval}
@@ -1121,6 +1412,35 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Job Completion Celebration overlay */}
+            <AnimatePresence>
+                {showCelebration && (
+                    <JobCompletionCelebration
+                        data={{
+                            variant: 'buyer',
+                            providerName: request?.provider?.company_name || request?.provider?.full_name || (isArabic ? 'مقدم الخدمة' : 'Service Provider'),
+                            providerAvatar: request?.provider?.avatar_url || undefined,
+                            amount: typeof request?.final_amount === 'number' ? request.final_amount : undefined,
+                            title: (request as any)?.title || (request as any)?.description || undefined,
+                            category: (request as any)?.category || undefined,
+                            date: request?.scheduled_for ? new Date(request.scheduled_for).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' }) : undefined,
+                            requestId: id || '',
+                            location: (request as any)?.location || undefined,
+                            lat: (request as any)?.latitude || (request as any)?.lat || undefined,
+                            lng: (request as any)?.longitude || (request as any)?.lng || undefined,
+                        }}
+                        currentLanguage={currentLanguage}
+                        onDismiss={() => setShowCelebration(false)}
+                        onReview={() => {
+                            // Scroll to review section
+                            setTimeout(() => {
+                                reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 300);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

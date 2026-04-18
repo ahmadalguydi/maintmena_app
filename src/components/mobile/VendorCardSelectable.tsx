@@ -357,3 +357,5 @@ export const VendorCardSelectable = ({
         </motion.div>
     );
 };
+
+

@@ -1,6 +1,12 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
-import { registerPushNotifications } from '@/lib/pushNotifications';
+import {
+  clearPushNotificationContext,
+  configurePushNotifications,
+  registerPushNotifications,
+  unregisterPushNotifications,
+} from '@/lib/pushNotifications';
 
 const SESSION_KEY = 'mm_push_registered_v1';
 
@@ -11,14 +17,33 @@ const SESSION_KEY = 'mm_push_registered_v1';
  * Mounted inside RealtimeHub so it runs for every authenticated user.
  */
 export function usePushNotifications(): void {
-  const { user } = useAuth();
+  const { user, userType, loading } = useAuth();
+  const navigate = useNavigate();
   const registeredRef = useRef(false);
+  const previousUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (loading) return;
+
     if (!user) {
+      if (previousUserIdRef.current) {
+        sessionStorage.removeItem(`${SESSION_KEY}:${previousUserIdRef.current}`);
+        void unregisterPushNotifications();
+      }
+
       registeredRef.current = false;
+      previousUserIdRef.current = null;
+      clearPushNotificationContext();
       return;
     }
+
+    previousUserIdRef.current = user.id;
+
+    configurePushNotifications({
+      userId: user.id,
+      userType: userType === 'seller' ? 'seller' : 'buyer',
+      onNavigate: (url) => navigate(url),
+    });
 
     // Skip if we already registered in this session for this user
     const sessionKey = `${SESSION_KEY}:${user.id}`;
@@ -33,10 +58,16 @@ export function usePushNotifications(): void {
     // 3 s delay so the push-permission prompt doesn't stack on top of login
     const timeoutId = window.setTimeout(() => {
       registerPushNotifications(user.id)
-        .then(() => sessionStorage.setItem(sessionKey, '1'))
+        .then((success) => {
+          if (success) {
+            sessionStorage.setItem(sessionKey, '1');
+          } else {
+            registeredRef.current = false;
+          }
+        })
         .catch(() => undefined);
     }, 3000);
 
     return () => window.clearTimeout(timeoutId);
-  }, [user]);
+  }, [loading, navigate, user, userType]);
 }

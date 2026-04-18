@@ -10,13 +10,12 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
-import { useCurrency } from '@/hooks/useCurrency';
 import { supabase } from '@/integrations/supabase/client';
 import { setLanguage } from '@/lib/preferences';
+import { registerPushNotifications, unregisterPushNotifications } from '@/lib/pushNotifications';
 import { Heading3, Body, BodySmall, Caption } from '@/components/mobile/Typography';
 import {
   Globe,
-  DollarSign,
   CalendarDays,
   Bell,
   Mail,
@@ -25,7 +24,6 @@ import {
   Info,
   Trash2,
   Star,
-  ExternalLink,
   Shield,
   Palette,
   Moon,
@@ -54,9 +52,8 @@ const fadeUp = {
 };
 
 export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) => {
-  const { user, signOut } = useAuth();
+  const { user, userType, signOut } = useAuth();
   const navigate = useNavigate();
-  const { currency, setCurrency } = useCurrency();
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [promotionNotifications, setPromotionNotifications] = useState(false);
@@ -71,7 +68,6 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
       title: 'Settings',
       preferences: 'Preferences',
       language: 'Language',
-      currency: 'Currency',
       dateFormat: 'Date Format',
       gregorian: 'Gregorian',
       hijri: 'Hijri',
@@ -163,20 +159,17 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
         const { data } = await supabase
           .from('user_preferences')
           .select(
-            'preferred_currency, preferred_language, notification_settings, content_preferences',
+            'preferred_language, notification_settings, content_preferences',
           )
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (!data) return;
 
-        if (data.preferred_currency) {
-          setCurrency(data.preferred_currency as 'USD' | 'SAR' | 'AED' | 'KWD');
-        }
-
         const notifSettings = (data.notification_settings as Record<string, unknown>) || {};
         setPushNotifications((notifSettings.push_enabled as boolean) ?? true);
         setEmailNotifications((notifSettings.email_enabled as boolean) ?? true);
+        setPromotionNotifications((notifSettings.promo_enabled as boolean) ?? false);
 
         const contentPrefs = (data.content_preferences as Record<string, unknown>) || {};
         setDateFormat((contentPrefs.date_format as 'gregorian' | 'hijri') || 'gregorian');
@@ -186,7 +179,7 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
     };
 
     void loadSettings();
-  }, [setCurrency, user]);
+  }, [user]);
 
   const handleLanguageChange = (lang: 'en' | 'ar') => {
     onLanguageChange?.(lang);
@@ -212,23 +205,9 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
     }
   };
 
-  const handleCurrencyChange = async (newCurrency: string) => {
-    if (!user) return;
-    try {
-      setCurrency(newCurrency as 'USD' | 'SAR' | 'AED' | 'KWD');
-      const { error } = await supabase
-        .from('user_preferences')
-        .update({ preferred_currency: newCurrency, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id);
-      if (error) throw error;
-      toast.success(t.saved);
-    } catch {
-      toast.error(t.saveFailed);
-    }
-  };
-
   const handleDateFormatChange = async (format: 'gregorian' | 'hijri') => {
     if (!user) return;
+    const previousFormat = dateFormat;
     try {
       setDateFormat(format);
       localStorage.setItem('dateFormat', format);
@@ -246,14 +225,16 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
 
       const { error } = await supabase
         .from('user_preferences')
-        .update({
+        .upsert({
+          user_id: user.id,
           content_preferences: { ...currentPrefs, date_format: format },
           updated_at: new Date().toISOString(),
-        })
+        }, { onConflict: 'user_id' })
         .eq('user_id', user.id);
       if (error) throw error;
       toast.success(t.saved);
     } catch {
+      setDateFormat(previousFormat);
       toast.error(t.saveFailed);
     }
   };
@@ -261,6 +242,22 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
   const handleNotificationToggle = async (type: 'push' | 'email', value: boolean) => {
     if (!user) return;
     try {
+      if (type === 'push') {
+        if (value) {
+          const enabled = await registerPushNotifications(user.id, {
+            force: true,
+            userType: userType === 'seller' ? 'seller' : 'buyer',
+            onNavigate: (url) => navigate(url),
+          });
+
+          if (!enabled) {
+            throw new Error('push-registration-failed');
+          }
+        } else {
+          await unregisterPushNotifications();
+        }
+      }
+
       let currentNotifs: Record<string, unknown> = {};
       try {
         const { data } = await supabase
@@ -277,10 +274,11 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
 
       const { error } = await supabase
         .from('user_preferences')
-        .update({
+        .upsert({
+          user_id: user.id,
           notification_settings: { ...currentNotifs, ...updates },
           updated_at: new Date().toISOString(),
-        })
+        }, { onConflict: 'user_id' })
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -294,13 +292,51 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
     }
   };
 
-  const handleDeleteAccount = () => {
-    toast.info(
-      isArabic
-        ? 'تم إرسال طلب الحذف. سيتواصل معك فريق الدعم خلال 24 ساعة.'
-        : 'Deletion request sent. Support will contact you within 24 hours.',
-    );
-    setShowDeleteConfirm(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setDeletingAccount(true);
+    try {
+      // Call edge function to schedule account deletion
+      const { error: fnError } = await supabase.functions.invoke('delete-user-account', {
+        body: { userId: user.id },
+      });
+
+      if (fnError) throw fnError;
+
+      toast.success(
+        isArabic
+          ? 'تم حذف حسابك بنجاح. نأسف لرؤيتك تغادر.'
+          : 'Your account has been deleted. We are sorry to see you go.',
+      );
+
+      // Sign out after deletion
+      await signOut(currentLanguage);
+    } catch {
+      // Fallback: insert a deletion request row so backend can process it
+      try {
+        await supabase.from('account_deletion_requests').insert({
+          user_id: user.id,
+          requested_at: new Date().toISOString(),
+          status: 'pending',
+        });
+        toast.info(
+          isArabic
+            ? 'تم إرسال طلب الحذف. سيتم حذف حسابك خلال ٢٤ ساعة.'
+            : 'Deletion request submitted. Your account will be deleted within 24 hours.',
+        );
+      } catch {
+        toast.error(
+          isArabic
+            ? 'فشل حذف الحساب. يرجى التواصل مع الدعم.'
+            : 'Failed to delete account. Please contact support.',
+        );
+      }
+    } finally {
+      setDeletingAccount(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   const Section = ({
@@ -385,21 +421,7 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
 
           <Separator className="opacity-50" />
 
-          <SettingRow label={t.currency}>
-            <Select value={currency} onValueChange={handleCurrencyChange}>
-              <SelectTrigger className="w-28 rounded-full h-9 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SAR">🇸🇦 SAR</SelectItem>
-                <SelectItem value="USD">🇺🇸 USD</SelectItem>
-                <SelectItem value="AED">🇦🇪 AED</SelectItem>
-                <SelectItem value="KWD">🇰🇼 KWD</SelectItem>
-              </SelectContent>
-            </Select>
-          </SettingRow>
 
-          <Separator className="opacity-50" />
 
           <SettingRow label={t.dateFormat}>
             <Select
@@ -470,7 +492,36 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
           <SettingRow label={t.promoNotifs} description={t.promoNotifsDesc}>
             <Switch
               checked={promotionNotifications}
-              onCheckedChange={setPromotionNotifications}
+              onCheckedChange={async (value) => {
+                const previousValue = promotionNotifications;
+                setPromotionNotifications(value);
+                if (!user) return;
+                try {
+                  let currentNotifs: Record<string, unknown> = {};
+                  try {
+                    const { data } = await supabase
+                      .from('user_preferences')
+                      .select('notification_settings')
+                      .eq('user_id', user.id)
+                      .maybeSingle();
+                    if (data?.notification_settings) {
+                      currentNotifs = data.notification_settings as Record<string, unknown>;
+                    }
+                  } catch {}
+                  const { error } = await supabase
+                    .from('user_preferences')
+                    .upsert({
+                      user_id: user.id,
+                      notification_settings: { ...currentNotifs, promo_enabled: value },
+                      updated_at: new Date().toISOString(),
+                    }, { onConflict: 'user_id' })
+                    .eq('user_id', user.id);
+                  if (error) throw error;
+                } catch {
+                  setPromotionNotifications(previousValue);
+                  toast.error(t.saveFailed);
+                }
+              }}
             />
           </SettingRow>
         </Section>
@@ -486,30 +537,30 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
           <Separator className="opacity-50" />
 
           <button
-            onClick={() => window.open('/terms', '_blank')}
+            onClick={() => navigate('/terms')}
             className="flex items-center justify-between w-full py-1 group"
           >
             <Label className={cn('text-sm cursor-pointer', isArabic && 'font-ar-body')}>
               {t.termsOfService}
             </Label>
-            <ExternalLink
+            <ChevronRight
               size={14}
-              className="text-muted-foreground group-hover:text-primary transition-colors"
+              className={cn('text-muted-foreground group-hover:text-primary transition-colors', isArabic && 'rotate-180')}
             />
           </button>
 
           <Separator className="opacity-50" />
 
           <button
-            onClick={() => window.open('/privacy', '_blank')}
+            onClick={() => navigate('/privacy')}
             className="flex items-center justify-between w-full py-1 group"
           >
             <Label className={cn('text-sm cursor-pointer', isArabic && 'font-ar-body')}>
               {t.privacyPolicy}
             </Label>
-            <ExternalLink
+            <ChevronRight
               size={14}
-              className="text-muted-foreground group-hover:text-primary transition-colors"
+              className={cn('text-muted-foreground group-hover:text-primary transition-colors', isArabic && 'rotate-180')}
             />
           </button>
 
@@ -517,9 +568,20 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
 
           <button
             className="flex items-center justify-between w-full py-1 group"
-            onClick={() =>
-              toast.info(isArabic ? 'سيتم فتح متجر التطبيقات' : 'Would open app store')
-            }
+            onClick={async () => {
+              try {
+                const { Capacitor } = await import('@capacitor/core');
+                if (Capacitor.getPlatform() === 'ios') {
+                  window.open('https://apps.apple.com/app/maintmena/id0000000000', '_system');
+                } else if (Capacitor.getPlatform() === 'android') {
+                  window.open('market://details?id=com.maintmena.app', '_system');
+                } else {
+                  toast.info(isArabic ? 'التقييم متاح في التطبيق فقط' : 'Rating available in the app only');
+                }
+              } catch {
+                toast.info(isArabic ? 'التقييم متاح في التطبيق فقط' : 'Rating available in the app only');
+              }
+            }}
           >
             <div>
               <Label className={cn('text-sm cursor-pointer', isArabic && 'font-ar-body')}>
@@ -612,7 +674,8 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
                     <Button
                       variant="destructive"
                       className="flex-1 rounded-xl"
-                      onClick={handleDeleteAccount}
+                      disabled={deletingAccount}
+                      onClick={() => void handleDeleteAccount()}
                     >
                       <Trash2 size={14} className={isArabic ? 'ml-1.5' : 'mr-1.5'} />
                       {t.deleteConfirmBtn}
@@ -657,3 +720,5 @@ export const Settings = ({ currentLanguage, onLanguageChange }: SettingsProps) =
     </div>
   );
 };
+
+

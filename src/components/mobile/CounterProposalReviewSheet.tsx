@@ -30,6 +30,7 @@ export const CounterProposalReviewSheet = ({
 }: CounterProposalReviewSheetProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const currencyLabel = currentLanguage === 'ar' ? 'ر.س' : 'SAR';
   const [submitting, setSubmitting] = useState(false);
   const [action, setAction] = useState<'accept' | 'reject' | 'counter'>('accept');
   const [buyerCounter, setBuyerCounter] = useState({
@@ -139,7 +140,7 @@ export const CounterProposalReviewSheet = ({
       // Navigate back to booking detail
       navigate(`/app/buyer/job/${booking.id}`);
     } catch (error: any) {
-      console.error('Accept error:', error);
+      if (import.meta.env.DEV) console.error('Accept error:', error);
       toast.error(error.message);
     } finally {
       setSubmitting(false);
@@ -170,7 +171,7 @@ export const CounterProposalReviewSheet = ({
       // Navigate back to booking detail
       navigate(`/app/buyer/job/${booking.id}`);
     } catch (error: any) {
-      console.error('Counter error:', error);
+      if (import.meta.env.DEV) console.error('Counter error:', error);
       toast.error(error.message);
     } finally {
       setSubmitting(false);
@@ -272,7 +273,7 @@ export const CounterProposalReviewSheet = ({
               {sellerProposal.price_estimate && (
                 <div>
                   <Label className="text-xs">{t.price}</Label>
-                  <Body lang={currentLanguage}>{sellerProposal.price_estimate} SAR</Body>
+                  <Body lang={currentLanguage}>{sellerProposal.price_estimate} {currencyLabel}</Body>
                 </div>
               )}
             </div>
@@ -383,3 +384,4 @@ export const CounterProposalReviewSheet = ({
     </BottomSheet>
   );
 };
+

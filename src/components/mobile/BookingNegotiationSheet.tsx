@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
+import { sendNotification } from '@/lib/notifications';
 
 interface BookingNegotiationSheetProps {
   open: boolean;
@@ -165,7 +166,7 @@ export const BookingNegotiationSheet = ({
       if (error) throw error;
 
       // Send notification to buyer
-      await supabase.from('notifications').insert({
+      await sendNotification({
         user_id: booking.buyer_id,
         title: currentLanguage === 'ar'
           ? (isEditMode ? 'تم تعديل رد مقدم الخدمة' : 'رد على طلبك')
@@ -196,7 +197,7 @@ export const BookingNegotiationSheet = ({
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Submit error:', error);
+      if (import.meta.env.DEV) console.error('Submit error:', error);
       toast.error(error.message);
     } finally {
       setSubmitting(false);
@@ -458,3 +459,5 @@ export const BookingNegotiationSheet = ({
     </BottomSheet>
   );
 };
+
+

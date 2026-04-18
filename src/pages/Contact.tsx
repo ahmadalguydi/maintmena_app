@@ -216,7 +216,7 @@ const Contact = ({ currentLanguage }: ContactProps) => {
         message: ''
       });
     } catch (error) {
-      console.error('Error submitting form:', error);
+      if (import.meta.env.DEV) console.error('Error submitting form:', error);
       
       // Handle validation errors
       if (error instanceof Error && error.name === 'ZodError') {

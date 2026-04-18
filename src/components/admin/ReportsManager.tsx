@@ -96,7 +96,7 @@ export const ReportsManager = () => {
             setResolutionNotes('');
         },
         onError: (error) => {
-            console.error('Update error:', error);
+            if (import.meta.env.DEV) console.error('Update error:', error);
             toast.error('Failed to update report');
         },
     });

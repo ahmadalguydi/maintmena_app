@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RealtimeHub } from "@/components/RealtimeHub";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from 'framer-motion';
+import { BrowserRouter, Routes, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence } from 'framer-motion';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { trackPageView } from '@/lib/brevoAnalytics';
 import { getLanguage, setLanguage } from '@/lib/preferences';
 import { AuthProvider } from "./hooks/useAuth";
 import { useDeepLinks } from "./hooks/useDeepLinks";
+import { useNativeSystemBars } from '@/hooks/useNativeSystemBars';
 import { CurrencyProvider } from "./hooks/useCurrency";
 import { RoleProvider } from "./contexts/RoleContext";
 import { CelebrationProvider } from "./contexts/CelebrationContext";
@@ -35,12 +36,18 @@ import {
   webAppRoutes,
 } from './routes';
 
+import { Capacitor } from '@capacitor/core';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => shouldRetryReactQuery(failureCount, error, 2),
       retryDelay: getSupabaseRetryDelay,
       refetchOnReconnect: true,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      staleTime: 30_000,   // 30s default — data considered stale quickly
+      gcTime: 5 * 60_000,  // 5 min garbage collection
     },
     mutations: {
       retry: false,
@@ -144,26 +151,31 @@ function PageViewTracker() {
 
   return null;
 }
+function NativeRedirect() {
+    const location = useLocation();
+    const navigate = useNavigate();
 
+    useEffect(() => {
+        if (Capacitor.isNativePlatform() && location.pathname === '/') {
+            navigate('/app', { replace: true });
+        }
+    }, [location.pathname, navigate]);
+
+    return null;
+}
+
+function NativeSystemBarsSync() {
+  useNativeSystemBars();
+  return null;
+}
 /**
  * AnimatedRoutesWrapper - Provides page transition animations
  */
 function AnimatedRoutesWrapper({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
-
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.15 }}
-        className="flex-1"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div className="min-h-0 flex-1">
+      {children}
+    </div>
   );
 }
 
@@ -201,10 +213,12 @@ const App = () => {
                   <CelebrationProvider currentLanguage={currentLanguage}>
                     <PageViewTracker />
                     <ScrollToTop />
+                    <NativeRedirect />
+                    <NativeSystemBarsSync />
                     <RealtimeHub />
                     <RoutePrefetcher />
                     <OfflineMode />
-                    <div className="min-h-screen flex flex-col bg-paper">
+                    <div className="min-h-full flex flex-col bg-paper">
                       <Chrome
                         currentLanguage={currentLanguage}
                         onToggle={() => handleLanguageToggle(currentLanguage === 'en' ? 'ar' : 'en')}

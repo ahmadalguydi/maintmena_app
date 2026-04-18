@@ -9,14 +9,7 @@ import { getAllCategories } from "@/lib/serviceCategories";
 import { SAUDI_CITIES_BILINGUAL } from "@/lib/saudiCities";
 import { ReportButton } from "@/components/mobile/ReportButton";
 import { getRelativeReviewDate } from "@/lib/reviewFlow";
-
-/** Compute reputation level from completed job count. */
-function getSellerLevel(jobs: number): { label: string; labelAr: string; badge: string } {
-    if (jobs >= 30) return { label: 'Master',  labelAr: 'خبير متميز', badge: '👑' };
-    if (jobs >= 15) return { label: 'Expert',  labelAr: 'خبير',       badge: '⭐⭐⭐' };
-    if (jobs >= 5)  return { label: 'Pro',     labelAr: 'محترف',      badge: '⭐⭐' };
-    return               { label: 'Starter', labelAr: 'مبتدئ',      badge: '⭐' };
-}
+import { getSellerLevel } from "@/lib/sellerLevel";
 
 interface VendorCardProps {
     vendor: any;

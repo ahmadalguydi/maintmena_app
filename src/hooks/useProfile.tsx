@@ -105,9 +105,8 @@ export const useProfile = (userId?: string) => {
             } as Profile;
         },
         enabled: !!userId,
-        staleTime: 5 * 60 * 1000, // 5 minutes - prevents refetch flicker
-        gcTime: 10 * 60 * 1000, // 10 minutes cache
-        refetchOnWindowFocus: false, // Prevent flash on tab switch
+        staleTime: 60_000, // 1 minute — profile changes are rare but shouldn't be stale for 5 min
+        gcTime: 5 * 60_000,
     });
 
     /**

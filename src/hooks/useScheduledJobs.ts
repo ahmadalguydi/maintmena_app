@@ -39,7 +39,7 @@ export async function fetchSellerScheduledJobs(
           'id, category, title, description, location, city, latitude, longitude, status, urgency, preferred_start_date, created_at, buyer_id, seller_pricing, seller_marked_complete, buyer_marked_complete, buyer_price_approved',
         )
         .eq('assigned_seller_id', sellerId)
-        .in('status', ['accepted', 'open'])
+        .in('status', ['open', 'accepted', 'seller_assigned'])
         .order('preferred_start_date', { ascending: true, nullsFirst: true }),
     {
       context: 'seller-scheduled-jobs',

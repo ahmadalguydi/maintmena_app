@@ -6,24 +6,23 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const TIME_SLOTS = [
-  { key: 'morning', en: 'Morning (8 AM – 12 PM)', ar: 'صباحاً (٨ ص – ١٢ م)' },
-  { key: 'afternoon', en: 'Afternoon (12 PM – 4 PM)', ar: 'ظهراً (١٢ م – ٤ م)' },
-  { key: 'evening', en: 'Evening (4 PM – 8 PM)', ar: 'مساءً (٤ م – ٨ م)' },
+  { key: '09:00', en: '9:00 AM', ar: '٩:٠٠ ص' },
+  { key: '10:00', en: '10:00 AM', ar: '١٠:٠٠ ص' },
+  { key: '11:00', en: '11:00 AM', ar: '١١:٠٠ ص' },
+  { key: '13:00', en: '1:00 PM', ar: '١:٠٠ م' },
+  { key: '15:00', en: '3:00 PM', ar: '٣:٠٠ م' },
+  { key: '17:00', en: '5:00 PM', ar: '٥:٠٠ م' },
+  { key: '19:00', en: '7:00 PM', ar: '٧:٠٠ م' },
 ] as const;
-
-// Map time slot keys to the start hour for the new scheduled datetime
-const SLOT_START_TIMES: Record<string, string> = {
-  morning: '09:00',
-  afternoon: '13:00',
-  evening: '17:00',
-};
 
 export const RescheduleJob = ({ currentLanguage }: { currentLanguage: 'en' | 'ar' }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const isRTL = currentLanguage === 'ar';
 
   const [selectedDate, setSelectedDate] = useState('');
@@ -63,26 +62,26 @@ export const RescheduleJob = ({ currentLanguage }: { currentLanguage: 'en' | 'ar
 
   const content = {
     en: {
-      title: 'Reschedule Job',
-      subtitle: 'Choose a new date and time slot. The customer will be notified.',
+      title: 'Request Reschedule',
+      subtitle: 'Choose a new date and time. The other party will need to approve.',
       currentSchedule: 'Current schedule',
       dateLabel: 'New date',
       slotLabel: 'Preferred time slot',
-      submitButton: 'Confirm Reschedule',
+      submitButton: 'Send Reschedule Request',
       cancelButton: 'Keep Current Schedule',
-      successMsg: 'Job rescheduled successfully.',
-      errorMsg: 'Failed to reschedule. Please try again.',
+      successMsg: 'Reschedule request sent. Waiting for approval.',
+      errorMsg: 'Failed to send reschedule request. Please try again.',
     },
     ar: {
-      title: 'إعادة جدولة',
-      subtitle: 'اختر تاريخاً ووقتاً جديدين. سيتم إخطار العميل.',
+      title: 'طلب إعادة جدولة',
+      subtitle: 'اختر تاريخاً ووقتاً جديدين. سيحتاج الطرف الآخر للموافقة.',
       currentSchedule: 'الموعد الحالي',
       dateLabel: 'التاريخ الجديد',
       slotLabel: 'الوقت المناسب',
-      submitButton: 'تأكيد إعادة الجدولة',
+      submitButton: 'إرسال طلب إعادة الجدولة',
       cancelButton: 'الإبقاء على الموعد الحالي',
-      successMsg: 'تمت إعادة الجدولة بنجاح.',
-      errorMsg: 'فشلت إعادة الجدولة. يرجى المحاولة مرة أخرى.',
+      successMsg: 'تم إرسال طلب إعادة الجدولة. بانتظار الموافقة.',
+      errorMsg: 'فشل إرسال طلب إعادة الجدولة. يرجى المحاولة مرة أخرى.',
     },
   };
 
@@ -93,16 +92,18 @@ export const RescheduleJob = ({ currentLanguage }: { currentLanguage: 'en' | 'ar
 
   const rescheduleMutation = useMutation({
     mutationFn: async () => {
-      if (!id || !selectedDate || !selectedSlot) throw new Error('Missing fields');
-      // Build a proper datetime from the date + slot start time
-      const timeStr = SLOT_START_TIMES[selectedSlot] ?? '09:00';
+      if (!id || !selectedDate || !selectedSlot || !user?.id) throw new Error('Missing fields');
+      // Build a proper datetime from the date + slot start time (key is already HH:MM)
+      const timeStr = selectedSlot ?? '09:00';
       const newDateTimeISO = new Date(`${selectedDate}T${timeStr}:00`).toISOString();
-      const { error } = await (supabase as unknown as { from: (t: string) => { update: (d: Record<string, unknown>) => { eq: (c: string, v: string) => Promise<{ error: unknown }> } } })
+      const { error } = await (supabase as any)
         .from('maintenance_requests')
         .update({
-          scheduled_for: newDateTimeISO,
-          preferred_start_date: newDateTimeISO,
-          preferred_time_slot: selectedSlot,
+          reschedule_requested_by: user.id,
+          reschedule_requested_at: new Date().toISOString(),
+          reschedule_new_date: newDateTimeISO,
+          reschedule_new_time_slot: selectedSlot,
+          reschedule_status: 'pending',
         })
         .eq('id', id);
       if (error) throw error;

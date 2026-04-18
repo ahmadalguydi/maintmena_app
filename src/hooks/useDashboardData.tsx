@@ -107,7 +107,7 @@ export function useDashboardData() {
 
       setRecentActivities(combinedActivities);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      if (import.meta.env.DEV) console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }

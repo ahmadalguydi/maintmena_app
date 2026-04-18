@@ -53,7 +53,7 @@ export default function Admin({ currentLanguage }: { currentLanguage: 'en' | 'ar
     const { data: hasRole, error } = await supabase.rpc('has_role', { _role: 'admin', _user_id: user.id });
 
     if (error) {
-      console.error('Admin check error:', error);
+      if (import.meta.env.DEV) console.error('Admin check error:', error);
     }
 
     if (hasRole === true) {

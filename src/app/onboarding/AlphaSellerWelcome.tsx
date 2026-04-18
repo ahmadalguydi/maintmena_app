@@ -17,8 +17,7 @@ export const AlphaSellerWelcome = ({ currentLanguage, onToggle }: AlphaSellerWel
 
   const handleContinue = () => {
     setIntendedRole('seller');
-    // Store that this is an alpha seller
-    localStorage.setItem('isAlphaSeller', 'true');
+    // Soft-opening benefits are controlled server-side via platform_settings
     localStorage.setItem('selectedPlan', 'professional');
     localStorage.setItem('selectedBilling', 'monthly');
     navigate('/app/onboarding/signup');
@@ -95,7 +94,7 @@ export const AlphaSellerWelcome = ({ currentLanguage, onToggle }: AlphaSellerWel
           ]
         }
       },
-      zeroPlatformFees: '٠٪ عمولة',
+      zeroPlatformFees: '٠% عمولة',
       zeroPlatformFeesDesc: 'كل اللي تكسبه لك خلال الإفتتاح التجريبي',
       cta: 'يلا نكمل'
     }
@@ -105,7 +104,8 @@ export const AlphaSellerWelcome = ({ currentLanguage, onToggle }: AlphaSellerWel
 
   return (
     <div 
-      className="min-h-screen bg-background flex flex-col" 
+      data-native-screen-surface="true"
+      className="min-h-app bg-background flex flex-col" 
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       {/* Language Toggle */}
@@ -226,7 +226,7 @@ export const AlphaSellerWelcome = ({ currentLanguage, onToggle }: AlphaSellerWel
       </div>
 
       {/* Fixed CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/95 backdrop-blur border-t">
+      <div className="fixed bottom-0 left-0 right-0 p-6 pb-safe-or-4 bg-background/95 backdrop-blur border-t">
         <Button
           size="lg"
           className={`w-full h-14 text-lg ${isRtl ? 'font-ar-display' : ''}`}
@@ -238,3 +238,5 @@ export const AlphaSellerWelcome = ({ currentLanguage, onToggle }: AlphaSellerWel
     </div>
   );
 };
+
+

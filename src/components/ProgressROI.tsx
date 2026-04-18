@@ -250,7 +250,7 @@ export const ProgressROI = ({ currentLanguage }: ProgressROIProps) => {
         actionableToday
       });
     } catch (error) {
-      console.error('Error fetching metrics:', error);
+      if (import.meta.env.DEV) console.error('Error fetching metrics:', error);
     } finally {
       setLoading(false);
     }

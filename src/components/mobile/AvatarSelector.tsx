@@ -72,7 +72,7 @@ export const AvatarSelector = ({
       onSelect?.(selectedSeed);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving avatar:', error);
+      if (import.meta.env.DEV) console.error('Error saving avatar:', error);
       toast.error(currentLanguage === 'ar' ? 'فشل حفظ الصورة' : 'Failed to save avatar');
     } finally {
       setSaving(false);

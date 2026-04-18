@@ -84,7 +84,7 @@ export function CompletionWorkflowCard({
       toast.success('Work marked as complete! Waiting for seller to confirm payment receipt.');
       onRefresh?.();
     } catch (error: unknown) {
-      console.error('Error marking complete:', error);
+      if (import.meta.env.DEV) console.error('Error marking complete:', error);
       toast.error('Failed to mark as complete: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
@@ -115,7 +115,7 @@ export function CompletionWorkflowCard({
       });
       onRefresh?.();
     } catch (error: unknown) {
-      console.error('Error confirming payment:', error);
+      if (import.meta.env.DEV) console.error('Error confirming payment:', error);
       toast.error('Failed to confirm payment: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);

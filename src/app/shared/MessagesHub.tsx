@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
-import { MessageCircle, Search } from 'lucide-react';
+import { CheckCheck, MessageCircle, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { SoftCard } from '@/components/mobile/SoftCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AvatarBadge } from '@/components/mobile/AvatarBadge';
@@ -12,7 +13,6 @@ import { GradientHeader } from '@/components/mobile/GradientHeader';
 import { Heading3, Body, BodySmall, Caption } from '@/components/mobile/Typography';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isSupabaseRelationKnownUnavailable } from '@/lib/supabaseSchema';
-import { executeSupabaseQuery } from '@/lib/supabaseQuery';
 import { cn } from '@/lib/utils';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -31,6 +31,7 @@ interface Conversation {
   unread_count: number;
   other_user_name: string;
   other_user_avatar?: string;
+  other_user_id?: string;
 }
 
 interface RequestMessageScope {
@@ -70,6 +71,23 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
   const pendingRefetchTimeoutRef = useRef<number | null>(null);
   const requestIdsRef = useRef<string[]>([]);
 
+  // Mark all received (unread) messages as read across all conversations
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) return;
+      const { error } = await db
+        .from('messages')
+        .update({ is_read: true })
+        .eq('recipient_id', user.id)
+        .eq('is_read', false);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['nav-unread-messages', user?.id] });
+    },
+  });
+
   const { data: conversations, isLoading } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async (): Promise<Conversation[]> => {
@@ -81,7 +99,7 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
       });
 
       if (error) {
-        console.error('[MessagesHub] RPC Error:', error);
+        if (import.meta.env.DEV) console.error('[MessagesHub] RPC Error:', error);
         return [];
       }
 
@@ -97,9 +115,9 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
       }));
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    refetchInterval: 30_000,
     placeholderData: (previousData) => previousData ?? [],
   });
 
@@ -180,6 +198,11 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
     };
   }, [queryClient, user]);
 
+  const totalUnread = useMemo(
+    () => (conversations ?? []).reduce((sum, c) => sum + (c.unread_count ?? 0), 0),
+    [conversations],
+  );
+
   const content = {
     en: {
       title: 'Messages',
@@ -187,6 +210,7 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
       noMessages: 'No messages yet',
       noMessagesDesc: 'When you start a conversation, it will appear here',
       unread: 'unread',
+      markAllRead: 'Mark all read',
     },
     ar: {
       title: 'الرسائل',
@@ -194,6 +218,7 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
       noMessages: 'لا توجد رسائل',
       noMessagesDesc: 'أول ما تبدأ محادثة بتظهر لك هنا',
       unread: 'غير مقروءة',
+      markAllRead: 'تعليم الكل كمقروء',
     },
   };
 
@@ -267,6 +292,22 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
             )}
           />
         </div>
+
+        {/* Mark all read — only visible when there are unread messages */}
+        {totalUnread > 0 && (
+          <div className={cn('flex', isArabic ? 'justify-start' : 'justify-end')}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => markAllReadMutation.mutate()}
+              disabled={markAllReadMutation.isPending}
+              className="h-9 gap-1.5 rounded-full px-4 text-sm text-primary hover:bg-primary/10"
+            >
+              <CheckCheck size={16} />
+              {t.markAllRead}
+            </Button>
+          </div>
+        )}
 
         {filteredConversations.length === 0 ? (
           <motion.div

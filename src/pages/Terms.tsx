@@ -10,7 +10,7 @@ const Terms = ({ currentLanguage }: TermsProps) => {
     en: {
       title: "Terms of Service",
       subtitle: "The legal framework for using MaintMENA services",
-      lastUpdated: "Last updated: September 2024",
+      lastUpdated: "Last updated: April 2026",
       sections: [
         {
           icon: Scale,
@@ -52,7 +52,7 @@ const Terms = ({ currentLanguage }: TermsProps) => {
     ar: {
       title: "شروط الخدمة",
       subtitle: "الإطار القانوني لاستخدام خدمات مينت مينا",
-      lastUpdated: "آخر تحديث: سبتمبر 2024", 
+      lastUpdated: "آخر تحديث: أبريل 2026", 
       sections: [
         {
           icon: Scale,

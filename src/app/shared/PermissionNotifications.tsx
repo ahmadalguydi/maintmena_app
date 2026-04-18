@@ -1,41 +1,62 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
-import { loadPushNotificationsPlugin } from '@/lib/nativePlugins';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { registerPushNotifications } from '@/lib/pushNotifications';
 
 export const PermissionNotifications = () => {
   const [isRequesting, setIsRequesting] = useState(false);
   const navigate = useNavigate();
+  const { user, userType } = useAuth();
   const currentLanguage = (localStorage.getItem('currentLanguage') || 'ar') as 'en' | 'ar';
+
+  const targetRoute = userType === 'seller' ? '/app/seller/home' : '/app/buyer/home';
 
   const handleAllow = async () => {
     setIsRequesting(true);
+
     try {
-      const { PushNotifications } = await loadPushNotificationsPlugin();
-      const result = await PushNotifications.requestPermissions();
-      if (result.receive === 'granted') {
-        await PushNotifications.register();
-        localStorage.setItem('notificationsPermission', 'granted');
-        toast.success(currentLanguage === 'ar' ? 'تم منح الإذن' : 'Permission granted');
+      if (user) {
+        const success = await registerPushNotifications(user.id, {
+          force: true,
+          userType: userType === 'seller' ? 'seller' : 'buyer',
+          onNavigate: (url) => navigate(url),
+        });
+
+        if (success) {
+          localStorage.setItem('notificationsPermission', 'granted');
+          toast.success(currentLanguage === 'ar' ? 'تم منح الإذن' : 'Permission granted');
+        } else {
+          localStorage.removeItem('notificationsPermission');
+          toast.error(
+            currentLanguage === 'ar'
+              ? 'لم يتم تفعيل الإشعارات'
+              : 'Notifications were not enabled',
+          );
+        }
       }
-      // Navigate regardless of permission result
-      navigate('/app/buyer/home'); // Default to buyer home, will be redirected based on user type
-    } catch (error) {
-      navigate('/app/buyer/home');
+
+      navigate(targetRoute);
+    } catch {
+      navigate(targetRoute);
     } finally {
       setIsRequesting(false);
     }
   };
 
   const handleSkip = () => {
-    navigate('/app/buyer/home');
+    navigate(targetRoute);
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div
+      data-native-screen-surface="true"
+      className="min-h-app bg-background flex flex-col items-center justify-center p-6 pb-safe-or-4 pt-safe"
+      dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
+    >
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -56,15 +77,14 @@ export const PermissionNotifications = () => {
         </p>
 
         <div className="space-y-3">
-          <Button
-            onClick={handleAllow}
-            disabled={isRequesting}
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleAllow} disabled={isRequesting} className="w-full" size="lg">
             {isRequesting
-              ? (currentLanguage === 'ar' ? 'جاري الطلب...' : 'Requesting...')
-              : (currentLanguage === 'ar' ? 'تفعيل الإشعارات' : 'Enable Notifications')}
+              ? currentLanguage === 'ar'
+                ? 'جاري الطلب...'
+                : 'Requesting...'
+              : currentLanguage === 'ar'
+                ? 'تفعيل الإشعارات'
+                : 'Enable Notifications'}
           </Button>
 
           <Button variant="ghost" onClick={handleSkip} className="w-full">
@@ -75,8 +95,8 @@ export const PermissionNotifications = () => {
         <div className="mt-8 p-4 bg-muted/30 rounded-lg">
           <p className="text-xs text-muted-foreground">
             {currentLanguage === 'ar'
-              ? '💡 نرسل إشعارات مهمة فقط - لن نزعجك كثيراً'
-              : '💡 We only send important notifications - we won\'t spam you'}
+              ? 'نرسل إشعارات مهمة فقط - لن نزعجك كثيراً'
+              : "We only send important notifications - we won't spam you"}
           </p>
         </div>
       </motion.div>

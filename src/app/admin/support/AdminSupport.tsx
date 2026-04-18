@@ -61,7 +61,7 @@ export const AdminSupport = ({ currentLanguage }: AdminSupportProps) => {
                 if (error) throw error;
                 return (data || []) as SupportChat[];
             } catch (e) {
-                console.warn('support_chats table may not exist:', e);
+                if (import.meta.env.DEV) console.warn('support_chats table may not exist:', e);
                 return [];
             }
         },

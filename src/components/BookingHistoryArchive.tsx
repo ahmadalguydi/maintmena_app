@@ -82,7 +82,7 @@ export const BookingHistoryArchive = ({ currentLanguage = 'en' }: BookingHistory
 
       setArchivedBookings(formatted);
     } catch (error) {
-      console.error('Error fetching archived bookings:', error);
+      if (import.meta.env.DEV) console.error('Error fetching archived bookings:', error);
     } finally {
       setLoading(false);
     }

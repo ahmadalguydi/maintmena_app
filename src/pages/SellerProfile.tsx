@@ -120,7 +120,7 @@ const SellerProfile = ({ currentLanguage }: SellerProfileProps) => {
         portfolio_items: (data.portfolio_items as any) || []
       } as SellerProfile);
     } catch (error) {
-      console.error('Error loading seller profile:', error);
+      if (import.meta.env.DEV) console.error('Error loading seller profile:', error);
       toast({
         title: 'Error',
         description: 'Failed to load seller profile',
@@ -151,7 +151,7 @@ const SellerProfile = ({ currentLanguage }: SellerProfileProps) => {
       if (error) throw error;
       setReviews((data as any) || []);
     } catch (error) {
-      console.error('Error loading reviews:', error);
+      if (import.meta.env.DEV) console.error('Error loading reviews:', error);
     }
   };
 

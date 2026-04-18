@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { GradientHeader } from '@/components/mobile/GradientHeader';
 import { SoftCard } from '@/components/mobile/SoftCard';
 import { Body, BodySmall, Caption } from '@/components/mobile/Typography';
@@ -53,6 +54,24 @@ export const AdminUsers = ({ currentLanguage }: AdminUsersProps) => {
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [roleFilter, setRoleFilter] = useState<'all' | 'buyer' | 'seller'>('all');
 
+    const queryClient = useQueryClient();
+
+    const suspendMutation = useMutation({
+        mutationFn: async (userId: string) => {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ is_suspended: true } as Record<string, unknown>)
+                .eq('id', userId);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+            toast.success(isArabic ? 'تم تعليق الحساب' : 'Account suspended');
+            setSelectedUser(null);
+        },
+        onError: () => toast.error(isArabic ? 'حدث خطأ' : 'An error occurred'),
+    });
+
     const { data: users, isLoading } = useQuery({
         queryKey: ['admin-users', searchQuery, roleFilter],
         queryFn: async () => {
@@ -90,6 +109,8 @@ export const AdminUsers = ({ currentLanguage }: AdminUsersProps) => {
             type: 'Type',
             verified: 'Verified',
             notVerified: 'Not Verified',
+            close: 'Close',
+            suspend: 'Suspend Account',
         },
         ar: {
             title: 'المستخدمين',
@@ -104,6 +125,8 @@ export const AdminUsers = ({ currentLanguage }: AdminUsersProps) => {
             type: 'النوع',
             verified: 'موثق',
             notVerified: 'غير موثق',
+            close: 'إغلاق',
+            suspend: 'تعليق الحساب',
         },
     };
 
@@ -280,14 +303,16 @@ export const AdminUsers = ({ currentLanguage }: AdminUsersProps) => {
                                     className="flex-1"
                                     onClick={() => setSelectedUser(null)}
                                 >
-                                    Close
+                                    {t.close}
                                 </Button>
                                 <Button
                                     variant="destructive"
                                     className="flex-1 gap-2"
+                                    disabled={suspendMutation.isPending}
+                                    onClick={() => suspendMutation.mutate(selectedUser.id)}
                                 >
                                     <AlertTriangle size={16} />
-                                    Suspend
+                                    {t.suspend}
                                 </Button>
                             </div>
                         </div>

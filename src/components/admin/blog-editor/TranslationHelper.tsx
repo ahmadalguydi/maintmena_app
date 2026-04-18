@@ -34,7 +34,7 @@ export const TranslationHelper = ({ data, currentLanguage, onUpdate }: Translati
 
       onUpdate(targetField, translated);
     } catch (error) {
-      console.error('Translation error:', error);
+      if (import.meta.env.DEV) console.error('Translation error:', error);
     } finally {
       setIsTranslating(false);
     }
@@ -208,7 +208,7 @@ export const TranslationHelper = ({ data, currentLanguage, onUpdate }: Translati
         description: 'Content translated successfully',
       });
     } catch (error) {
-      console.error('Translation error:', error);
+      if (import.meta.env.DEV) console.error('Translation error:', error);
       toast({
         title: 'Error',
         description: 'Failed to translate content',

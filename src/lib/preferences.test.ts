@@ -45,9 +45,10 @@ describe('preferences', () => {
             expect(preferences.getCurrency()).toBe('SAR');
         });
 
-        it('returns stored currency when set', () => {
+        it('forces SAR even when a legacy currency is stored', () => {
             localStorage.setItem('maintmena_currency', 'USD');
-            expect(preferences.getCurrency()).toBe('USD');
+            expect(preferences.getCurrency()).toBe('SAR');
+            expect(localStorage.getItem('maintmena_currency')).toBe('SAR');
         });
     });
 

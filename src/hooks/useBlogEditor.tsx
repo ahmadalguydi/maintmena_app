@@ -74,7 +74,7 @@ export const useBlogEditor = (blogId?: string) => {
         scheduled_at: blog.scheduled_at,
       });
     } catch (error) {
-      console.error('Error loading blog:', error);
+      if (import.meta.env.DEV) console.error('Error loading blog:', error);
       toast({
         title: 'Error',
         description: 'Failed to load blog post',
@@ -168,7 +168,7 @@ export const useBlogEditor = (blogId?: string) => {
       await saveBlog('draft');
       setLastSaved(new Date());
     } catch (error) {
-      console.error('Auto-save failed:', error);
+      if (import.meta.env.DEV) console.error('Auto-save failed:', error);
     } finally {
       setIsSaving(false);
     }
@@ -252,7 +252,7 @@ export const useBlogEditor = (blogId?: string) => {
 
       return true;
     } catch (error) {
-      console.error('Error saving blog:', error);
+      if (import.meta.env.DEV) console.error('Error saving blog:', error);
       toast({
         title: 'Error',
         description: 'Failed to save blog post',

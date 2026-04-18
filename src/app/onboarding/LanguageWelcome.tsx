@@ -14,11 +14,14 @@ export const LanguageWelcome = ({ currentLanguage }: LanguageWelcomeProps) => {
   const handleLanguageSelect = async (language: 'ar' | 'en') => {
     await vibrate('light');
     localStorage.setItem('preferredLanguage', language);
+    localStorage.setItem('currentLanguage', language);
+    // Sync with App's language state via custom event
+    window.dispatchEvent(new CustomEvent('mm:language-change', { detail: { lang: language } }));
     navigate('/app/onboarding/role-selection');
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-background via-muted/20 to-background">
+    <div className="min-h-app flex flex-col items-center justify-center p-6 pb-safe-or-4 pt-safe bg-gradient-to-b from-background via-muted/20 to-background">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

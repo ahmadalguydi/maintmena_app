@@ -66,6 +66,47 @@
     --card-gap: 1.5rem;
   }
 
+  /* ─── Dark Mode ─── */
+  .dark {
+    --ink: 0 0% 92%;
+    --paper: 0 0% 7%;
+    --rule: 0 0% 16%;
+    --accent: 26 78% 48%;
+    --accent-2: 26 82% 42%;
+    --accent-hover: 26 78% 42%;
+    --navy: 214 50% 60%;
+    --sand: 30 6% 18%;
+
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --border: var(--rule);
+    --input: 0 0% 13%;
+    --ring: var(--accent);
+
+    --card: 0 0% 10%;
+    --card-foreground: var(--ink);
+    --popover: 0 0% 10%;
+    --popover-foreground: var(--ink);
+
+    --primary: var(--accent);
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 85%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 64%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --copper: 26 78% 48%;
+    --sand: 30 6% 18%;
+    --success: 142 65% 40%;
+    --warning: 38 85% 52%;
+    --error: 0 65% 52%;
+  }
+
   /* Density Strategy: Compact */
   [data-density="compact"] {
     --badge-px: 0.5rem;
@@ -126,6 +167,11 @@
     /* Micro-interactions */
     --transition-base: 150ms ease;
     --transition-slow: 300ms ease;
+
+    --app-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --app-safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+    --app-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+    --app-safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
   }
 }
 
@@ -188,29 +234,29 @@
 
 @layer utilities {
   .pt-safe {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+    padding-top: calc(var(--app-safe-top) + 0.75rem);
   }
 
   .pt-safe-top {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--app-safe-top);
   }
 
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: var(--app-safe-bottom);
   }
 
   .pb-safe-or-4 {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    padding-bottom: calc(var(--app-safe-bottom) + 1rem);
   }
 
   .min-h-app {
+    min-height: 100vh;
     min-height: 100dvh;
-    min-height: 100svh;
   }
 
   .h-app {
+    height: 100vh;
     height: 100dvh;
-    height: 100svh;
   }
 }
 
@@ -539,10 +585,18 @@
     backdrop-filter: blur(20px);
   }
 
+  .dark .glass {
+    @apply bg-paper/70;
+  }
+
   .glass-subtle {
     @apply bg-paper/60 backdrop-blur-lg;
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
+  }
+
+  .dark .glass-subtle {
+    @apply bg-paper/50;
   }
 
   /* iOS-style inertia scroll */

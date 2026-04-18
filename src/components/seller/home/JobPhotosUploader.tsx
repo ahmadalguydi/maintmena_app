@@ -78,7 +78,7 @@ export function JobPhotosUploader({
                 onAfterUpload(publicUrl);
             }
         } catch (error: any) {
-            console.error(`Error uploading ${type} photo:`, error);
+            if (import.meta.env.DEV) console.error(`Error uploading ${type} photo:`, error);
             toast({
                 title: currentLanguage === 'ar' ? 'فشل الرفع' : 'Upload Failed',
                 description: error.message,
@@ -114,7 +114,7 @@ export function JobPhotosUploader({
                 await handleUpload(file, type);
             }
         } catch (error) {
-            console.error('Camera error:', error);
+            if (import.meta.env.DEV) console.error('Camera error:', error);
         }
     };
 

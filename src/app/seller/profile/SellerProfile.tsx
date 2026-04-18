@@ -16,14 +16,7 @@ import { useState } from 'react';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
 import { setLanguage } from '@/lib/preferences';
 import { toast } from 'sonner';
-
-/** Returns the seller level label and icon based on completed job count. */
-function getSellerLevel(completedJobs: number): { label: string; labelAr: string; badge: string; ring: string; color: string } {
-  if (completedJobs >= 30) return { label: 'Master', labelAr: 'خبير متميز', badge: '👑', ring: 'ring-amber-400', color: 'text-amber-600' };
-  if (completedJobs >= 15) return { label: 'Expert', labelAr: 'خبير',       badge: '⭐',  ring: 'ring-purple-400', color: 'text-purple-600' };
-  if (completedJobs >= 5)  return { label: 'Pro',    labelAr: 'محترف',      badge: '⭐',  ring: 'ring-blue-400',   color: 'text-blue-600' };
-  return                         { label: 'Starter', labelAr: 'مبتدئ',      badge: '⭐',  ring: 'ring-slate-300',  color: 'text-slate-500' };
-}
+import { getSellerLevel, getSellerLevelProgress } from '@/lib/sellerLevel';
 
 interface SellerProfileProps {
   currentLanguage: 'en' | 'ar';
@@ -277,18 +270,17 @@ export const SellerProfile = ({ currentLanguage }: SellerProfileProps) => {
             </div>
 
             {/* Level progress bar */}
-            {completedJobs < 30 && (() => {
-              const nextThreshold = completedJobs < 5 ? 5 : completedJobs < 15 ? 15 : 30;
-              const prevThreshold = completedJobs < 5 ? 0 : completedJobs < 15 ? 5 : 15;
-              const pct = Math.round(((completedJobs - prevThreshold) / (nextThreshold - prevThreshold)) * 100);
+            {(() => {
+              const levelProgress = getSellerLevelProgress(completedJobs);
+              if (!levelProgress.next) return null;
               return (
                 <div className="w-full mt-3 space-y-1">
                   <div className="flex justify-between text-[10px] text-muted-foreground">
                     <span>{completedJobs} {currentLanguage === 'ar' ? 'مهمة' : 'jobs'}</span>
-                    <span>{nextThreshold - completedJobs} {currentLanguage === 'ar' ? 'للمستوى التالي' : 'to next level'}</span>
+                    <span>{levelProgress.remaining} {currentLanguage === 'ar' ? 'للمستوى التالي' : `to ${levelProgress.next.label}`}</span>
                   </div>
                   <div className="h-1.5 bg-background/50 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${levelProgress.percentage}%` }} />
                   </div>
                 </div>
               );
@@ -316,7 +308,7 @@ export const SellerProfile = ({ currentLanguage }: SellerProfileProps) => {
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                {lang === 'en' ? '🇺🇸 EN' : '🇸🇦 AR'}
+                {lang === 'en' ? '🇺🇸 EN' : '🇸🇦 عربي'}
               </button>
             ))}
           </div>

@@ -103,7 +103,7 @@ export function PhotoProofModal({
 
       setPhotos(prev => [...prev, publicUrl]);
     } catch (error) {
-      console.error('Photo upload error:', error);
+      if (import.meta.env.DEV) console.error('Photo upload error:', error);
     } finally {
       setIsUploading(false);
     }
@@ -142,7 +142,7 @@ export function PhotoProofModal({
           setPhotos(prev => [...prev, publicUrl]);
         }
       } catch (error) {
-        console.error('Camera error:', error);
+        if (import.meta.env.DEV) console.error('Camera error:', error);
       } finally {
         setIsUploading(false);
       }

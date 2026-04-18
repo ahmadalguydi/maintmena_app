@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface LoginProps {
@@ -22,7 +22,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { containerStyle } = useKeyboardAvoidance();
+  const { containerStyle, isKeyboardVisible } = useKeyboardAvoidance();
 
   const content = {
     en: {
@@ -53,7 +53,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password, currentLanguage);
+    const { error } = await signIn(email.trim(), password, currentLanguage);
 
     if (!error) {
       // Check for pending action and redirect accordingly
@@ -76,11 +76,11 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
             return;
           }
         } catch (e) {
-          console.error('Failed to parse pending action');
+          if (import.meta.env.DEV) console.error('Failed to parse pending action');
         }
       }
 
-      // Default redirect based on user type
+      // Default redirect based on user type (read from auth context via signIn's fetchUserType)
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user) {
         const { data: roles } = await supabase
@@ -92,17 +92,20 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
 
         if (roleMap.includes('admin')) {
           navigate('/app/admin/home');
+          setLoading(false);
           return;
         }
         if (roleMap.includes('seller')) {
           localStorage.setItem('userType', 'seller');
           navigate('/app/seller/home');
+          setLoading(false);
           return;
         }
 
         // Default to buyer
         localStorage.setItem('userType', 'buyer');
         navigate('/app/buyer/home');
+        setLoading(false);
         return;
       }
 
@@ -114,14 +117,18 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
   };
 
   return (
-    <div className="min-h-app bg-background flex flex-col p-6 pb-safe-or-4 pt-safe" style={containerStyle} dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div
+      className={`min-h-full overflow-y-auto bg-background flex flex-col p-6 pt-safe ${isKeyboardVisible ? 'pb-4' : 'pb-safe-or-4'}`}
+      style={containerStyle}
+      dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
+    >
       {/* Header with Back Button and Language Toggle */}
       <div className="flex items-center justify-between mb-8">
         <button
           onClick={() => navigate('/app/onboarding/role-selection')}
           className="flex items-center gap-2 text-muted-foreground"
         >
-          <ArrowLeft size={20} />
+          {currentLanguage === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
         </button>
 
         <Button variant="ghost" size="sm" onClick={onToggle} className="text-sm">
@@ -132,7 +139,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full"
+        className={`flex w-full max-w-md mx-auto flex-1 flex-col ${isKeyboardVisible ? 'justify-start pt-4' : 'justify-center'}`}
       >
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
@@ -148,6 +155,8 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-12 text-base"
+              autoComplete="email"
+              inputMode="email"
               required
             />
           </div>
@@ -161,6 +170,7 @@ export const Login = ({ currentLanguage, onToggle }: LoginProps) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={`h-12 text-base ${currentLanguage === 'ar' ? 'pl-10' : 'pr-10'}`}
+                autoComplete="current-password"
                 required
               />
               <button

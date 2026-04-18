@@ -31,7 +31,11 @@ export const PermissionCamera = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
+    <div
+      data-native-screen-surface="true"
+      className="min-h-app bg-background flex flex-col items-center justify-center p-6 pb-safe-or-4 pt-safe"
+      dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}
+    >
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

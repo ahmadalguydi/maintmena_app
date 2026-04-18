@@ -26,7 +26,7 @@ const content = {
         noActivity: 'لا يوجد نشاط بعد',
         noActivityDesc: 'ستظهر هنا أرباحك ونشاطك عند إتمام أولى مهامك',
         billingInfo: 'معلومات الفوترة',
-        billingDesc: 'خلال فترتك التعريفية، جميع أرباحك لك بالكامل - بدون رسوم!',
+        billingDesc: 'خلال فترتك التعريفيةٌ جميع أرباحك لك بالكامل - بدون رسوم!',
         learnMore: 'اعرف المزيد',
         earned: 'ربحت',
     },
@@ -55,6 +55,7 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
     const navigate = useNavigate();
     const currentLanguage = propLanguage || ((typeof window !== 'undefined' ? localStorage.getItem('preferredLanguage') : null) as 'en' | 'ar') || 'ar';
     const isRTL = currentLanguage === 'ar';
+    const currencyLabel = isRTL ? 'ر.س' : 'SAR';
     const t = content[currentLanguage];
 
     // Real earnings data from Supabase
@@ -92,7 +93,7 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
                             </span>
                         </div>
                         <div className={cn("text-4xl font-bold mb-6", isRTL && "font-ar-heading")}>
-                            {isLoading ? '...' : `SAR ${earnings.thisMonth.toLocaleString()}`}
+                            {isLoading ? '...' : `${currencyLabel} ${earnings.thisMonth.toLocaleString()}`}
                         </div>
 
                         {/* Stats Grid */}
@@ -118,7 +119,7 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
                                     {t.pendingPayments}
                                 </div>
                                 <div className="text-xl font-bold">
-                                    {isLoading ? '...' : `SAR ${earnings.pendingPayments.toLocaleString()}`}
+                                    {isLoading ? '...' : `${currencyLabel} ${earnings.pendingPayments.toLocaleString()}`}
                                 </div>
                             </div>
 
@@ -186,8 +187,8 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
                                 )}
 
                                 <div className={cn("flex justify-between mt-1 text-xs font-semibold opacity-90", isRTL && "flex-row-reverse")}>
-                                    <span className="opacity-60">{t.lastMonth}: SAR {isLoading ? '...' : earnings.lastMonth.toLocaleString()}</span>
-                                    <span>{t.thisMonth}: SAR {isLoading ? '...' : earnings.thisMonth.toLocaleString()}</span>
+                                    <span className="opacity-60">{t.lastMonth}: {currencyLabel} {isLoading ? '...' : earnings.lastMonth.toLocaleString()}</span>
+                                    <span>{t.thisMonth}: {currencyLabel} {isLoading ? '...' : earnings.thisMonth.toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
@@ -216,7 +217,7 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
                                 "text-2xl font-bold text-emerald-700 dark:text-emerald-400 mb-1",
                                 isRTL && "font-ar-heading"
                             )}>
-                                SAR 0
+                                {currencyLabel} 0
                             </div>
                             <p className={cn(
                                 "text-sm text-emerald-600/80 dark:text-emerald-400/80",
@@ -313,7 +314,7 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
                                     </div>
                                     <div className="text-right">
                                         <span className={cn("block text-sm font-semibold text-emerald-600 dark:text-emerald-400", isRTL && "font-ar-heading")}>
-                                            +SAR {tx.amount.toLocaleString()}
+                                            +{currencyLabel} {tx.amount.toLocaleString()}
                                         </span>
                                         <span className="block text-xs text-muted-foreground capitalize">{tx.status}</span>
                                     </div>
@@ -326,3 +327,7 @@ export const SellerEarnings = ({ currentLanguage: propLanguage }: SellerEarnings
         </div>
     );
 };
+
+
+
+

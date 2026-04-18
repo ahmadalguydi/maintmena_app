@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import { useRole } from '@/contexts/RoleContext';
 
 interface AuthTriggerModalProps {
   open: boolean;
@@ -22,6 +23,7 @@ export const AuthTriggerModal = ({
   pendingAction 
 }: AuthTriggerModalProps) => {
   const navigate = useNavigate();
+  const { setIntendedRole } = useRole();
 
   const content = {
     en: {
@@ -61,8 +63,8 @@ export const AuthTriggerModal = ({
     }
     // Save role as buyer since this modal is for buyer guests
     localStorage.setItem('selectedRole', 'buyer');
-    // Also set intendedRole for RoleContext
-    localStorage.setItem('intendedRole', 'buyer');
+    // Sync intendedRole with both localStorage and RoleContext state
+    setIntendedRole('buyer');
     onOpenChange(false);
     // Go directly to buyer signup (skip role selection)
     navigate('/app/onboarding/signup');
@@ -75,7 +77,7 @@ export const AuthTriggerModal = ({
     }
     // Save role as buyer
     localStorage.setItem('selectedRole', 'buyer');
-    localStorage.setItem('intendedRole', 'buyer');
+    setIntendedRole('buyer');
     onOpenChange(false);
     navigate('/app/onboarding/login');
   };

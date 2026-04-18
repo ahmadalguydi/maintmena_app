@@ -56,7 +56,7 @@ const content = {
     asap: 'أقرب وقت',
     scheduled: 'مجدول',
     matching: { title: 'ندور لك على فني...', sub: 'نطابق طلبك مع أفضل فني متاح' },
-    no_seller_found: { title: 'ما لقينا فني', sub: 'ما في فنيين متاحين الحين. حاول مرة ثانية لاحقاً' },
+    no_seller_found: { title: 'ندور لك على فني ثاني...', sub: 'ما لقينا أحد الحين، بنلقاك فني بأقرب وقت' },
     accepted: { title: 'تم تعيين الفني', sub: 'تقدر تتابع التفاصيل الحين' },
     on_the_way: { title: 'الفني بالطريق', sub: 'في طريقه لموقعك' },
     arrived: { title: 'الفني وصل', sub: 'صار عند الموقع' },
@@ -73,7 +73,7 @@ const content = {
     asap: 'Earliest',
     scheduled: 'Scheduled',
     matching: { title: 'Finding provider...', sub: 'Locating the best professional' },
-    no_seller_found: { title: 'No provider found', sub: 'No providers are available right now. Try again later' },
+    no_seller_found: { title: 'Finding another pro...', sub: 'No match yet — we\'re expanding the search' },
     accepted: { title: 'Provider assigned', sub: 'Your provider details are ready' },
     on_the_way: { title: 'Provider on the way', sub: 'Heading to your location now' },
     arrived: { title: 'Provider arrived', sub: 'The provider is already at your location' },
@@ -166,7 +166,7 @@ export const ActiveRequestCard = ({
       statusTitle={statusInfo.title}
       statusSubtitle={statusInfo.sub}
       statusColor={statusColor}
-      isPulse={safeStatus === 'matching' || safeStatus === 'on_the_way'}
+      isPulse={safeStatus === 'matching' || safeStatus === 'no_seller_found' || safeStatus === 'on_the_way'}
       providerAvatar={request.providerAvatar}
       providerName={providerDisplayName}
       providerId={request.providerId}
@@ -204,9 +204,9 @@ export const ActiveRequestCard = ({
           />
 
           {safeStatus === 'on_the_way' ? (
-            <div className="w-max rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700 shadow-sm">
+            <div className="w-max rounded-2xl border border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-950/25 px-4 py-3 text-blue-700 dark:text-blue-300 shadow-sm">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 dark:bg-blue-500/15">
                   <Clock className="h-4 w-4" />
                 </div>
                 <p className="text-sm font-semibold">{t.eta}</p>

@@ -161,6 +161,7 @@ export const ActivityCard = forwardRef<HTMLDivElement, ActivityCardProps>(({
     const config = typeConfig[type];
     const Icon = config.icon;
     const isArabic = currentLanguage === 'ar';
+    const currencyLabel = isArabic ? 'ر.س' : 'SAR';
 
     const formatRelativeTime = (dateString: string) => {
         try {
@@ -295,7 +296,7 @@ export const ActivityCard = forwardRef<HTMLDivElement, ActivityCardProps>(({
                         {/* Price */}
                         {price && (
                             <p className="text-sm font-bold text-foreground">
-                                {price.toLocaleString()} <span className="text-xs font-normal">{isArabic ? 'ر.س' : 'SAR'}</span>
+                                {price.toLocaleString()} <span className="text-xs font-normal">{currencyLabel}</span>
                             </p>
                         )}
 
@@ -386,3 +387,5 @@ export const ActivityCardSkeleton = () => (
         </div>
     </div>
 );
+
+

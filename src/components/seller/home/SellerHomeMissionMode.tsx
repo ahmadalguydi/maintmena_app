@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Clock, ChevronDown, AlertTriangle, PhoneOff, Camera, AlertCircle, CalendarClock, MessageCircle } from 'lucide-react';
+import { Clock, ChevronDown, AlertTriangle, PhoneOff, Camera, AlertCircle, CalendarClock, MessageCircle, ArrowLeft, Lock } from 'lucide-react';
 import { MissionHeroCard } from './MissionHeroCard';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,9 @@ import { toast } from 'sonner';
 import { FinalPriceSheet } from '@/components/mobile/FinalPriceSheet';
 import { JobCompletionCodeModal } from '@/components/mobile/JobCompletionCodeModal';
 import { PhotoProofModal } from '@/components/mobile/PhotoProofModal';
+import { RescheduleApprovalBanner } from '@/components/mobile/RescheduleApprovalBanner';
+import { useRescheduleRequest } from '@/hooks/useRescheduleRequest';
+import { sendNotification } from '@/lib/notifications';
 
 type MissionStatus = 'accepted' | 'en_route' | 'arrived' | 'in_progress' | 'seller_completed' | 'completed';
 
@@ -45,11 +48,31 @@ interface ScheduledJob {
     commitment_type: 'soft' | 'hard';
 }
 
+export interface JobCompletionData {
+    jobId: string;
+    buyerName?: string;
+    buyerAvatar?: string;
+    amount: number;
+    title?: string;
+    category?: string;
+    location?: string;
+    lat?: number;
+    lng?: number;
+}
+
 interface SellerHomeMissionModeProps {
     currentLanguage: 'en' | 'ar';
     activeJob: ActiveJob;
     nextJob?: ScheduledJob;
     todayEarnings: number;
+    /** Whether this is voluntary focus mode for a scheduled job */
+    isFocusMode?: boolean;
+    /** Whether focus mode is auto-locked (cannot exit) */
+    isFocusLocked?: boolean;
+    /** Exit focus mode callback */
+    onExitFocusMode?: () => void;
+    /** Called when the job is fully completed (code verified) so parent can show celebration */
+    onJobCompleted?: (data: JobCompletionData) => void;
 }
 
 const SERVICE_EMOJI: Record<string, string> = {
@@ -74,11 +97,16 @@ export function SellerHomeMissionMode({
     activeJob,
     nextJob,
     todayEarnings,
+    isFocusMode,
+    isFocusLocked,
+    onExitFocusMode,
+    onJobCompleted,
 }: SellerHomeMissionModeProps) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { user } = useAuth();
     const [manageOpen, setManageOpen] = useState(false);
+    const { reschedule: pendingReschedule } = useRescheduleRequest(activeJob.id);
 
     // Completion Flow State
     const [showFinalPriceSheet, setShowFinalPriceSheet] = useState(false);
@@ -183,7 +211,7 @@ export function SellerHomeMissionMode({
             .eq('id', activeJob.id);
 
         if (error) {
-            console.error(`Error updating job ${field}:`, error);
+            if (import.meta.env.DEV) console.error(`Error updating job ${field}:`, error);
             throw error;
         }
 
@@ -202,13 +230,13 @@ export function SellerHomeMissionMode({
     const handleBeforeUpload = async (url: string) => {
         setBeforePhotoUrl(url);
         await updatePhotosToDB(url);
-        toast.success(currentLanguage === 'ar' ? 'تم رفع صورة قبل العمل' : 'Before photo saved');
+        toast.success(currentLanguage === 'ar' ? 'حفظنا صورة (قبل العمل) 👍' : 'Before photo saved');
     };
 
     const handleAfterUpload = async (url: string) => {
         setAfterPhotoUrl(url);
         await updatePhotosToDB(url);
-        toast.success(currentLanguage === 'ar' ? 'تم رفع صورة بعد العمل' : 'After photo saved');
+        toast.success(currentLanguage === 'ar' ? 'حفظنا صورة (بعد العمل) 👍' : 'After photo saved');
     };
 
     const handleNavigate = () => {
@@ -218,7 +246,7 @@ export function SellerHomeMissionMode({
                 '_blank'
             );
         } else {
-            toast.error(currentLanguage === 'ar' ? 'الموقع غير متوفر' : 'Location not available');
+            toast.error(currentLanguage === 'ar' ? 'ما قدرنا نحدد موقعك' : 'Location not available');
         }
     };
 
@@ -228,9 +256,18 @@ export function SellerHomeMissionMode({
         try {
             // Update status first to ensure transition happens
             await updateJobStatus('status', 'en_route');
-            toast.success(currentLanguage === 'ar' ? 'تم البدء بالتنقل' : 'Navigation started');
-        } catch (error: any) {
-            toast.error(currentLanguage === 'ar' ? 'فشل تحديث الحالة' : 'Failed to update status');
+            toast.success(currentLanguage === 'ar' ? 'حركنا للموقع 🚗' : 'Navigation started');
+
+            // Notify buyer
+            if (activeJob.buyer_id) {
+                sendNotification({
+                    userId: activeJob.buyer_id,
+                    type: 'seller_on_way',
+                    contentId: activeJob.id,
+                });
+            }
+        } catch (error) {
+            toast.error(currentLanguage === 'ar' ? 'عفوًا، ما قدرنا نحدّث الحالة' : 'Failed to update status');
         } finally {
             setIsUpdating(false);
         }
@@ -241,9 +278,18 @@ export function SellerHomeMissionMode({
         setIsUpdating(true);
         try {
             await updateJobStatus('status', 'arrived');
-            toast.success(currentLanguage === 'ar' ? 'تم تأكيد الوصول' : 'Arrival confirmed');
-        } catch (error: any) {
-            toast.error(currentLanguage === 'ar' ? 'فشل تحديث الوصول' : 'Failed to confirm arrival');
+            toast.success(currentLanguage === 'ar' ? 'وصلت بالسلامة 📍' : 'Arrival confirmed');
+
+            // Notify buyer
+            if (activeJob.buyer_id) {
+                sendNotification({
+                    userId: activeJob.buyer_id,
+                    type: 'seller_arrived',
+                    contentId: activeJob.id,
+                });
+            }
+        } catch (error) {
+            toast.error(currentLanguage === 'ar' ? 'عفوًا، ما قدرنا نأكد وصولك' : 'Failed to confirm arrival');
         } finally {
             setIsUpdating(false);
         }
@@ -254,9 +300,9 @@ export function SellerHomeMissionMode({
         setIsUpdating(true);
         try {
             await updateJobStatus('status', 'in_progress');
-            toast.success(currentLanguage === 'ar' ? 'تم بدء العمل' : 'Work started');
-        } catch (error: any) {
-            toast.error(currentLanguage === 'ar' ? 'فشل بدء العمل' : 'Failed to start work');
+            toast.success(currentLanguage === 'ar' ? 'بسم الله بدأنا العمل 🔧' : 'Work started');
+        } catch (error) {
+            toast.error(currentLanguage === 'ar' ? 'عفوًا، ما قدرنا نبدأ الشغل' : 'Failed to start work');
         } finally {
             setIsUpdating(false);
         }
@@ -285,6 +331,7 @@ export function SellerHomeMissionMode({
         const priceToUse = overridePrice !== undefined ? overridePrice : finalPrice;
 
         const updateData: any = {
+            status: 'seller_marked_complete',
             seller_marked_complete: true,
             seller_completion_date: new Date().toISOString(),
             completion_photos: photos,
@@ -299,8 +346,17 @@ export function SellerHomeMissionMode({
             const { error } = await (supabase as any).from('maintenance_requests').update(updateData).eq('id', activeJob.id);
             if (error) throw error;
 
-            toast.success(currentLanguage === 'ar' ? 'تم إرسال الإثباتات' : 'Photos submitted');
+            toast.success(currentLanguage === 'ar' ? 'وصلت إثباتاتك 👍' : 'Photos submitted');
             setShowPhotoProof(false);
+
+            // Notify buyer that we are awaiting their price approval
+            if (activeJob.buyer_id) {
+                sendNotification({
+                    userId: activeJob.buyer_id,
+                    type: 'price_approval_needed',
+                    contentId: activeJob.id,
+                });
+            }
 
             // Critical: show the code modal immediately so they can finalize with the buyer
             setTimeout(() => setShowCompletionCodeModal(true), 300);
@@ -309,8 +365,8 @@ export function SellerHomeMissionMode({
             await queryClient.invalidateQueries({ queryKey: ['seller-active-jobs'] });
             await queryClient.invalidateQueries({ queryKey: ['seller-scheduled-jobs'] });
         } catch (error: any) {
-            console.error('Photo proof submission error:', error);
-            toast.error(currentLanguage === 'ar' ? 'فشل إرسال الإثباتات' : 'Failed to submit photos');
+            if (import.meta.env.DEV) console.error('Photo proof submission error:', error);
+            toast.error(currentLanguage === 'ar' ? 'عفوًا، ما قدرنا نرفعها' : 'Failed to submit photos');
         } finally {
             setIsUpdating(false);
         }
@@ -328,12 +384,44 @@ export function SellerHomeMissionMode({
             if (error) throw error;
 
             if (!verified) {
-                toast.error(currentLanguage === 'ar' ? "الرمز غير صحيح" : "Incorrect code");
+                toast.error(currentLanguage === 'ar' ? "الرمز مو صحيح، شيك عليه" : "Incorrect code");
                 return;
             }
 
-            toast.success(currentLanguage === 'ar' ? "تم تأكيد إنجاز العمل!" : "Job completion confirmed!");
+            toast.success(currentLanguage === 'ar' ? "تم يا بطل، تأكد إنجازك للعمل! 🎊" : "Job completion confirmed!");
             setShowCompletionCodeModal(false);
+
+            // Capture celebration data before queries invalidate and job disappears
+            if (onJobCompleted) {
+                onJobCompleted({
+                    jobId: activeJob.id,
+                    buyerName: activeJob.buyer_name,
+                    amount: finalPrice || activeJob.budget || 0,
+                    title: activeJob.description,
+                    category: activeJob.service_type,
+                    location: activeJob.location,
+                    lat: activeJob.location_lat,
+                    lng: activeJob.location_lng,
+                });
+            }
+
+            // Notify buyer
+            if (activeJob.buyer_id) {
+                sendNotification({
+                    userId: activeJob.buyer_id,
+                    type: 'job_completed',
+                    contentId: activeJob.id,
+                });
+                // After completion, prompt for review shortly
+                setTimeout(() => {
+                    sendNotification({
+                        userId: activeJob.buyer_id!,
+                        type: 'review_prompt_reminder',
+                        contentId: activeJob.id,
+                    });
+                }, 1000 * 60 * 30); // Show review prompt after 30 mins
+            }
+
             queryClient.invalidateQueries({ queryKey: ['seller-active-job'] });
             queryClient.invalidateQueries({ queryKey: ['seller-active-jobs'] });
             queryClient.invalidateQueries({ queryKey: ['seller-scheduled-jobs'] });
@@ -368,6 +456,57 @@ export function SellerHomeMissionMode({
             exit={{ opacity: 0 }}
             className="animate-fade-in space-y-5 pb-36"
         >
+            {/* Focus Mode Header */}
+            {isFocusMode && (
+                <div className="flex items-center justify-between rounded-2xl bg-card border border-border/40 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                        {isFocusLocked ? (
+                            <Lock className="h-4 w-4 text-red-500" />
+                        ) : null}
+                        <span className={cn(
+                            "text-sm font-semibold",
+                            isFocusLocked ? "text-red-600 dark:text-red-400" : "text-primary",
+                            currentLanguage === 'ar' ? 'font-ar-body' : ''
+                        )}>
+                            {isFocusLocked
+                                ? (currentLanguage === 'ar' ? 'وضع التركيز مُقفل — الموعد قريب' : 'Focus locked — job starting soon')
+                                : (currentLanguage === 'ar' ? 'وضع التركيز' : 'Focus Mode')}
+                        </span>
+                    </div>
+                    {!isFocusLocked && onExitFocusMode && (
+                        <button
+                            onClick={onExitFocusMode}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-foreground"
+                        >
+                            <ArrowLeft className={cn("h-3.5 w-3.5", currentLanguage === 'ar' && 'rotate-180')} />
+                            {currentLanguage === 'ar' ? 'اطلع' : 'Exit'}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Pending Reschedule Approval (from buyer) */}
+            {pendingReschedule && !pendingReschedule.isOwnRequest && (
+                <RescheduleApprovalBanner
+                    currentLanguage={currentLanguage}
+                    requestId={activeJob.id}
+                    newDate={pendingReschedule.newDate}
+                    newTimeSlot={pendingReschedule.newTimeSlot ?? undefined}
+                    requesterName={pendingReschedule.requesterName}
+                    viewerRole="seller"
+                />
+            )}
+
+            {/* Pending Reschedule (own request - waiting for approval) */}
+            {pendingReschedule && pendingReschedule.isOwnRequest && (
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 dark:bg-primary/10 px-4 py-3 flex items-center gap-2.5">
+                    <CalendarClock className="h-4 w-4 text-primary shrink-0" />
+                    <p className={cn("text-sm text-primary font-medium", currentLanguage === 'ar' ? 'font-ar-body' : '')}>
+                        {currentLanguage === 'ar' ? 'طلب التأجيل بانتظار موافقة العميل' : 'Reschedule request waiting for customer approval'}
+                    </p>
+                </div>
+            )}
+
             {/* Mission Hero Card */}
             <MissionHeroCard
                 currentLanguage={currentLanguage}
@@ -417,7 +556,7 @@ export function SellerHomeMissionMode({
                                 if (activeJob.buyer_phone) {
                                     window.open(`tel:${activeJob.buyer_phone}`);
                                 } else {
-                                    toast.info(currentLanguage === 'ar' ? 'رقم العميل غير متوفر' : 'Customer phone not available');
+                                    toast.info(currentLanguage === 'ar' ? 'رقم الجوال مو متوفر' : 'Customer phone not available');
                                 }
                             }}
                         >
@@ -432,7 +571,7 @@ export function SellerHomeMissionMode({
                                 if (activeJob.buyer_phone) {
                                     window.open(`tel:${activeJob.buyer_phone}`);
                                 } else {
-                                    toast.info(currentLanguage === 'ar' ? 'رقم العميل غير متوفر' : 'Customer phone not available');
+                                    toast.info(currentLanguage === 'ar' ? 'رقم الجوال مو متوفر' : 'Customer phone not available');
                                 }
                             }}
                         >
@@ -558,3 +697,5 @@ export function SellerHomeMissionMode({
         </motion.div>
     );
 }
+
+

@@ -133,7 +133,7 @@ const LiveChat = ({ currentLanguage }: LiveChatProps) => {
         });
       }
     } catch (error) {
-      console.error('Error starting chat:', error);
+      if (import.meta.env.DEV) console.error('Error starting chat:', error);
       toast({
         title: currentLanguage === 'ar' ? 'خطأ' : 'Error',
         description: currentLanguage === 'ar' ? 'فشل بدء المحادثة' : 'Failed to start chat',
@@ -168,7 +168,7 @@ const LiveChat = ({ currentLanguage }: LiveChatProps) => {
         });
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      if (import.meta.env.DEV) console.error('Error sending message:', error);
       toast({
         title: currentLanguage === 'ar' ? 'خطأ' : 'Error',
         description: currentLanguage === 'ar' ? 'فشل إرسال الرسالة' : 'Failed to send message',

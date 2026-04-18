@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   AppNotification,
+  deleteNotification,
+  deleteAllNotifications,
   fetchUnreadNotificationCount,
   fetchUserNotifications,
   markAllNotificationsRead,
@@ -26,7 +28,6 @@ export function useNotifications({ includeList = true }: UseNotificationsOptions
     staleTime: STALE_TIME.DYNAMIC,
     gcTime: GC_TIME.STANDARD,
     placeholderData: (previous) => previous,
-    refetchOnWindowFocus: false,
   });
 
   const unreadCountQuery = useQuery({
@@ -36,7 +37,6 @@ export function useNotifications({ includeList = true }: UseNotificationsOptions
     staleTime: STALE_TIME.SHORT,
     gcTime: GC_TIME.SHORT,
     placeholderData: (previous) => previous,
-    refetchOnWindowFocus: false,
   });
 
   const markReadMutation = useMutation({
@@ -147,6 +147,93 @@ export function useNotifications({ includeList = true }: UseNotificationsOptions
     },
   });
 
+  // ── Delete single notification ──
+  const deleteMutation = useMutation({
+    mutationFn: deleteNotification,
+    onMutate: async (notificationId) => {
+      if (!user) return;
+
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: notificationQueryKeys.list(user.id) }),
+        queryClient.cancelQueries({ queryKey: notificationQueryKeys.unreadCount(user.id) }),
+      ]);
+
+      const previousNotifications = queryClient.getQueryData<AppNotification[]>(
+        notificationQueryKeys.list(user.id),
+      );
+      const previousUnreadCount = queryClient.getQueryData<number>(
+        notificationQueryKeys.unreadCount(user.id),
+      );
+
+      if (previousNotifications) {
+        const wasUnread = previousNotifications.some(
+          (n) => n.id === notificationId && !n.read,
+        );
+        queryClient.setQueryData(
+          notificationQueryKeys.list(user.id),
+          previousNotifications.filter((n) => n.id !== notificationId),
+        );
+        if (wasUnread && typeof previousUnreadCount === 'number') {
+          queryClient.setQueryData(
+            notificationQueryKeys.unreadCount(user.id),
+            Math.max(0, previousUnreadCount - 1),
+          );
+        }
+      }
+
+      return { previousNotifications, previousUnreadCount };
+    },
+    onError: (_error, _id, context) => {
+      if (!user || !context) return;
+      if (context.previousNotifications) {
+        queryClient.setQueryData(notificationQueryKeys.list(user.id), context.previousNotifications);
+      }
+      if (typeof context.previousUnreadCount === 'number') {
+        queryClient.setQueryData(notificationQueryKeys.unreadCount(user.id), context.previousUnreadCount);
+      }
+    },
+    onSettled: () => {
+      if (!user) return;
+      queryClient.invalidateQueries({ queryKey: notificationQueryKeys.list(user.id) });
+      queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount(user.id) });
+    },
+  });
+
+  // ── Delete all notifications ──
+  const deleteAllMutation = useMutation({
+    mutationFn: () => deleteAllNotifications(user!.id),
+    onMutate: async () => {
+      if (!user) return;
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: notificationQueryKeys.list(user.id) }),
+        queryClient.cancelQueries({ queryKey: notificationQueryKeys.unreadCount(user.id) }),
+      ]);
+      const previousNotifications = queryClient.getQueryData<AppNotification[]>(
+        notificationQueryKeys.list(user.id),
+      );
+      const previousUnreadCount = queryClient.getQueryData<number>(
+        notificationQueryKeys.unreadCount(user.id),
+      );
+      queryClient.setQueryData(notificationQueryKeys.list(user.id), []);
+      queryClient.setQueryData(notificationQueryKeys.unreadCount(user.id), 0);
+      return { previousNotifications, previousUnreadCount };
+    },
+    onError: (_error, _variables, context) => {
+      if (!user || !context) return;
+      if (context.previousNotifications) {
+        queryClient.setQueryData(notificationQueryKeys.list(user.id), context.previousNotifications);
+      }
+      if (typeof context.previousUnreadCount === 'number') {
+        queryClient.setQueryData(notificationQueryKeys.unreadCount(user.id), context.previousUnreadCount);
+      }
+    },
+    onSettled: () => {
+      if (!user) return;
+      queryClient.invalidateQueries({ queryKey: notificationQueryKeys.list(user.id) });
+      queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount(user.id) });
+    },
+  });
+
   const notifications = notificationsQuery.data || [];
   const fallbackUnreadCount = useMemo(
     () => notifications.filter((notification) => !notification.read).length,
@@ -162,7 +249,11 @@ export function useNotifications({ includeList = true }: UseNotificationsOptions
     error: includeList ? notificationsQuery.error || unreadCountQuery.error : unreadCountQuery.error,
     markAsRead: markReadMutation.mutateAsync,
     markAllAsRead: markAllReadMutation.mutateAsync,
+    deleteOne: deleteMutation.mutateAsync,
+    deleteAll: deleteAllMutation.mutateAsync,
     isMarkingRead: markReadMutation.isPending,
     isMarkingAllRead: markAllReadMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isDeletingAll: deleteAllMutation.isPending,
   };
 }

@@ -48,7 +48,13 @@ export const signupSchema = z.object({
   password: passwordSchema,
   confirmPassword: z.string(),
   phone: z.string()
-    .regex(/^[\d\+\-]+$/, errors.phone.invalid)
+    .refine(val => {
+      if (!val || val === '') return true;
+      // Strip spaces, dashes, parens
+      const cleaned = val.replace(/[\s\-()]/g, '');
+      // Accept: +966XXXXXXXXX, 05XXXXXXXX, 5XXXXXXXX
+      return /^(\+966[0-9]{9}|05[0-9]{8}|5[0-9]{8})$/.test(cleaned);
+    }, errors.phone.invalid)
     .optional()
     .or(z.literal('')),
   companyName: z.string()

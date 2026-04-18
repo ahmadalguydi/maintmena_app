@@ -336,19 +336,19 @@ export function getComponent(name: string): ComponentMetadata | null {
     const metadata = COMPONENT_REGISTRY[name];
 
     if (!metadata) {
-        console.warn(`[ComponentRegistry] Component "${name}" not found in registry`);
+        if (import.meta.env.DEV) console.warn(`[ComponentRegistry] Component "${name}" not found in registry`);
         return null;
     }
 
     if (metadata.status === 'deprecated') {
-        console.warn(
+        if (import.meta.env.DEV) console.warn(
             `[ComponentRegistry] ⚠️ Component "${name}" is DEPRECATED.`,
             metadata.deprecationInfo?.migrateFrom || 'Please migrate to a newer component.'
         );
     }
 
     if (metadata.status === 'experimental') {
-        console.warn(
+        if (import.meta.env.DEV) console.warn(
             `[ComponentRegistry] 🧪 Component "${name}" is EXPERIMENTAL. API may change.`
         );
     }

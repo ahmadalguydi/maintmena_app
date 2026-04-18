@@ -36,7 +36,7 @@ export const ContactSubmissionsManager = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching submissions:', error);
+      if (import.meta.env.DEV) console.error('Error fetching submissions:', error);
       return;
     }
 
@@ -62,7 +62,7 @@ export const ContactSubmissionsManager = () => {
         setSelectedSubmission({ ...selectedSubmission, status });
       }
     } catch (error) {
-      console.error('Error updating status:', error);
+      if (import.meta.env.DEV) console.error('Error updating status:', error);
       toast({
         title: 'Error',
         description: 'Failed to update status',

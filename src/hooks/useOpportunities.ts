@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -11,6 +11,7 @@ import {
 } from '@/lib/maintenanceRequest';
 import { isRequestOpportunityVisible } from '@/lib/opportunityVisibility';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
+import { getCategoryIcon } from '@/lib/serviceCategories';
 
 export interface Opportunity {
   id: string;
@@ -60,9 +61,13 @@ const CATEGORY_ICONS: Record<string, string> = {
   general: '🛠️',
 };
 
+// Persist declined IDs across remounts so they don't reappear on navigation
+const declinedIdsCache = new Set<string>();
+
 export function useOpportunities(): UseOpportunitiesResult {
   const { user } = useAuth();
-  const [declinedIds, setDeclinedIds] = useState<string[]>([]);
+  const queryClient = useQueryClient();
+  const [declinedIds, setDeclinedIds] = useState<string[]>(() => Array.from(declinedIdsCache));
 
   const { data, isLoading, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['seller-opportunities', user?.id],
@@ -134,7 +139,7 @@ export function useOpportunities(): UseOpportunitiesResult {
             offerId: offer.id,
             type: 'request' as const,
             category: serviceType,
-            categoryIcon: CATEGORY_ICONS[categoryKey] || CATEGORY_ICONS.general,
+            categoryIcon: getCategoryIcon(serviceType) || CATEGORY_ICONS[categoryKey] || CATEGORY_ICONS.general,
             title: formatServiceTitle(serviceType),
             subCategory: request.title ? request.title.split(' - ').pop() : undefined,
             description: request.description
@@ -182,14 +187,16 @@ export function useOpportunities(): UseOpportunitiesResult {
     [data?.opportunities, declinedIds],
   );
 
-  const declineOpportunity = (id: string) => {
+  const declineOpportunity = useCallback((id: string) => {
+    // Persist in module-level cache so it survives remounts
+    declinedIdsCache.add(id);
     // Optimistically hide from UI immediately
     setDeclinedIds((previous) => [...previous, id]);
 
     // Persist the decline to the DB so the offer is marked and dispatch engine skips this seller
     const opportunity = data?.opportunities.find((o) => o.id === id);
     if (opportunity?.offerId) {
-      void (supabase as any)
+      (supabase as any)
         .from('job_dispatch_offers')
         .update({
           offer_status: 'declined',
@@ -197,9 +204,19 @@ export function useOpportunities(): UseOpportunitiesResult {
           response_type: 'decline',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', opportunity.offerId);
+        .eq('id', opportunity.offerId)
+        .then(({ error }: { error: any }) => {
+          if (error) {
+            console.error('[declineOpportunity] Failed to persist decline:', error);
+          } else {
+            // DB succeeded — clear from local cache so future refetches exclude it server-side
+            declinedIdsCache.delete(id);
+            // Invalidate so next refetch gets clean server state
+            queryClient.invalidateQueries({ queryKey: ['seller-opportunities'] });
+          }
+        });
     }
-  };
+  }, [data?.opportunities, queryClient]);
 
   return {
     opportunities,

@@ -199,15 +199,22 @@ export const EditProfile = ({ currentLanguage }: EditProfileProps) => {
 
   const confirmTypeSwitch = async () => {
     if (!showTypeConfirm || !user) return;
+    const previousType = accountType;
     setAccountType(showTypeConfirm);
     // Persist buyer_type which is how the schema tracks individual vs company
-    await (supabase as any)
+    const { error } = await (supabase as any)
       .from('profiles')
       .update({
         buyer_type: showTypeConfirm,
         updated_at: new Date().toISOString(),
       })
       .eq('id', user.id);
+    if (error) {
+      setAccountType(previousType);
+      toast.error(isAr ? 'فشل تغيير نوع الحساب' : 'Failed to switch account type');
+      setShowTypeConfirm(null);
+      return;
+    }
     toast.success(
       isAr
         ? `تم التبديل إلى ${showTypeConfirm === 'company' ? 'شركة' : 'فرد'}`
@@ -249,7 +256,7 @@ export const EditProfile = ({ currentLanguage }: EditProfileProps) => {
           ...(accountType === 'company' && {
             company_name: formData.company_name || null,
             company_description: formData.company_description || null,
-            years_of_experience: formData.years_of_experience ? parseInt(formData.years_of_experience) : null,
+            years_of_experience: formData.years_of_experience && !isNaN(parseInt(formData.years_of_experience)) ? parseInt(formData.years_of_experience) : null,
             crew_size_range: formData.crew_size_range || null,
             company_address: formData.company_address || null,
             cr_number: formData.cr_number || null,

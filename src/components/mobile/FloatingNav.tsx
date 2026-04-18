@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useRole } from '@/contexts/RoleContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useKeyboardAvoidance } from '@/hooks/useKeyboardAvoidance';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,6 +90,8 @@ export const FloatingNav = ({
   const { vibrate } = useHaptics();
   const { currentRole } = useRole();
   const { user, userType } = useAuth();
+  const { isKeyboardVisible } = useKeyboardAvoidance();
+  const isDark = useDarkMode();
 
   // Fetch unread message count for badge on Messages tab
   const { data: unreadMessages = 0 } = useQuery({
@@ -106,8 +110,8 @@ export const FloatingNav = ({
     staleTime: STALE_TIME.DYNAMIC,
   });
 
-  // Only show seller tabs if authenticated as seller
-  const isLoggedInSeller = user && userType === 'seller';
+  // Show seller tabs if authenticated as seller, or if admin/dual-role browsing as seller
+  const isLoggedInSeller = user && (userType === 'seller' || currentRole === 'seller');
 
   // Determine which tabs to show
   const tabs = isLoggedInSeller ? SELLER_TABS : BUYER_TABS;
@@ -134,10 +138,20 @@ export const FloatingNav = ({
   const isSettingsPage = location.pathname === '/app/settings';
   const isAdminPage = location.pathname.startsWith('/app/admin/');
 
-  const shouldHideNav = isMessageThreadPage || isSellerJobDetailPage || isBuyerJobDetailPage || isVendorProfilePage || isHelpPage || isRequestDetailPage || isSettingsPage || isAdminPage;
+  const shouldHideNav =
+    isKeyboardVisible ||
+    isMessageThreadPage ||
+    isSellerJobDetailPage ||
+    isBuyerJobDetailPage ||
+    isVendorProfilePage ||
+    isHelpPage ||
+    isRequestDetailPage ||
+    isSettingsPage ||
+    isAdminPage;
 
   return (
     <motion.nav
+      data-native-bottom-surface={isDark ? '#121212' : '#ffffff'}
       className="fixed bottom-0 left-0 right-0 z-50 pb-safe"
       initial={false}
       animate={{

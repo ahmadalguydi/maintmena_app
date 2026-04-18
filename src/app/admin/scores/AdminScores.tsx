@@ -39,7 +39,7 @@ export const AdminScores = ({ currentLanguage }: AdminScoresProps) => {
                 .eq('user_type', 'seller');
 
             if (error) {
-                console.error('Error fetching sellers:', error);
+                if (import.meta.env.DEV) console.error('Error fetching sellers:', error);
                 return [];
             }
             
@@ -127,9 +127,14 @@ export const AdminScores = ({ currentLanguage }: AdminScoresProps) => {
 
     const t = content[currentLanguage];
 
-    const filteredSellers = sellers?.filter(seller =>
-        seller.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredSellers = sellers?.filter(seller => {
+        if (!searchQuery) return true;
+        const q = searchQuery.toLowerCase();
+        return (
+            seller.full_name?.toLowerCase().includes(q) ||
+            (seller as any).company_name?.toLowerCase().includes(q)
+        );
+    });
 
     const getRatingColor = (rating: number) => {
         if (rating >= 4.5) return 'text-green-500';
@@ -149,12 +154,15 @@ export const AdminScores = ({ currentLanguage }: AdminScoresProps) => {
             <div className="px-4 py-4 space-y-4">
                 {/* Search */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Search className={cn(
+                        'absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground',
+                        isArabic ? 'right-3' : 'left-3'
+                    )} />
                     <Input
                         placeholder={t.search}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 rounded-full"
+                        className={cn('rounded-full', isArabic ? 'pr-10 text-right' : 'pl-10')}
                     />
                 </div>
 
