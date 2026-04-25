@@ -1,10 +1,27 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
+const APP_ORIGIN = Deno.env.get('APP_ORIGIN') ?? 'https://maintmena.com';
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const INTERNAL_BACKFILL_SECRET = Deno.env.get('INTERNAL_BACKFILL_SECRET');
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Origin': APP_ORIGIN,
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-backfill-secret',
 };
+
+function isAuthorizedInternal(req: Request): boolean {
+  const authHeader = req.headers.get('authorization') ?? '';
+  const bearer = authHeader.toLowerCase().startsWith('bearer ')
+    ? authHeader.slice('bearer '.length)
+    : '';
+  const secretHeader = req.headers.get('x-internal-backfill-secret') ?? '';
+
+  return (
+    (!!SUPABASE_SERVICE_ROLE_KEY && bearer === SUPABASE_SERVICE_ROLE_KEY) ||
+    (!!INTERNAL_BACKFILL_SECRET && secretHeader === INTERNAL_BACKFILL_SECRET)
+  );
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,6 +29,13 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (!isAuthorizedInternal(req)) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

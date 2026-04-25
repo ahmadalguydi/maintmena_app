@@ -25,7 +25,7 @@ export const RoleSelection = ({ currentLanguage, onToggle }: RoleSelectionProps)
       subheading: 'Let us help you get started',
       buyer: {
         title: 'I need a service',
-        description: 'Post jobs, get quotes from trusted pros'
+        description: 'Submit a request and get matched with a provider'
       },
       seller: {
         title: 'I provide services',
@@ -63,14 +63,11 @@ export const RoleSelection = ({ currentLanguage, onToggle }: RoleSelectionProps)
     if (!selectedRole) return;
     setIntendedRole(selectedRole);
 
-    // Lazy Registration: Buyers go directly to explore (guest mode)
-    // Sellers go to alpha welcome page (special benefits)
     if (selectedRole === 'buyer') {
       localStorage.setItem('guestMode', 'true');
       navigate('/app/onboarding/signup');
     } else {
-      // Alpha run: send sellers to special alpha welcome instead of plan selection
-      navigate('/app/onboarding/alpha-seller');
+      navigate('/app/onboarding/signup');
     }
   };
 

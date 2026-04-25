@@ -1,10 +1,10 @@
-﻿import { Bell, MessageCircle, MapPin, UserPlus } from 'lucide-react';
+﻿import { Bell, MapPin, UserPlus } from 'lucide-react';
 import { getGreeting } from '@/lib/smartTime';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -18,7 +18,6 @@ interface AppHeaderProps {
   userName?: string;
   location?: string;
   showNotifications?: boolean;
-  showMessages?: boolean;
   onAuthRequired?: () => void;
 }
 
@@ -28,19 +27,13 @@ export const AppHeader = ({
   userName,
   location = 'Riyadh',
   showNotifications = true,
-  showMessages = true,
   onAuthRequired
 }: AppHeaderProps) => {
   const navigate = useNavigate();
-  const routeLocation = useLocation();
-  const { user, userType } = useAuth();
+  const { user } = useAuth();
   const { profile, getAvatarUrl, isLoading: isProfileLoading } = useProfile(user?.id);
   const { unreadCount } = useNotifications({ includeList: false });
   const isDark = useDarkMode();
-
-  // Determine current route context (buyer or seller) based on URL
-  const isInSellerRoutes = routeLocation.pathname.startsWith('/app/seller');
-  const currentRouteRole = isInSellerRoutes ? 'seller' : 'buyer';
 
   const isGuestBuyer = !user;
 
@@ -138,7 +131,7 @@ export const AppHeader = ({
           )}
         </div>
 
-        {/* Right: Location + Notifications + Messages */}
+        {/* Right: Location + Notifications */}
         <div className="flex items-center gap-2">
           {/* Location Pill */}
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/30">
@@ -183,29 +176,6 @@ export const AppHeader = ({
             </button>
           )}
 
-          {/* Messages */}
-          {showMessages && (
-            <button
-              onClick={() => {
-                if (!user && onAuthRequired) {
-                  onAuthRequired();
-                } else {
-                  // Navigate based on current route context, not userType
-                  const messagesRoute = currentRouteRole === 'seller'
-                    ? '/app/seller/messages'
-                    : '/app/buyer/messages';
-                  navigate(messagesRoute);
-                }
-              }}
-              className={cn(
-                'relative p-2 rounded-full min-h-[44px] min-w-[44px]',
-                'hover:bg-muted/50 transition-colors',
-                'active:scale-95 flex items-center justify-center'
-              )}
-            >
-              <MessageCircle size={20} className="text-foreground" />
-            </button>
-          )}
           </div>
         </div>
       </div>

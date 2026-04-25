@@ -44,6 +44,8 @@ interface RequestSummaryCardProps {
   className?: string;
   children?: React.ReactNode;
   urgentCta?: { label: string; sublabel?: string; onClick: () => void };
+  /** Force dark-mode map rendering even when the app is in light mode. */
+  forceDark?: boolean;
 }
 
 // Maps statusColor → visual tokens for the status pill/strip
@@ -204,6 +206,7 @@ export const RequestSummaryCard = ({
   className,
   children,
   urgentCta,
+  forceDark,
 }: RequestSummaryCardProps) => {
   const isRTL = currentLanguage === 'ar';
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -249,6 +252,7 @@ export const RequestSummaryCard = ({
           locationLabel={location}
           heightClassName="h-36"
           className="rounded-none border-0 shadow-none"
+          forceDark={forceDark}
         />
       </div>
 

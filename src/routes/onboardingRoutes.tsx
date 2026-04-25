@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
-import { Route } from 'react-router-dom';
-import { RouteLoader, lazyNamedRoute, lazyRoute } from './routeLoader';
+import { Navigate, Route } from 'react-router-dom';
+import { RouteLoader, lazyNamedRoute } from './routeLoader';
 
 export interface OnboardingRouteProps {
     currentLanguage: 'en' | 'ar';
@@ -19,8 +19,6 @@ const SignupSuccess = lazyNamedRoute(() => import('@/app/shared/SignupSuccess'),
 const PermissionCamera = lazyNamedRoute(() => import('@/app/shared/PermissionCamera'), 'PermissionCamera');
 const PermissionLocation = lazyNamedRoute(() => import('@/app/shared/PermissionLocation'), 'PermissionLocation');
 const PermissionNotifications = lazyNamedRoute(() => import('@/app/shared/PermissionNotifications'), 'PermissionNotifications');
-const AlphaSellerWelcome = lazyNamedRoute<{ currentLanguage: 'en' | 'ar'; onToggle: () => void }>(() => import('@/app/onboarding/AlphaSellerWelcome'), 'AlphaSellerWelcome');
-const PlanSelection = lazyRoute(() => import('@/components/PlanSelection'));
 
 export function onboardingRoutes({ currentLanguage, setCurrentLanguage }: OnboardingRouteProps) {
     const handleToggle = () => setCurrentLanguage(currentLanguage === 'en' ? 'ar' : 'en');
@@ -43,33 +41,13 @@ export function onboardingRoutes({ currentLanguage, setCurrentLanguage }: Onboar
                 </Suspense>
             } />
             <Route path="/app/onboarding/alpha-seller" element={
-                <Suspense fallback={<RouteLoader />}>
-                    <AlphaSellerWelcome currentLanguage={currentLanguage} onToggle={handleToggle} />
-                </Suspense>
+                <Navigate to="/app/onboarding/signup" replace />
             } />
             <Route path="/app/onboarding/buyer-plan-selection" element={
-                <Suspense fallback={<RouteLoader />}>
-                    <PlanSelection
-                        currentLanguage={currentLanguage}
-                        onSelectPlan={(plan, isAnnual) => {
-                            localStorage.setItem('selectedPlan', plan);
-                            localStorage.setItem('selectedBilling', isAnnual ? 'annual' : 'monthly');
-                        }}
-                        userType="buyer"
-                    />
-                </Suspense>
+                <Navigate to="/app/onboarding/signup" replace />
             } />
             <Route path="/app/onboarding/seller-plan-selection" element={
-                <Suspense fallback={<RouteLoader />}>
-                    <PlanSelection
-                        currentLanguage={currentLanguage}
-                        onSelectPlan={(plan, isAnnual) => {
-                            localStorage.setItem('selectedPlan', plan);
-                            localStorage.setItem('selectedBilling', isAnnual ? 'annual' : 'monthly');
-                        }}
-                        userType="seller"
-                    />
-                </Suspense>
+                <Navigate to="/app/onboarding/signup" replace />
             } />
             <Route path="/app/onboarding/login" element={
                 <Suspense fallback={<RouteLoader />}>

@@ -71,7 +71,7 @@ export const OnboardingSlides = () => {
   const completeOnboarding = () => {
     localStorage.setItem('hasSeenOnboarding', 'true');
     localStorage.setItem('currentLanguage', language);
-    navigate(intendedRole === 'seller' ? '/app/onboarding/seller-plan-selection' : '/app/onboarding/signup');
+    navigate('/app/onboarding/signup');
   };
 
   const handleNext = () => {

@@ -31,7 +31,7 @@ export function isTabSwitch(from: string, to: string): boolean {
     // Same depth and both are "home" level routes
     if (fromParts.length === toParts.length && fromParts.length <= 3) {
         // /app/buyer/home vs /app/buyer/explore = tab switch
-        // /app/seller/home vs /app/seller/marketplace = tab switch
+        // /app/seller/home vs another seller tab = tab switch
         return fromParts[0] === toParts[0] && fromParts[1] === toParts[1];
     }
     return false;

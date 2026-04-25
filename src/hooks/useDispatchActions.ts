@@ -62,11 +62,13 @@ export function useDispatchActions() {
         options?: {
             isScheduled?: boolean;
             scheduledFor?: string | null;
+            excludeSellerIds?: string[];
         }
     ): Promise<DispatchResult> => {
         try {
             const isScheduled = options?.isScheduled ?? false;
             const scheduledFor = options?.scheduledFor ?? null;
+            const excludedSellerIds = new Set(options?.excludeSellerIds ?? []);
 
             // Validate coordinates
             if (buyerLat != null && buyerLng != null) {
@@ -104,6 +106,8 @@ export function useDispatchActions() {
             const categoryNorm = normalize(category);
 
             const eligible = sellers.filter((s: any) => {
+                if (excludedSellerIds.has(s.id)) return false;
+
                 if (buyerLat != null && buyerLng != null) {
                     const radiusKm: number | null = s.service_radius_km ?? null;
                     if (radiusKm != null && radiusKm > 0 && s.location_lat && s.location_lng) {

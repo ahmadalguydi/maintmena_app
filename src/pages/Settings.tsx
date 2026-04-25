@@ -69,7 +69,7 @@ const Settings = ({
   const [notifications, setNotifications] = useState({
     email_updates: true,
     weekly_digest: true,
-    tender_alerts: true
+    job_alerts: true
   });
   const [pwdForm, setPwdForm] = useState({
     password: '',
@@ -389,8 +389,8 @@ const Settings = ({
       emailUpdatesDesc: 'Receive updates about new features',
       weeklyDigest: 'Weekly Digest',
       weeklyDigestDesc: 'Get a summary of the week',
-      tenderAlerts: 'Tender Alerts',
-      tenderAlertsDesc: 'Get notified about new tenders',
+      jobAlerts: 'Job Alerts',
+      jobAlertsDesc: 'Get notified about new maintenance jobs',
       security: 'Security',
       securityDesc: 'Manage your account security',
       changePassword: 'Change Password',
@@ -418,8 +418,8 @@ const Settings = ({
       emailUpdatesDesc: 'تلقي تحديثات حول الميزات الجديدة',
       weeklyDigest: 'ملخص أسبوعي',
       weeklyDigestDesc: 'احصل على ملخص الأسبوع',
-      tenderAlerts: 'تنبيهات العطاءات',
-      tenderAlertsDesc: 'احصل على إشعارات حول العطاءات الجديدة',
+      jobAlerts: 'Job Alerts',
+      jobAlertsDesc: 'Get notified about new maintenance jobs',
       security: 'الأمان',
       securityDesc: 'إدارة أمان حسابك',
       changePassword: 'تغيير كلمة المرور',
@@ -1014,12 +1014,12 @@ const Settings = ({
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>{t.tenderAlerts}</Label>
-                    <p className="text-sm text-muted-foreground">{t.tenderAlertsDesc}</p>
+                    <Label>{t.jobAlerts}</Label>
+                    <p className="text-sm text-muted-foreground">{t.jobAlertsDesc}</p>
                   </div>
-                  <Switch checked={notifications.tender_alerts} onCheckedChange={checked => setNotifications({
+                  <Switch checked={notifications.job_alerts} onCheckedChange={checked => setNotifications({
                   ...notifications,
-                  tender_alerts: checked
+                  job_alerts: checked
                 })} />
                 </div>
               </CardContent>

@@ -13,7 +13,7 @@ export const lazyRoute = <TProps,>(loader: LazyLoader<TProps>) => {
   return Component;
 };
 
-export const lazyNamedRoute = <TProps, TModule extends Record<string, unknown>>(
+export const lazyNamedRoute = <TProps, TModule extends Record<string, unknown> = Record<string, unknown>>(
   loader: () => Promise<TModule>,
   exportName: keyof TModule,
 ) =>

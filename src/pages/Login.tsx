@@ -139,7 +139,7 @@ const Login = ({
         title: 'Your Dashboard Snapshot',
         stats: [{
           icon: Briefcase,
-          label: 'New Tenders',
+          label: 'New Requests',
           value: '12',
           change: '+3'
         }, {
@@ -160,16 +160,16 @@ const Login = ({
         }]
       },
       weeklyBrief: {
-        title: 'Weekly Intelligence Brief',
-        highlights: ['Major petrochemical tender opens in UAE - $45M maintenance contract', 'New safety regulations affecting HVAC maintenance in Saudi Arabia', 'Qatar utility company extends deadline for electrical maintenance bids', 'Oil & gas sector seeing 23% increase in predictive maintenance adoption']
+        title: 'Service Activity Snapshot',
+        highlights: ['Track active maintenance requests', 'Review assigned jobs and service updates', 'Check urgent customer messages', 'Keep your profile ready for dispatch']
       },
       quickActions: {
         title: 'Quick Actions',
-        actions: ['View Full Brief', 'Check Tender Alerts', 'Update Profile', 'Download Reports']
+        actions: ['View Activity', 'Check Job Alerts', 'Update Profile', 'View Reports']
       },
       cta: {
         primary: 'Go to Dashboard',
-        secondary: 'Read Weekly Brief'
+        secondary: 'View Activity'
       },
       emailNotVerified: 'Email Not Verified',
       emailNotVerifiedDesc: 'Please check your email and click the verification link to activate your account. You can also sign in without verification - your account will be fully activated once you verify.',
@@ -207,7 +207,7 @@ const Login = ({
       },
       weeklyBrief: {
         title: 'موجز المعلومات الأسبوعي',
-        highlights: ['مناقصة بتروكيماوية كبرى في الإمارات - عقد صيانة بقيمة 45 مليون دولار', 'لوائح السلامة الجديدة المؤثرة على صيانة التكييف في السعودية', 'شركة مرافق قطرية تمدد موعد عطاءات صيانة الكهرباء', 'قطاع النفط والغاز يشهد زيادة 23% في اعتماد الصيانة التنبؤية']
+        highlights: ['Track active maintenance requests', 'Review assigned jobs and service updates', 'Check urgent customer messages', 'Keep your profile ready for dispatch']
       },
       quickActions: {
         title: 'إجراءات سريعة',
@@ -319,7 +319,7 @@ const Login = ({
                   {currentLanguage === 'en' ? 'New to MaintMENA?' : 'جديد في مينت مينا؟'}
                 </h3>
                 <p className="text-sm text-ink/70 mb-4">
-                  {currentLanguage === 'en' ? 'Join thousands of buyers and sellers connecting on our trusted platform. Get started in minutes.' : 'انضم لآلاف المشترين والبائعين المتواصلين على منصتنا الموثوقة. ابدأ خلال دقائق.'}
+                  {currentLanguage === 'en' ? 'Join customers and service pros using MaintMENA for fast maintenance dispatch. Get started in minutes.' : 'انضم لآلاف المشترين والبائعين المتواصلين على منصتنا الموثوقة. ابدأ خلال دقائق.'}
                 </p>
                 <Link to="/signup-choice">
                   <Button variant="default" className="w-full">

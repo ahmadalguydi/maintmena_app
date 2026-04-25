@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
 import { getGreeting } from '@/lib/smartTime';
-import { Bell, MessageCircle, Building2, User } from 'lucide-react';
+import { Bell, Building2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface SellerHomeHeaderProps {
     currentLanguage: 'en' | 'ar';
@@ -14,6 +15,7 @@ interface SellerHomeHeaderProps {
 export function SellerHomeHeader({ currentLanguage }: SellerHomeHeaderProps) {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { unreadCount: notificationCount } = useNotifications({ includeList: false });
 
     const greeting = getGreeting(currentLanguage);
 
@@ -31,19 +33,6 @@ export function SellerHomeHeader({ currentLanguage }: SellerHomeHeaderProps) {
         },
         enabled: !!user?.id,
         staleTime: 60_000, // 1 minute
-    });
-
-    // Fetch unread notification count
-    const { data: notificationCount = 0 } = useQuery({
-        queryKey: ['seller-notification-count', user?.id],
-        queryFn: async () => {
-            if (!user?.id) return 0;
-            // This would query a notifications table in production
-            // For now, return 0
-            return 2; // Mock count for visual
-        },
-        enabled: !!user?.id,
-        staleTime: 60000,
     });
 
     const displayName = profile?.company_name || profile?.full_name?.split(' ')[0] || 'Seller';
@@ -95,11 +84,11 @@ export function SellerHomeHeader({ currentLanguage }: SellerHomeHeaderProps) {
                 </div>
             </div>
 
-            {/* Right: Notifications + Messages */}
+            {/* Right: Notifications */}
             <div className="flex items-center gap-2">
                 <motion.button
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/app/seller/messages')}
+                    onClick={() => navigate('/app/notifications')}
                     className="relative p-2.5 rounded-full bg-muted/50 hover:bg-muted transition-colors"
                 >
                     <Bell size={20} className="text-foreground" />
@@ -108,13 +97,6 @@ export function SellerHomeHeader({ currentLanguage }: SellerHomeHeaderProps) {
                             {notificationCount > 9 ? '9+' : notificationCount}
                         </span>
                     )}
-                </motion.button>
-                <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/app/seller/messages')}
-                    className="p-2.5 rounded-full bg-muted/50 hover:bg-muted transition-colors"
-                >
-                    <MessageCircle size={20} className="text-foreground" />
                 </motion.button>
             </div>
         </div>

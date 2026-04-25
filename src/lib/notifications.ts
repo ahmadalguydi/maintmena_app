@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { executeSupabaseQuery } from '@/lib/supabaseQuery';
 
 export type NotificationLanguage = 'en' | 'ar';
 export type NotificationUserType = 'buyer' | 'seller';
@@ -18,8 +17,6 @@ export type AppNotificationType =
   | 'job_resolution_progress'
   | 'job_resolved'
   | 'job_cancelled'
-  | 'booking_response'
-  | 'quote_revision_requested'
   | 'warranty_nudge'
   | 'auto_close'
   // ── Seller engagement ───────────────────────────────────────────────
@@ -51,6 +48,16 @@ export interface NotificationData {
   notification_type: string;
   content_id?: string | null;
 }
+
+export interface LegacyNotificationData {
+  userId: string;
+  type: string;
+  contentId?: string | null;
+  title?: string;
+  message?: string;
+}
+
+type SendNotificationInput = NotificationData | LegacyNotificationData;
 
 export interface NotificationPresentation {
   title: string;
@@ -261,26 +268,6 @@ export const NOTIFICATION_COPY: Record<string, NotificationCopyEntry> = {
     en: { title: 'How was the service?', message: "Your honest review helps others find great pros. Takes 10 seconds ⚡" },
     ar: { title: 'كيف كانت الخدمة؟', message: 'تقييمك الصادق يساعد غيرك يختار الفني الصح. ما يأخذ إلا ثواني ⚡' },
   },
-  booking_response: {
-    icon: '📋',
-    category: 'job',
-    bgColor: 'bg-primary/10',
-    iconColor: 'text-primary',
-    isActionable: true,
-    actionLabel: { en: 'View', ar: 'عرض' },
-    en: { title: 'Booking update', message: 'A provider responded to your booking. See the latest.' },
-    ar: { title: 'تحديث حجزك', message: 'مقدم الخدمة رد على حجزك. شوف وش صار.' },
-  },
-  quote_revision_requested: {
-    icon: '📝',
-    category: 'alert',
-    bgColor: 'bg-amber-500/10',
-    iconColor: 'text-amber-600',
-    isActionable: true,
-    actionLabel: { en: 'Revise', ar: 'عدّل' },
-    en: { title: 'Quote revision requested', message: 'The buyer wants a change to your quote. Update it to keep the deal moving.' },
-    ar: { title: 'طلب تعديل على العرض', message: 'العميل طلب تعديل على عرضك. عدّله عشان ما يفوتك.' },
-  },
   warranty_nudge: {
     icon: '🛡️',
     category: 'alert',
@@ -329,8 +316,8 @@ export const getNotificationPresentation = (
 
   // Always prefer the localized copy — the DB may store English even for Arabic users
   return {
-    title: copy[language].title,
-    message: copy[language].message,
+    title: notification.title || copy[language].title,
+    message: notification.message || copy[language].message,
     icon: copy.icon,
     category: copy.category,
     bgColor: copy.bgColor,
@@ -354,10 +341,6 @@ export const getNotificationTarget = (
     return userType === 'buyer' ? '/app/buyer/messages' : '/app/seller/messages';
   }
   if (type === 'job_dispatched') return '/app/seller/home';
-  if (type === 'booking_response') {
-    return userType === 'buyer' ? '/app/buyer/home' : '/app/seller/home';
-  }
-  if (type === 'quote_revision_requested') return '/app/seller/home';
   if (type === 'warranty_nudge' || type === 'auto_close') {
     return userType === 'buyer' ? '/app/buyer/activity' : '/app/seller/home';
   }
@@ -422,7 +405,8 @@ export async function fetchUnreadNotificationCount(userId: string): Promise<numb
     .from('notifications')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .eq('read', false);
+    .eq('read', false)
+    .neq('notification_type', 'new_message');
 
   if (error) {
     if (import.meta.env.DEV) {
@@ -446,7 +430,8 @@ export async function markAllNotificationsRead(userId: string) {
     .from('notifications')
     .update({ read: true })
     .eq('user_id', userId)
-    .eq('read', false);
+    .eq('read', false)
+    .neq('notification_type', 'new_message');
 
   if (error) {
     throw error;
@@ -461,18 +446,46 @@ export async function deleteNotification(notificationId: string) {
 }
 
 export async function deleteAllNotifications(userId: string) {
-  const { error } = await supabase.from('notifications').delete().eq('user_id', userId);
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .eq('user_id', userId)
+    .neq('notification_type', 'new_message');
   if (error) {
     throw error;
   }
 }
 
+const normalizeNotificationInput = (input: SendNotificationInput): NotificationData => {
+  if ('user_id' in input) {
+    return {
+      user_id: input.user_id,
+      title: input.title,
+      message: input.message,
+      notification_type: input.notification_type,
+      content_id: input.content_id ?? null,
+    };
+  }
+
+  const language = (localStorage.getItem('preferredLanguage') || localStorage.getItem('currentLanguage') || 'en') as NotificationLanguage;
+  const copy = NOTIFICATION_COPY[input.type];
+
+  return {
+    user_id: input.userId,
+    title: input.title || copy?.[language]?.title || 'Request update',
+    message: input.message || copy?.[language]?.message || 'There is a new update on your request.',
+    notification_type: input.type,
+    content_id: input.contentId ?? null,
+  };
+};
+
 /**
  * Insert a notification with duplicate prevention.
- * Checks if a similar notification was sent in the last 5 minutes to prevent duplicates.
+ * Legacy camelCase callers are normalized here while older screens are retired.
  */
-export async function sendNotification(data: NotificationData): Promise<boolean> {
+export async function sendNotification(input: SendNotificationInput): Promise<boolean> {
   try {
+    const data = normalizeNotificationInput(input);
     const { data: response, error } = await supabase.functions.invoke<{
       duplicate?: boolean;
     }>('send-notification', {

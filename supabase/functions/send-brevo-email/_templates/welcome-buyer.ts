@@ -78,12 +78,12 @@ export const getWelcomeBuyerTemplate = (language: 'en' | 'ar', data: Record<stri
             <p>As a buyer on MaintMENA, you can:</p>
             <ul>
               <li>Post maintenance requests and projects</li>
-              <li>Receive quotes from qualified service providers</li>
-              <li>Compare offers and choose the best one</li>
-              <li>Manage contracts and payments securely</li>
+                <li>Get matched with an available service provider</li>
+                <li>Review the estimated price when the seller accepts</li>
+                <li>Track job status and message the assigned provider</li>
             </ul>
             <a href="${dashboardUrl}" class="button">Go to Dashboard</a>
-            <p><strong>Pro tip:</strong> Complete your profile to get better quotes!</p>
+              <p><strong>Pro tip:</strong> Complete your profile to speed up request dispatch.</p>
           </div>
           <div class="footer">
             <p>MaintMENA - Your MENA Maintenance & Projects Platform</p>

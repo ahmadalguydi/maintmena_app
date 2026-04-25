@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Archive,
   BarChart3,
   BookOpen,
   HelpCircle,
@@ -57,15 +56,6 @@ const REQUEST_ONLY_NAV_ITEMS: NavItem[] = [
     description: 'Articles and insights',
     arDescription: 'مقالات ونصائح',
     icon: BookOpen,
-  },
-  {
-    label: 'Resources',
-    arLabel: 'المصادر',
-    href: '/resources',
-    description: 'Guides and tools',
-    arDescription: 'أدلة وأدوات',
-    icon: Archive,
-    roles: ['seller', 'admin'],
   },
   {
     label: 'Support',

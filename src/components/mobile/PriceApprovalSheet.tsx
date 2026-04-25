@@ -34,22 +34,22 @@ export function PriceApprovalSheet({
 
   const content = {
     ar: {
-      title: 'الموافقة على السعر النهائي',
+      title: 'تأكيد السعر النهائي',
       subtitle:
-        'أنهى مقدم الخدمة العمل وأدخل السعر النهائي أدناه. راجع المبلغ ثم وافق لإغلاق الطلب بشكل نهائي.',
+        'راجع المبلغ الذي دفعته لمقدم الخدمة. بعد التأكيد سنعرض لك رمز الإغلاق لإعطائه لمقدم الخدمة.',
       finalPrice: 'السعر النهائي المطلوب',
       originalEstimate: 'التوقع السابق',
-      approve: 'أوافق وأغلق الطلب',
-      reject: 'رفض السعر / توجد مشكلة',
+      approve: 'تأكيد وإظهار الرمز',
+      reject: 'لم أدفع هذا المبلغ',
     },
     en: {
-      title: 'Approve Final Price',
+      title: 'Confirm Final Price',
       subtitle:
-        'The provider finished the work and entered the final amount below. Review it before closing the request.',
+        'Confirm the amount you paid to the provider. We will show your completion code after you confirm.',
       finalPrice: 'Final amount requested',
       originalEstimate: 'Earlier expectation',
-      approve: 'Approve & Close Request',
-      reject: 'Reject / Report Issue',
+      approve: 'Confirm & Show Code',
+      reject: 'I did not pay this amount',
     },
   };
 

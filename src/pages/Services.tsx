@@ -26,9 +26,9 @@ const Services = ({ currentLanguage }: ServicesProps) => {
         },
         {
           icon: TrendingUp,
-          title: "Quote Comparison",
-          description: "Receive multiple quotes and compare pricing, timelines, and portfolios side-by-side.",
-          features: ["Transparent Pricing", "Timeline Estimates", "Portfolio Viewing", "Direct Messaging"]
+          title: "Request Matching",
+          description: "Submit one request and get matched with an available provider who accepts the job.",
+          features: ["Estimated Price", "Arrival Updates", "Request Tracking", "Direct Messaging"]
         },
         {
           icon: Settings,
@@ -158,7 +158,7 @@ const Services = ({ currentLanguage }: ServicesProps) => {
           <Button 
             size="lg" 
             className="font-medium"
-            onClick={() => window.location.href = '/#pricing'}
+            onClick={() => window.location.href = '/signup-choice?type=buyer'}
           >
             {currentContent.cta}
           </Button>

@@ -19,12 +19,9 @@ interface InAppNotificationBannerProps {
 }
 
 /**
- * Instagram-style in-app notification pill.
- *
- * Slides down from the top of the screen.
+ * Compact in-app notification banner.
  * Tap anywhere on the pill navigates to actionPath.
  * Small X button to dismiss.
- * No reply / action buttons.
  */
 export function InAppNotificationBanner({
   notification,
@@ -42,31 +39,31 @@ export function InAppNotificationBanner({
       transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.8 }}
       dir={isRtl ? 'rtl' : 'ltr'}
       className={cn(
-        'flex items-center gap-3',
-        'rounded-full bg-[#1c1c1e]/92 dark:bg-[#1c1c1e]/95',
-        'shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-2xl',
-        'border border-white/10',
-        'px-4 py-3',
-        'w-[calc(100vw-24px)] max-w-[400px]',
+        'flex items-start gap-3',
+        'rounded-2xl bg-neutral-950 text-white',
+        'shadow-[0_12px_34px_rgba(0,0,0,0.32)]',
+        'border border-white/15',
+        'px-4 py-3.5',
+        'w-[calc(100vw-24px)] max-w-[420px]',
         'cursor-pointer select-none',
       )}
       onClick={() => notification.actionPath && onAction(notification.actionPath)}
     >
       {/* Icon avatar */}
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-lg leading-none">
+      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/12 text-lg leading-none">
         {notification.icon}
       </div>
 
       {/* Text */}
       <div className={cn('min-w-0 flex-1', isRtl ? 'text-right' : 'text-left')}>
         <p className={cn(
-          'text-[13px] font-semibold leading-tight text-white line-clamp-1',
+          'text-[14px] font-semibold leading-snug text-white line-clamp-1',
           isRtl ? 'font-ar-body' : 'font-body',
         )}>
           {notification.title}
         </p>
         <p className={cn(
-          'mt-0.5 text-[12px] leading-snug text-white/65 line-clamp-1',
+          'mt-1 text-[13px] leading-snug text-white/85 line-clamp-2',
           isRtl ? 'font-ar-body' : 'font-body',
         )}>
           {notification.message}
@@ -76,7 +73,7 @@ export function InAppNotificationBanner({
       {/* Dismiss — only button, no reply */}
       <button
         onClick={(e) => { e.stopPropagation(); onDismiss(); }}
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/50 hover:bg-white/20 hover:text-white transition-colors"
+        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors"
         aria-label="Dismiss"
       >
         <X size={12} strokeWidth={2.5} />

@@ -128,6 +128,7 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
     const [isChangingProvider, setIsChangingProvider] = useState(false);
     const [showEditSheet, setShowEditSheet] = useState(false);
     const reviewSectionRef = useRef<HTMLDivElement | null>(null);
+    const completionCodeRef = useRef<HTMLDivElement | null>(null);
     const { triggerDispatch } = useDispatchActions();
 
     const { reschedule: pendingReschedule } = useRescheduleRequest(id);
@@ -279,9 +280,10 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
             // Only mark approved in local state after the DB write succeeds
             setLocalPriceApproved(true);
             setShowPriceApproval(false);
-            if (id) celebrationFiredRef.current[id] = true;
-            setShowCelebration(true);
             queryClient.invalidateQueries({ queryKey: ['request-tracking', id] });
+            window.setTimeout(() => {
+                completionCodeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 250);
         } catch (err) {
             if (import.meta.env.DEV) console.error('[RequestDetail] Failed to save price approval:', err);
             toast.error(isArabic ? 'حدث خطأ أثناء حفظ الموافقة' : 'Failed to save approval, please try again');
@@ -1015,6 +1017,7 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                             <AnimatePresence>
                                 {buyerPriceApproved && !buyerMarkedComplete && completionCode && (
                                     <motion.div
+                                        ref={completionCodeRef}
                                         initial={{ opacity: 0, y: 12 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -8 }}
@@ -1421,9 +1424,11 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                             variant: 'buyer',
                             providerName: request?.provider?.company_name || request?.provider?.full_name || (isArabic ? 'مقدم الخدمة' : 'Service Provider'),
                             providerAvatar: request?.provider?.avatar_url || undefined,
+                            providerId: request?.provider?.id || reviewContext?.sellerId || undefined,
                             amount: typeof request?.final_amount === 'number' ? request.final_amount : undefined,
                             title: (request as any)?.title || (request as any)?.description || undefined,
                             category: (request as any)?.category || undefined,
+                            subIssue: (request as any)?.subcategory || (request as any)?.sub_category || undefined,
                             date: request?.scheduled_for ? new Date(request.scheduled_for).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' }) : undefined,
                             requestId: id || '',
                             location: (request as any)?.location || undefined,
@@ -1437,6 +1442,44 @@ export const RequestDetail = ({ currentLanguage }: RequestDetailProps) => {
                             setTimeout(() => {
                                 reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }, 300);
+                        }}
+                        onSubmitReview={async (ratingValue, textValue) => {
+                            if (!user?.id || !reviewContext?.sellerId || !id) {
+                                toast.error(isArabic ? 'لا يمكن إرسال التقييم الآن' : 'Unable to submit review right now');
+                                throw new Error('Missing review context');
+                            }
+                            try {
+                                const result = await submitSellerReview({
+                                    client: supabase as Parameters<typeof submitSellerReview>[0]['client'],
+                                    buyerId: user.id,
+                                    sellerId: reviewContext.sellerId,
+                                    rating: ratingValue,
+                                    reviewText: textValue,
+                                    requestId: id,
+                                    reviewId: existingReview?.id || null,
+                                });
+                                setRating(ratingValue);
+                                setReviewText(textValue);
+                                markReviewPromptSeen();
+                                setReviewSubmitted(true);
+                                setIsEditingReview(false);
+                                setShowReviewPrompt(false);
+                                queryClient.invalidateQueries({ queryKey: ['request-review-context', id, user.id, request?.assigned_seller_id] });
+                                queryClient.invalidateQueries({ queryKey: ['request-tracking', id] });
+                                queryClient.invalidateQueries({ queryKey: ['seller-reviews'] });
+                                queryClient.invalidateQueries({ queryKey: ['buyer-history'] });
+                                queryClient.invalidateQueries({ queryKey: ['buyer-history-all-v4'] });
+                                queryClient.invalidateQueries({ queryKey: ['seller-history-all-v2'] });
+                                queryClient.invalidateQueries({ queryKey: ['buyer-completed-review-prompt', user.id] });
+                                toast.success(
+                                    isArabic
+                                        ? result.mode === 'updated' ? 'تم تحديث تقييمك' : 'تم إرسال تقييمك بنجاح'
+                                        : result.mode === 'updated' ? 'Your review was updated' : 'Your review was submitted',
+                                );
+                            } catch (err) {
+                                toast.error(isArabic ? 'فشل إرسال التقييم' : 'Failed to submit review');
+                                throw err;
+                            }
                         }}
                     />
                 )}

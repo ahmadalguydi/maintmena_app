@@ -23,9 +23,9 @@ export const SellerVisibilityPanel = ({ currentLanguage }: SellerVisibilityPanel
     const content = {
         en: {
             title: 'Visibility',
-            description: 'Control whether you appear in the marketplace',
+            description: 'Control whether you are available for dispatch',
             visible: 'Visible to Buyers',
-            hidden: 'Hidden from Marketplace',
+            hidden: 'Unavailable for Dispatch',
             visibleDesc: 'Buyers can find you and send requests',
             hiddenDesc: 'Take a break - you won\'t receive new jobs',
         },
@@ -62,8 +62,8 @@ export const SellerVisibilityPanel = ({ currentLanguage }: SellerVisibilityPanel
             queryClient.invalidateQueries({ queryKey: ['seller-profile'] });
             toast.success(
                 visible
-                    ? (isArabic ? 'أنت الآن ظاهر في السوق' : 'You are now visible in marketplace')
-                    : (isArabic ? 'أنت الآن مخفي من السوق' : 'You are now hidden from marketplace')
+                    ? (isArabic ? 'أنت الآن ظاهر في السوق' : 'You are now available for dispatch')
+                    : (isArabic ? 'أنت الآن مخفي من السوق' : 'You are now unavailable for dispatch')
             );
         },
         onError: () => {

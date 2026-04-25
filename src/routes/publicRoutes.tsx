@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Route } from 'react-router-dom';
+import { Navigate, Route } from 'react-router-dom';
 import { RouteLoader, lazyRoute } from './routeLoader';
 
 export interface RouteProps {
@@ -9,7 +9,6 @@ export interface RouteProps {
 const Index = lazyRoute<RouteProps>(() => import('@/pages/Index'));
 const About = lazyRoute<RouteProps>(() => import('@/pages/About'));
 const Contact = lazyRoute<RouteProps>(() => import('@/pages/Contact'));
-const PricingPage = lazyRoute<RouteProps>(() => import('@/pages/PricingPage'));
 const Services = lazyRoute<RouteProps>(() => import('@/pages/Services'));
 const Blog = lazyRoute<RouteProps>(() => import('@/pages/Blog'));
 const BlogPost = lazyRoute<RouteProps>(() => import('@/pages/BlogPost'));
@@ -29,7 +28,7 @@ export function publicRoutes({ currentLanguage }: RouteProps) {
             <Route path="/" element={<Suspense fallback={<RouteLoader />}><Index currentLanguage={currentLanguage} /></Suspense>} />
             <Route path="/about" element={<Suspense fallback={<RouteLoader />}><About currentLanguage={currentLanguage} /></Suspense>} />
             <Route path="/contact" element={<Suspense fallback={<RouteLoader />}><Contact currentLanguage={currentLanguage} /></Suspense>} />
-            <Route path="/pricing" element={<Suspense fallback={<RouteLoader />}><PricingPage currentLanguage={currentLanguage} /></Suspense>} />
+            <Route path="/pricing" element={<Navigate to="/services" replace />} />
             <Route path="/blog" element={<Suspense fallback={<RouteLoader />}><Blog currentLanguage={currentLanguage} /></Suspense>} />
             <Route path="/blog/:slug" element={<Suspense fallback={<RouteLoader />}><BlogPost currentLanguage={currentLanguage} /></Suspense>} />
             <Route path="/services" element={<Suspense fallback={<RouteLoader />}><Services currentLanguage={currentLanguage} /></Suspense>} />

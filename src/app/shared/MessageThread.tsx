@@ -9,24 +9,20 @@ import { GradientHeader } from '@/components/mobile/GradientHeader';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Send, Check, CheckCheck, Paperclip, Image as ImageIcon, MapPin, FileText, Download, ArrowUpDown } from 'lucide-react';
+import { Send, Check, CheckCheck, MapPin, FileText, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { CashSafetyBanner } from '@/components/mobile/CashSafetyBanner';
-import { WhatsAppEscapeWarning } from '@/components/mobile/WhatsAppEscapeWarning';
-import { PriceProposalModal } from '@/components/mobile/PriceProposalModal';
-import { PriceProposalBubble } from '@/components/mobile/PriceProposalBubble';
 import { ReportButton } from '@/components/mobile/ReportButton';
 import { isSupabaseRelationKnownUnavailable, rememberMissingSupabaseRelation } from '@/lib/supabaseSchema';
 import { executeSupabaseQuery } from '@/lib/supabaseQuery';
+import { markRequestMessagesRead } from '@/lib/messageReadReceipts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Untyped Supabase client for tables not present in the generated schema
 const db = supabase as unknown as SupabaseClient;
 
-// Allowed file types and max size
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+// Historical payload rendering remains for old rows. New outgoing messages are
+// text-only until a private request-scoped attachment bucket is introduced.
 
 interface MessageThreadProps {
   currentLanguage: 'en' | 'ar';
@@ -44,7 +40,9 @@ interface MessagePayload {
 
 interface Message {
   id: string;
+  request_id?: string;
   sender_id: string;
+  recipient_id?: string | null;
   content: string;
   created_at: string;
   is_read: boolean;
@@ -58,8 +56,6 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
   const { currentRole } = useRole();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const handleBack = () => {
     if (window.history.length > 2) {
@@ -71,7 +67,6 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
 
   const requestId = searchParams.get('request');
   const [messageText, setMessageText] = useState('');
-  const [uploading, setUploading] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [messageLimit, setMessageLimit] = useState(50);
   const [isOtherTyping, setIsOtherTyping] = useState(false);
@@ -122,7 +117,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       
       // Verify user is a participant before returning messages
       if (data && data.length > 0 && user?.id) {
-        const isParticipant = data.some(m => m.sender_id === user.id || m.receiver_id === user.id);
+        const isParticipant = data.some(m => m.sender_id === user.id || m.recipient_id === user.id);
         if (!isParticipant) return [];
       }
 
@@ -165,9 +160,16 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
         (payload) => {
           queryClient.setQueryData(['messages', requestId, messageLimit], (old: Message[] | undefined) => {
             if (!old) return [payload.new as Message];
-            // Dedupe optimistic messages
-            if (old.some(m => m.id === payload.new.id)) return old;
-            return [...old, payload.new as Message];
+            const incoming = payload.new as Message;
+            if (old.some(m => m.id === incoming.id)) return old;
+            const withoutMatchingTemp = old.filter((m) => !(
+              m.id.startsWith('temp-') &&
+              m.sender_id === incoming.sender_id &&
+              m.content === incoming.content
+            ));
+            return [...withoutMatchingTemp, incoming].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+            );
           });
         }
       )
@@ -245,18 +247,19 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
     if (unreadMessages.length === 0) return;
 
     const markAsRead = async () => {
-      const { error } = await supabase
-        .from('messages')
-        .update({ is_read: true, read_at: new Date().toISOString() })
-        .in('id', unreadMessages.map(m => m.id));
+      if (!requestId || !user?.id) return;
 
-      if (!error) {
+      try {
+        await markRequestMessagesRead(requestId, user.id);
         // Optimistic cache update for read status
         queryClient.setQueryData(['messages', requestId, messageLimit], (old: Message[] | undefined) => {
            if (!old) return old;
            return old.map(m => unreadMessages.find(um => um.id === m.id) ? { ...m, is_read: true } : m);
         });
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        queryClient.invalidateQueries({ queryKey: ['nav-unread-messages', user.id] });
+      } catch (error) {
+        if (import.meta.env.DEV) console.warn('[MessageThread] mark read failed:', error);
       }
     };
 
@@ -272,9 +275,18 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
         throw new Error(currentLanguage === 'ar' ? 'خدمة الرسائل غير متاحة حالياً' : 'Messaging is currently unavailable');
       }
 
+      if (!requestId) {
+        throw new Error(currentLanguage === 'ar' ? 'Ø§Ù„Ø·Ù„Ø¨ ØºÙŠØ± Ù…Ø­Ø¯Ø¯' : 'Request is missing');
+      }
+
+      const trimmedContent = content.trim();
+      if (!trimmedContent || trimmedContent.length > 5000) {
+        throw new Error(currentLanguage === 'ar' ? 'Ø§Ù„Ø±Ø³Ø§Ù„Ø© ÙŠØ¬Ø¨ Ø£Ù† ØªÙƒÙˆÙ† Ø¨ÙŠÙ† 1 Ùˆ5000 Ø­Ø±Ù' : 'Message must be between 1 and 5000 characters');
+      }
+
       const messageData: Record<string, unknown> = {
         sender_id: user.id,
-        content,
+        content: trimmedContent,
         request_id: requestId,
       };
 
@@ -298,8 +310,10 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
        const previousMessages = queryClient.getQueryData<Message[]>(['messages', requestId, messageLimit]);
        const optimisticMsg: Message = {
          id: `temp-${Date.now()}`,
+         request_id: requestId ?? undefined,
          sender_id: user.id,
-         content: newMsg.content,
+         recipient_id: null,
+         content: newMsg.content.trim(),
          created_at: new Date().toISOString(),
          is_read: false,
          payload: newMsg.payload,
@@ -325,104 +339,13 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
         return old.map(m => m.id === context?.tempId ? { ...data, payload: data.payload as unknown as MessagePayload } as Message : m);
       });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['nav-unread-messages', user?.id] });
     }
   });
 
   const handleSend = () => {
     if (!messageText.trim() || !user?.id) return;
-    sendMessageMutation.mutate({ content: messageText });
-  };
-
-  const handleFileUpload = async (file: File, type: 'image' | 'file') => {
-    if (!user) return;
-
-    const allowedTypes = type === 'image' ? ALLOWED_IMAGE_TYPES : ALLOWED_FILE_TYPES;
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: currentLanguage === 'ar' ? 'نوع ملف غير صالح' : 'Invalid file type',
-        description: type === 'image'
-          ? (currentLanguage === 'ar' ? 'مسموح: JPG, PNG, GIF, WebP' : 'Allowed: JPG, PNG, GIF, WebP')
-          : (currentLanguage === 'ar' ? 'مسموح: PDF, DOC, DOCX' : 'Allowed: PDF, DOC, DOCX'),
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      toast({
-        title: currentLanguage === 'ar' ? 'الملف كبير جداً' : 'File too large',
-        description: currentLanguage === 'ar' ? 'الحد الأقصى 10 ميجابايت' : 'Maximum size is 10MB',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filePath = `${user.id}/${Date.now()}_${sanitizedName}`;
-
-      const { error } = await supabase.storage
-        .from('message-attachments')
-        .upload(filePath, file);
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage
-        .from('message-attachments')
-        .getPublicUrl(filePath);
-
-      const payload: MessagePayload = {
-        type,
-        url: urlData.publicUrl,
-        name: file.name,
-        size: file.size,
-        mimeType: file.type
-      };
-
-      const content = type === 'image' ? '📷 Image' : '📎 File';
-      sendMessageMutation.mutate({ content, payload });
-    } catch (error: unknown) {
-      toast({
-        title: currentLanguage === 'ar' ? 'فشل الرفع' : 'Upload failed',
-        description: error instanceof Error ? error.message : String(error),
-        variant: 'destructive'
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleShareLocation = async () => {
-    if (!navigator.geolocation) {
-      toast({
-        title: currentLanguage === 'ar' ? 'غير مدعوم' : 'Not supported',
-        description: currentLanguage === 'ar' ? 'تحديد الموقع غير مدعوم' : 'Geolocation is not supported',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setUploading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const payload: MessagePayload = {
-          type: 'location',
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        };
-        sendMessageMutation.mutate({ content: '📍 Location', payload });
-        setUploading(false);
-      },
-      (error) => {
-        toast({
-          title: currentLanguage === 'ar' ? 'خطأ في الموقع' : 'Location error',
-          description: error.message,
-          variant: 'destructive'
-        });
-        setUploading(false);
-      }
-    );
+    sendMessageMutation.mutate({ content: messageText.trim() });
   };
 
   const renderAttachment = (payload: MessagePayload, isOwn: boolean) => {
@@ -524,22 +447,6 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       {/* Cash Safety Banner - only for buyers and not dismissed for this thread */}
       {!isSeller && !bannerDismissed && <CashSafetyBanner currentLanguage={currentLanguage} onDismiss={handleBannerDismiss} />}
 
-      {/* Hidden file inputs */}
-      <input
-        type="file"
-        ref={imageInputRef}
-        className="hidden"
-        accept="image/jpeg,image/png,image/gif,image/webp"
-        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'image')}
-      />
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        accept=".pdf,.doc,.docx"
-        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'file')}
-      />
-
       {/* Messages */}
       <motion.div
         ref={scrollContainerRef}
@@ -639,31 +546,6 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
       {/* Input */}
       <div className={`border-t border-border/30 bg-background px-6 py-4 ${isKeyboardVisible ? 'pb-4' : 'pb-safe-or-4'}`}>
         <div className="flex gap-2 items-center">
-          {/* Attachment buttons */}
-          <div className="flex gap-1">
-            <button
-              onClick={() => imageInputRef.current?.click()}
-              disabled={uploading}
-              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors disabled:opacity-50"
-            >
-              <ImageIcon size={18} />
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors disabled:opacity-50"
-            >
-              <Paperclip size={18} />
-            </button>
-            <button
-              onClick={handleShareLocation}
-              disabled={uploading}
-              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors disabled:opacity-50"
-            >
-              <MapPin size={18} />
-            </button>
-          </div>
-
           <Input
             value={messageText}
             onChange={(e) => { setMessageText(e.target.value); broadcastTyping(); }}
@@ -673,7 +555,7 @@ export const MessageThread = ({ currentLanguage }: MessageThreadProps) => {
           />
           <button
             onClick={handleSend}
-            disabled={!messageText.trim() || sendMessageMutation.isPending || uploading}
+            disabled={!messageText.trim() || sendMessageMutation.isPending}
             className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <Send size={20} />

@@ -43,7 +43,7 @@ const About = ({ currentLanguage }: AboutProps) => {
           {
             name: 'Experienced Team',
             role: 'Co-Founders',
-            background: 'Background in home services, construction management, and marketplace platforms',
+            background: 'Background in home services, construction management, and dispatch platforms',
             location: 'Dubai, UAE'
           },
           {

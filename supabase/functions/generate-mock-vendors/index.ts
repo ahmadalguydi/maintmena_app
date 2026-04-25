@@ -1,9 +1,26 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 
+const APP_ORIGIN = Deno.env.get('APP_ORIGIN') ?? 'https://maintmena.com';
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const INTERNAL_MOCK_VENDOR_SECRET = Deno.env.get('INTERNAL_MOCK_VENDOR_SECRET');
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Origin': APP_ORIGIN,
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-mock-vendor-secret',
 };
+
+function isAuthorizedInternal(req: Request): boolean {
+  const authHeader = req.headers.get('authorization') ?? '';
+  const bearer = authHeader.toLowerCase().startsWith('bearer ')
+    ? authHeader.slice('bearer '.length)
+    : '';
+  const secretHeader = req.headers.get('x-internal-mock-vendor-secret') ?? '';
+
+  return (
+    (!!SUPABASE_SERVICE_ROLE_KEY && bearer === SUPABASE_SERVICE_ROLE_KEY) ||
+    (!!INTERNAL_MOCK_VENDOR_SECRET && secretHeader === INTERNAL_MOCK_VENDOR_SECRET)
+  );
+}
 
 interface VendorData {
   email: string;
@@ -426,6 +443,13 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (!isAuthorizedInternal(req)) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     

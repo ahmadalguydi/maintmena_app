@@ -20,7 +20,7 @@ const Privacy = ({ currentLanguage }: PrivacyProps) => {
         {
           icon: FileText,
           title: "How We Use Your Information",
-          content: "Your information helps us deliver personalized industrial intelligence, process payments securely, send relevant updates about tenders and opportunities, provide customer support, and improve our platform. We never use your data for purposes beyond what's necessary to provide our services."
+          content: "Your information helps us operate maintenance dispatch, process payments securely, send relevant service and account updates, provide customer support, and improve our platform. We never use your data for purposes beyond what's necessary to provide our services."
         },
         {
           icon: Shield,

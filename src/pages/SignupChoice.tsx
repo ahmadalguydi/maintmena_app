@@ -16,14 +16,14 @@ const SignupChoice = ({
       subtitle: 'Choose how you want to use our platform',
       buyer: {
         title: 'I Need Home or Project Services',
-        description: 'Post jobs for your home or project, get quotes from verified pros, and hire with confidence',
-        features: ['Post home repairs or project work', 'Compare quotes from verified pros', 'Track progress and pay securely', 'Message pros directly'],
+        description: 'Request maintenance, get matched with a verified pro, and track the job from dispatch to completion',
+        features: ['Request home repairs or project work', 'Get matched with verified pros', 'Track progress and pay securely', 'Message your assigned pro'],
         button: 'Sign Up as Buyer'
       },
       seller: {
         title: "I'm a Service Pro or Contractor",
-        description: 'Find home service jobs and project work, submit competitive quotes, and grow your business',
-        features: ['Browse home and project opportunities', 'Submit quotes with your best pricing', 'Build your reputation with reviews', 'Get paid securely'],
+        description: 'Receive dispatched maintenance jobs, serve customers quickly, and grow your reputation',
+        features: ['Receive nearby service requests', 'Accept dispatched jobs', 'Build your reputation with reviews', 'Get paid securely'],
         button: 'Sign Up as Pro'
       },
       footer: 'Already have an account?',

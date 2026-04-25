@@ -148,20 +148,6 @@ export const Signup = ({ currentLanguage, onToggle }: SignupProps) => {
     setLoading(true);
 
     // Auto-assign free plan for buyers
-    const metadata: Record<string, string | undefined> = {
-      full_name: formData.name,
-      phone: formData.phone,
-      user_type: intendedRole || 'buyer',
-      buyer_type: formData.accountType,
-      company_name: formData.companyName || undefined,
-      original_language: currentLanguage
-    };
-
-    // Add subscription plan for buyers (auto-free)
-    if (intendedRole === 'buyer') {
-      metadata.subscription_plan = 'free';
-    }
-
     const { error } = await signUp(
       formData.email,
       formData.password,

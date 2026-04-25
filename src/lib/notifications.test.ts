@@ -6,7 +6,7 @@ import {
 } from '@/lib/notifications';
 
 describe('notifications', () => {
-  it('uses localized fallback copy for known notification types', () => {
+  it('uses fallback copy for known notification types', () => {
     const presentation = getNotificationPresentation(
       {
         notification_type: 'seller_arrived',
@@ -16,8 +16,8 @@ describe('notifications', () => {
       'en',
     );
 
-    expect(presentation.title).toBe('Provider arrived');
-    expect(presentation.icon).toBe('📍');
+    expect(presentation.title).toBe('Provider arrived!');
+    expect(presentation.category).toBe('job');
   });
 
   it('prefers stored notification text when present', () => {
@@ -34,7 +34,7 @@ describe('notifications', () => {
     expect(presentation.message).toBe('Custom message');
   });
 
-  it('routes message notifications to the messages screen', () => {
+  it('routes message notifications directly to the request thread', () => {
     expect(
       getNotificationTarget(
         {
@@ -43,7 +43,7 @@ describe('notifications', () => {
         },
         'buyer',
       ),
-    ).toBe('/app/buyer/messages');
+    ).toBe('/app/messages/thread?request=request-1');
 
     expect(isMessageNotification({ notification_type: 'new_message' })).toBe(true);
   });

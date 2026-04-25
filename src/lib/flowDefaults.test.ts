@@ -27,7 +27,12 @@ describe('flowDefaults', () => {
   });
 
   it('returns the next sensible same-day slot during the day', () => {
-    expect(getSuggestedTimeForDate(new Date('2026-03-25T09:30:00'))).toEqual({
+    expect(
+      getSuggestedTimeForDate(
+        new Date('2026-03-25T09:30:00'),
+        new Date('2026-03-25T09:30:00'),
+      ),
+    ).toEqual({
       time24: '10:00',
       timeSlot: 'morning',
       bookingUrgency: 'urgent',

@@ -6,9 +6,8 @@ const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Allow all origins for CORS
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') ?? 'https://maintmena.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -20,31 +19,46 @@ const generateToken = () => {
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 };
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const normalizeEmail = (value: unknown) =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const normalizeLanguage = (value: unknown): 'en' | 'ar' =>
+  value === 'ar' ? 'ar' : 'en';
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
+    );
+  }
+
   try {
     console.log('send-verification-email: Starting request processing');
     
-    const { userId, email, fullName, userType, language = 'en' } = await req.json();
-    console.log('send-verification-email: Received request for email:', email, 'language:', language);
+    const { userId, email, language = 'en' } = await req.json();
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedLanguage = normalizeLanguage(language);
+    console.log('send-verification-email: Received request for email:', normalizedEmail, 'language:', normalizedLanguage);
 
     // Input validation
-    if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      console.error('send-verification-email: Invalid email address:', email);
+    if (!normalizedEmail || normalizedEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      console.error('send-verification-email: Invalid email address');
       return new Response(
         JSON.stringify({ error: 'Invalid email address' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    if (fullName && fullName.length > 100) {
-      console.error('send-verification-email: Name too long');
-      return new Response(
-        JSON.stringify({ error: 'Name too long' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -61,12 +75,20 @@ serve(async (req) => {
     // Create Supabase admin client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Handle resend case - look up user by email if userId not provided
-    let finalUserId = userId;
-    let finalFullName = fullName;
-    let finalUserType = userType;
+    let finalUserId = typeof userId === 'string' && userId.length > 0 ? userId : '';
 
-    if (!finalUserId && email) {
+    if (finalUserId) {
+      const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(finalUserId);
+
+      if (userError || !user || user.email?.toLowerCase() !== normalizedEmail) {
+        console.error('send-verification-email: User/email mismatch');
+        return new Response(
+          JSON.stringify({ error: 'Invalid verification request' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
+      }
+    } else {
+      // Resend case. Keep the external response generic to avoid account enumeration.
       console.log('send-verification-email: Looking up user by email');
       const { data: { users }, error: userError } = await supabase.auth.admin.listUsers();
       
@@ -75,25 +97,27 @@ serve(async (req) => {
         throw new Error('Failed to look up user');
       }
       
-      const foundUser = users?.find(u => u.email === email);
+      const foundUser = users?.find(u => u.email?.toLowerCase() === normalizedEmail);
       
       if (!foundUser) {
-        console.error('send-verification-email: User not found for email:', email);
-        throw new Error('User not found');
+        console.log('send-verification-email: No matching user for resend request');
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+        );
       }
       
       finalUserId = foundUser.id;
-      
-      // Get profile data
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, user_type')
-        .eq('id', finalUserId)
-        .single();
-        
-      finalFullName = profile?.full_name || 'User';
-      finalUserType = profile?.user_type || 'buyer';
     }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, user_type')
+      .eq('id', finalUserId)
+      .single();
+
+    const finalFullName = profile?.full_name || 'User';
+    const safeFullName = escapeHtml(finalFullName.slice(0, 100));
 
     // Generate verification token
     const token = generateToken();
@@ -122,11 +146,11 @@ serve(async (req) => {
 
     // Build verification URL
     const functionUrl = SUPABASE_URL.replace('.supabase.co', '.functions.supabase.co');
-    const verificationUrl = `${functionUrl}/verify-email?token=${token}&lang=${language}`;
+    const verificationUrl = `${functionUrl}/verify-email?token=${token}&lang=${normalizedLanguage}`;
     console.log('send-verification-email: Verification URL generated');
 
     // Prepare email content based on language
-    const emailContent = language === 'ar' ? {
+    const emailContent = normalizedLanguage === 'ar' ? {
       subject: 'تحقق من بريدك الإلكتروني - MaintMENA',
       htmlContent: `
         <!DOCTYPE html>
@@ -150,7 +174,7 @@ serve(async (req) => {
               <h1>تحقق من بريدك الإلكتروني</h1>
             </div>
             <div class="content">
-              <p>مرحباً ${finalFullName}،</p>
+              <p>مرحباً ${safeFullName}،</p>
               <p>شكراً لتسجيلك في MaintMENA! لتفعيل حسابك، يرجى التحقق من عنوان بريدك الإلكتروني بالنقر على الزر أدناه:</p>
               <div style="text-align: center;">
                 <a href="${verificationUrl}" class="button">تحقق من البريد الإلكتروني</a>
@@ -196,7 +220,7 @@ serve(async (req) => {
               <h1>Verify Your Email</h1>
             </div>
             <div class="content">
-              <p>Hi ${finalFullName},</p>
+              <p>Hi ${safeFullName},</p>
               <p>Thank you for signing up for MaintMENA! To activate your account, please verify your email address by clicking the button below:</p>
               <div style="text-align: center;">
                 <a href="${verificationUrl}" class="button">Verify Email</a>
@@ -234,7 +258,7 @@ serve(async (req) => {
           email: 'noreply@maintmena.com'
         },
         to: [{
-          email: email,
+          email: normalizedEmail,
           name: finalFullName
         }],
         subject: emailContent.subject,

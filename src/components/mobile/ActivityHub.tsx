@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ActivityCard, ActivityCardSkeleton, ActivityType } from './ActivityCard';
 import { Heading2 } from './Typography';
-import { Plus, Zap, Sparkles, ArrowRight } from 'lucide-react';
+import { Plus, Sparkles, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { haptics } from '@/lib/haptics';
 
@@ -33,17 +33,15 @@ const content = {
     en: {
         title: 'Your Activity',
         empty: 'All caught up!',
-        emptyDesc: 'You have no pending requests or bookings.',
+        emptyDesc: 'You have no pending requests.',
         postRequest: 'Post Request',
-        bookNow: 'Book Now',
         viewAll: 'View All',
     },
     ar: {
         title: 'نشاطك',
         empty: 'لا يوجد نشاط!',
-        emptyDesc: 'ليس لديك طلبات أو حجوزات معلقة.',
+        emptyDesc: 'ليس لديك طلبات معلقة.',
         postRequest: 'انشر طلب',
-        bookNow: 'احجز الآن',
         viewAll: 'عرض الكل',
     },
 };
@@ -119,21 +117,6 @@ export const ActivityHub = ({
                         >
                             <Plus className="w-4 h-4" />
                             {t.postRequest}
-                        </motion.button>
-                        <motion.button
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                                haptics.medium();
-                                navigate('/app/buyer/explore');
-                            }}
-                            className={cn(
-                                'px-4 py-2.5 rounded-full bg-muted text-foreground',
-                                'font-semibold text-sm flex items-center gap-2',
-                                isArabic ? 'font-ar-body' : 'font-body'
-                            )}
-                        >
-                            <Zap className="w-4 h-4" />
-                            {t.bookNow}
                         </motion.button>
                     </div>
                 </div>

@@ -3,9 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const APP_ORIGIN = Deno.env.get('APP_ORIGIN') ?? 'https://maintmena.com';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://owvzutteoguscbymypyl.lovableproject.com',
+  'Access-Control-Allow-Origin': APP_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'X-Frame-Options': 'DENY',
@@ -85,8 +86,8 @@ serve(async (req) => {
     if (profile) {
       const emailType = profile.user_type === 'seller' ? 'welcome_seller' : 'welcome_buyer';
       const dashboardUrl = profile.user_type === 'seller' 
-        ? 'https://maintmena.com/seller-dashboard'
-        : 'https://maintmena.com/buyer-dashboard';
+        ? `${APP_ORIGIN}/app/seller/home`
+        : `${APP_ORIGIN}/app/buyer/home`;
 
       try {
         await supabase.functions.invoke('send-brevo-email', {
@@ -116,7 +117,7 @@ serve(async (req) => {
 });
 
 function redirectToLogin(status: string, language: string) {
-  const baseUrl = 'https://owvzutteoguscbymypyl.lovableproject.com';
+  const baseUrl = APP_ORIGIN;
   const redirectUrl = `${baseUrl}/app/onboarding/login?verified=${status}&lang=${language}`;
   
   return new Response(null, {

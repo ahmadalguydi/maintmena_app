@@ -229,10 +229,9 @@ export const getCanonicalLifecycle = (
 
   if (rawStatus === 'cancelled') return 'cancelled';
   if (rawStatus === 'disputed') return 'disputed';
-  // closed/completed must be checked BEFORE buyer_marked_complete to prevent stale flag override
-  if (rawStatus === 'closed' || rawStatus === 'completed' || rawStatus === 'confirmed') return 'closed';
   if (row?.buyer_marked_complete || rawStatus === 'buyer_confirmed') return 'buyer_confirmed';
   if (hasSellerCompletionArtifacts(row)) return 'seller_marked_complete';
+  if (rawStatus === 'closed' || rawStatus === 'completed' || rawStatus === 'confirmed') return 'closed';
   if (rawStatus === 'in_progress') return 'in_progress';
   if (rawStatus === 'en_route' || rawStatus === 'arrived') return 'in_route';
   if (rawStatus === 'accepted') {

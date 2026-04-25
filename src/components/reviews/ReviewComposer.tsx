@@ -54,7 +54,7 @@ export const ReviewComposer = ({
 
   const subtitle = isArabic
     ? 'تقييمك يساعد العميل اللي بعدك ويعطي صورة أوضح عن الخدمة.'
-    : 'Specific feedback builds real trust across the marketplace.';
+    : 'Specific feedback builds real trust across MaintMENA.';
 
   const helper = isArabic
     ? compact

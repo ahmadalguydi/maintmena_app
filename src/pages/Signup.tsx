@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Wrench, Eye, EyeOff } from 'lucide-react';
-import PlanSelection from '@/components/PlanSelection';
 
 interface SignupProps {
   currentLanguage: 'en' | 'ar';
@@ -15,15 +14,11 @@ interface SignupProps {
 
 const Signup = ({ currentLanguage }: SignupProps) => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { signUp } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const userType = (searchParams.get('type') as 'buyer' | 'seller') || 'buyer';
-  const selectedPlan = searchParams.get('plan');
-  const billingCycle = searchParams.get('billing') as 'monthly' | 'annual' || 'monthly';
-
-  const [showPlanSelection, setShowPlanSelection] = useState(true);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -33,8 +28,6 @@ const Signup = ({ currentLanguage }: SignupProps) => {
     phone: '',
     companyName: '',
     buyerType: 'company' as 'company' | 'individual',
-    plan: selectedPlan || '',
-    billingCycle: billingCycle
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -125,17 +118,6 @@ const Signup = ({ currentLanguage }: SignupProps) => {
     }
   }, [searchParams, navigate]);
 
-  const handlePlanSelect = (plan: string, isAnnual: boolean) => {
-    setFormData({ ...formData, plan, billingCycle: isAnnual ? 'annual' : 'monthly' });
-    setShowPlanSelection(false);
-
-    // Update URL with plan selection
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('plan', plan);
-    newParams.set('billing', isAnnual ? 'annual' : 'monthly');
-    setSearchParams(newParams);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -169,19 +151,6 @@ const Signup = ({ currentLanguage }: SignupProps) => {
   };
 
   const isBuyer = userType === 'buyer';
-
-  // Show plan selection first
-  if (showPlanSelection) {
-    return (
-      <PlanSelection
-        userType={userType}
-        currentLanguage={currentLanguage}
-        onSelectPlan={handlePlanSelect}
-        preSelectedPlan={selectedPlan || undefined}
-        preSelectedBilling={billingCycle}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>

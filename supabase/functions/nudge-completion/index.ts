@@ -1,22 +1,33 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { insertNotificationAndSendPush } from "../_shared/push.ts";
+import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { insertNotificationAndSendPush } from '../_shared/push.ts';
+
+const appOrigin = Deno.env.get('APP_ORIGIN') ?? 'https://maintmena.com';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Origin': appOrigin,
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-interface NudgeJob {
+interface PendingRequest {
   id: string;
   buyer_id: string;
-  seller_id: string;
-  service_category: string | null;
-  nudge_count: number;
-  completed_at: string | null;
-  seller_marked_complete: boolean;
-  buyer_marked_complete: boolean;
-  type: 'booking' | 'request';
+  nudge_count: number | null;
+  seller_completion_date: string | null;
+}
+
+function isAuthorized(req: Request): boolean {
+  const secret = Deno.env.get('NUDGE_COMPLETION_SECRET');
+  if (!secret) return false;
+
+  const headerSecret = req.headers.get('x-cron-secret');
+  const authHeader = req.headers.get('authorization') ?? '';
+  const bearer = authHeader.toLowerCase().startsWith('bearer ')
+    ? authHeader.slice('bearer '.length)
+    : null;
+
+  return headerSecret === secret || bearer === secret;
 }
 
 serve(async (req) => {
@@ -24,180 +35,112 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (!isAuthorized(req)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized cron request' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    console.log('Starting nudge-completion job...');
-
-    // Get bookings where seller marked complete but buyer hasn't
-    const { data: pendingBookings, error: bookingError } = await supabase
-      .from('booking_requests')
-      .select('id, buyer_id, seller_id, service_category, nudge_count, completed_at, seller_marked_complete, buyer_marked_complete, seller_completion_date')
-      .eq('seller_marked_complete', true)
-      .eq('buyer_marked_complete', false)
-      .eq('auto_closed', false)
-      .not('seller_completion_date', 'is', null);
-
-    if (bookingError) {
-      console.error('Error fetching bookings:', bookingError);
-      throw bookingError;
-    }
-
-    // Get maintenance requests where seller marked complete but buyer hasn't
-    const { data: pendingRequests, error: requestError } = await supabase
+    const { data: pendingRequests, error } = await supabase
       .from('maintenance_requests')
-      .select('id, buyer_id, assigned_seller_id, category, nudge_count, seller_marked_complete, buyer_marked_complete, seller_completion_date')
+      .select('id, buyer_id, nudge_count, seller_completion_date')
       .eq('seller_marked_complete', true)
       .eq('buyer_marked_complete', false)
       .eq('auto_closed', false)
       .not('seller_completion_date', 'is', null);
 
-    if (requestError) {
-      console.error('Error fetching requests:', requestError);
-      throw requestError;
-    }
+    if (error) throw error;
 
     const nudgeSequence = [
-      { hours: 1, message_en: 'Activate your warranty now!', message_ar: 'فعّل ضمانك الآن!' },
-      { hours: 6, message_en: 'Your warranty is waiting...', message_ar: 'ضمانك في الانتظار...' },
-      { hours: 24, message_en: 'Job still unconfirmed. Confirm to protect your work.', message_ar: 'العمل لم يُؤكد بعد. أكّد لحماية عملك.' },
-      { hours: 72, message_en: 'Final reminder: Confirm your job completion', message_ar: 'تذكير أخير: أكّد إتمام عملك' },
-      { hours: 168, message_en: 'Auto-closing soon without warranty', message_ar: 'سيُغلق تلقائياً قريباً بدون ضمان' }
+      { hours: 1, message: 'Please confirm the completed job to activate your warranty.' },
+      { hours: 6, message: 'Your warranty is waiting for job confirmation.' },
+      { hours: 24, message: 'Confirm completion to keep your warranty protection active.' },
+      { hours: 72, message: 'Final reminders are active for this completed job.' },
+      { hours: 168, message: 'This completed job will be closed soon without buyer confirmation.' },
     ];
 
     let nudgesSent = 0;
     let jobsAutoClosed = 0;
 
-    // Process bookings
-    for (const booking of pendingBookings || []) {
-      const completedAt = new Date(booking.seller_completion_date);
-      const hoursSinceComplete = (Date.now() - completedAt.getTime()) / (1000 * 60 * 60);
-      const currentNudgeIndex = booking.nudge_count || 0;
+    for (const request of (pendingRequests ?? []) as PendingRequest[]) {
+      if (!request.seller_completion_date) continue;
 
-      // Check if should auto-close (after 7 days / 168 hours)
-      if (hoursSinceComplete >= 168) {
-        await supabase
-          .from('booking_requests')
-          .update({ 
-            auto_closed: true,
-            status: 'unconfirmed_no_warranty'
-          })
-          .eq('id', booking.id);
-
-        await insertNotificationAndSendPush(supabase, {
-          user_id: booking.buyer_id,
-          title: 'Job Auto-Closed',
-          message: 'Your job was auto-closed without warranty activation due to no confirmation.',
-          notification_type: 'auto_close',
-          content_id: booking.id
-        });
-
-        jobsAutoClosed++;
-        continue;
-      }
-
-      // Check if time for next nudge
-      if (currentNudgeIndex < nudgeSequence.length) {
-        const nextNudge = nudgeSequence[currentNudgeIndex];
-        if (hoursSinceComplete >= nextNudge.hours) {
-          await insertNotificationAndSendPush(supabase, {
-            user_id: booking.buyer_id,
-            title: 'Confirm Work Complete',
-            message: nextNudge.message_en,
-            notification_type: 'warranty_nudge',
-            content_id: booking.id
-          });
-
-          // Update nudge count
-          await supabase
-            .from('booking_requests')
-            .update({ 
-              nudge_count: currentNudgeIndex + 1,
-              last_nudge_at: new Date().toISOString()
-            })
-            .eq('id', booking.id);
-
-          nudgesSent++;
-        }
-      }
-    }
-
-    // Process maintenance requests (similar logic)
-    for (const request of pendingRequests || []) {
       const completedAt = new Date(request.seller_completion_date);
       const hoursSinceComplete = (Date.now() - completedAt.getTime()) / (1000 * 60 * 60);
-      const currentNudgeIndex = request.nudge_count || 0;
+      const currentNudgeIndex = request.nudge_count ?? 0;
 
       if (hoursSinceComplete >= 168) {
         await supabase
           .from('maintenance_requests')
-          .update({ 
+          .update({
             auto_closed: true,
-            status: 'unconfirmed_no_warranty'
+            status: 'completed',
+            updated_at: new Date().toISOString(),
           })
           .eq('id', request.id);
 
         await insertNotificationAndSendPush(supabase, {
           user_id: request.buyer_id,
-          title: 'Job Auto-Closed',
-          message: 'Your job was auto-closed without warranty activation due to no confirmation.',
+          title: 'Job closed',
+          message: 'This job was closed automatically after the confirmation window ended.',
           notification_type: 'auto_close',
-          content_id: request.id
+          content_id: request.id,
         });
 
-        jobsAutoClosed++;
+        jobsAutoClosed += 1;
         continue;
       }
 
-      if (currentNudgeIndex < nudgeSequence.length) {
-        const nextNudge = nudgeSequence[currentNudgeIndex];
-        if (hoursSinceComplete >= nextNudge.hours) {
-          await insertNotificationAndSendPush(supabase, {
-            user_id: request.buyer_id,
-            title: 'Confirm Work Complete',
-            message: nextNudge.message_en,
-            notification_type: 'warranty_nudge',
-            content_id: request.id
-          });
+      const nextNudge = nudgeSequence[currentNudgeIndex];
+      if (nextNudge && hoursSinceComplete >= nextNudge.hours) {
+        await insertNotificationAndSendPush(supabase, {
+          user_id: request.buyer_id,
+          title: 'Confirm completed job',
+          message: nextNudge.message,
+          notification_type: 'warranty_nudge',
+          content_id: request.id,
+        });
 
-          await supabase
-            .from('maintenance_requests')
-            .update({ 
-              nudge_count: currentNudgeIndex + 1,
-              last_nudge_at: new Date().toISOString()
-            })
-            .eq('id', request.id);
+        await supabase
+          .from('maintenance_requests')
+          .update({
+            nudge_count: currentNudgeIndex + 1,
+            last_nudge_at: new Date().toISOString(),
+          })
+          .eq('id', request.id);
 
-          nudgesSent++;
-        }
+        nudgesSent += 1;
       }
     }
 
-    console.log(`Nudge job complete. Nudges sent: ${nudgesSent}, Jobs auto-closed: ${jobsAutoClosed}`);
-
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        nudgesSent, 
-        jobsAutoClosed 
-      }),
-      { 
+      JSON.stringify({ success: true, nudgesSent, jobsAutoClosed }),
+      {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      },
     );
-
   } catch (error) {
-    console.error('Nudge completion error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unexpected error' }),
+      {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
+      },
     );
   }
 });

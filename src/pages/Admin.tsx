@@ -19,12 +19,10 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
-  MessageCircle,
 } from "lucide-react";
 import { UserManager } from "@/components/admin/UserManager";
 import { ActivityLog } from "@/components/admin/ActivityLog";
 import { SystemStats } from "@/components/admin/SystemStats";
-import { SupportChatManager } from "@/components/admin/SupportChatManager";
 import { ReportsManager } from "@/components/admin/ReportsManager";
 import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -73,19 +71,16 @@ export default function Admin({ currentLanguage }: { currentLanguage: 'en' | 'ar
         reportsRes,
         haltedJobsRes,
         usersRes,
-        chatsRes,
       ] = await Promise.all([
         supabase.from("user_reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("maintenance_requests").select("id", { count: "exact", head: true }).eq("halted", true),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("support_chats").select("id", { count: "exact", head: true }).eq("status", "open"),
       ]);
 
       return {
         pendingReports: reportsRes.count || 0,
         haltedJobs: haltedJobsRes.count || 0,
         totalUsers: usersRes.count || 0,
-        openChats: chatsRes.count || 0,
       };
     },
     enabled: isAdmin,
@@ -95,7 +90,6 @@ export default function Admin({ currentLanguage }: { currentLanguage: 'en' | 'ar
   const menuItems = [
     { id: "priority", label: "Priority Queue", icon: AlertTriangle, color: "text-red-500", badge: (stats?.pendingReports || 0) + (stats?.haltedJobs || 0) },
     { id: "reports", label: "User Reports", icon: Flag, color: "text-orange-500", badge: stats?.pendingReports },
-    { id: "chats", label: "Support Chats", icon: MessageCircle, color: "text-blue-500", badge: stats?.openChats },
     { id: "users", label: "User Management", icon: Users, color: "text-purple-500" },
     { id: "activity", label: "Activity Log", icon: Activity, color: "text-green-500" },
     { id: "system", label: "System Health", icon: Settings, color: "text-slate-500" },
@@ -257,15 +251,6 @@ export default function Admin({ currentLanguage }: { currentLanguage: 'en' | 'ar
                           <p className="text-sm text-muted-foreground">Halted Jobs</p>
                         </Card>
 
-                        <Card className="p-6 bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab("chats")}>
-                          <div className="flex items-center justify-between mb-4">
-                            <MessageCircle className="w-8 h-8 text-blue-600" />
-                            <Badge className="bg-blue-100 text-blue-700 border-blue-200">Support</Badge>
-                          </div>
-                          <p className="text-3xl font-bold text-foreground mb-1">{stats?.openChats || 0}</p>
-                          <p className="text-sm text-muted-foreground">Open Chats</p>
-                        </Card>
-
                         <Card className="p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab("users")}>
                           <div className="flex items-center justify-between mb-4">
                             <Users className="w-8 h-8 text-purple-600" />
@@ -298,7 +283,6 @@ export default function Admin({ currentLanguage }: { currentLanguage: 'en' | 'ar
                   )}
 
                   {activeTab === "reports" && <ReportsManager />}
-                  {activeTab === "chats" && <SupportChatManager />}
                   {activeTab === "users" && <UserManager onUpdate={() => { }} />}
                   {activeTab === "activity" && (
                     <Card className="p-6">

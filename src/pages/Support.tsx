@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Mail, Clock, Search, HelpCircle, Book, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import LiveChat from '@/components/LiveChat';
 
 interface SupportProps {
   currentLanguage: 'en' | 'ar';
@@ -48,15 +47,15 @@ const Support = ({ currentLanguage }: SupportProps) => {
       faqs: [
         {
           question: "How does MaintMENA help my business?",
-          answer: "MaintMENA provides two core pillars: Intelligence (curated signals, tenders, and market insights) and Marketplace (connect directly with buyers/sellers for maintenance projects). This dual approach helps you stay ahead of opportunities and win more business."
+          answer: "MaintMENA is an on-demand maintenance dispatch app. Customers submit service requests, verified pros receive dispatched jobs, and both sides track the work from assignment through completion."
         },
         {
           question: "What's included in the 14-day trial?",
-          answer: "Your trial includes full access to Weekly Brief, tender tracking, marketplace features, and all tools in your chosen tier. No credit card required to start."
+          answer: "Your trial includes access to the app workflows available for your role, including request tracking, job updates, notifications, and account tools. No credit card required to start."
         },
         {
           question: "How accurate is your intelligence data?",
-          answer: "Our signals and tenders are verified from official sources and industry contacts, with a 95%+ accuracy rate. We continuously validate all information before publishing."
+          answer: "Service pros are reviewed through our operational checks, customer feedback, and platform activity so customers can request help with confidence."
         },
         {
           question: "Can I switch between plans?",
@@ -276,8 +275,6 @@ const Support = ({ currentLanguage }: SupportProps) => {
         </div>
       </div>
       
-      {/* Live Chat Widget */}
-      <LiveChat currentLanguage={currentLanguage} />
     </>
   );
 };

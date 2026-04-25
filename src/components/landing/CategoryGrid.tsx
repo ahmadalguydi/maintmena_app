@@ -32,7 +32,7 @@ const CategoryGrid = ({ currentLanguage }: CategoryGridProps) => {
       category: cat.category,
       audience: audience
     });
-    navigate(`/marketplace?${params.toString()}`);
+    navigate(`/signup-choice?type=buyer&${params.toString()}`);
   };
 
   return (

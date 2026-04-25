@@ -13,7 +13,7 @@ import { useSellerHomeState } from '@/hooks/useSellerHomeState';
 import { useDispatchActions } from '@/hooks/useDispatchActions';
 import { useOpportunities } from '@/hooks/useOpportunities';
 import { useSellerEarnings } from '@/hooks/useSellerEarnings';
-import { sendNotification } from '@/lib/notifications';
+import { getNotificationPresentation, sendNotification } from '@/lib/notifications';
 
 // Shared components
 import { SellerHomeHeader } from '@/components/seller/home/SellerHomeHeader';
@@ -284,23 +284,30 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
 
         const opp = opportunities.find(o => o.id === selectedOpportunityId);
 
-        const onSuccess = async () => {
+        const onSuccess = async (acceptedJobId: string) => {
             try {
                 // Determine buyer_id to send notification
                 const { data: reqData } = await supabase
                     .from('maintenance_requests')
                     .select('buyer_id')
-                    .eq('id', selectedOpportunityId)
+                    .eq('id', acceptedJobId)
                     .maybeSingle();
 
-                await primeAcceptedJobState(selectedOpportunityId, opp);
+                await primeAcceptedJobState(acceptedJobId, opp);
                 toast.success(currentLanguage === 'ar' ? 'تم قبول الطلب بنجاح!' : 'Job accepted successfully!');
 
                 if (reqData?.buyer_id) {
-                    sendNotification({
-                        userId: reqData.buyer_id,
-                        type: 'job_accepted',
-                        contentId: selectedOpportunityId,
+                    const notification = getNotificationPresentation(
+                        { notification_type: 'job_accepted', title: null, message: null },
+                        currentLanguage,
+                    );
+
+                    void sendNotification({
+                        user_id: reqData.buyer_id,
+                        title: notification.title,
+                        message: notification.message,
+                        notification_type: 'job_accepted',
+                        content_id: acceptedJobId,
                     });
                 }
 
@@ -326,7 +333,7 @@ export const SellerHome = ({ currentLanguage: propLanguage }: SellerHomeProps) =
 
         const result = await acceptOffer(opp.offerId, pricing);
         if (result.accepted) {
-            await onSuccess();
+            await onSuccess(result.jobId || selectedOpportunityId);
         } else if (result.reason === 'already_taken') {
             toast.error(currentLanguage === 'ar' ? 'تم قبول هذا الطلب من فني آخر' : 'This job was already taken by another provider');
             queryClient.invalidateQueries({ queryKey: ['seller-opportunities'] });

@@ -21,6 +21,8 @@ export interface ServiceLocationMapProps {
   actionButton?: ReactNode;
   footerOverlay?: ReactNode;
   onMapClick?: MouseEventHandler<HTMLDivElement>;
+  /** Force dark-mode rendering regardless of the system/app theme. */
+  forceDark?: boolean;
 }
 
 const markerAccent = {
@@ -152,12 +154,14 @@ export const ServiceLocationMap = ({
   actionButton,
   footerOverlay,
   onMapClick,
+  forceDark,
 }: ServiceLocationMapProps) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const [staticMapFailed, setStaticMapFailed] = useState(false);
-  const isDark = useDarkMode();
+  const systemDark = useDarkMode();
+  const isDark = forceDark ?? systemDark;
   const hasCoordinates = typeof lat === 'number' && typeof lng === 'number';
 
   const interactionHint = currentLanguage === 'ar' ? 'حرّك وكبّر الخريطة' : 'Drag and zoom the map';
@@ -166,7 +170,9 @@ export const ServiceLocationMap = ({
   const camera = interactive ? INTERACTIVE_CAMERA : STATIC_CAMERA;
   const shouldShowInteractionHint = showInteractionHint ?? interactive;
   const markerElement = useMemo(() => buildMarkerElement(), []);
-  const staticStylePath = getStaticMapStylePath();
+  const staticStylePath = forceDark
+    ? 'mapbox/dark-v11'
+    : getStaticMapStylePath();
   const staticMapUrl = useMemo(
     () => (!interactive && hasCoordinates && MAPBOX_TOKEN ? buildStaticMapUrl(lng, lat, staticStylePath) : null),
     [hasCoordinates, interactive, lat, lng, staticStylePath],

@@ -56,7 +56,7 @@ export const trackLogin = (email: string) => {
   });
 };
 
-// Marketplace events
+// Dispatch events
 export const trackJobPosted = (email: string, jobData: {
   serviceCategory: string;
   requestType: 'home' | 'project';

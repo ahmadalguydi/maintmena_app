@@ -16,7 +16,7 @@ const FinalCTA = ({ currentLanguage }: FinalCTAProps) => {
     en: {
       headline: 'Join the MaintMENA Network',
       subheadline: 'Where homes get fixed and professionals grow faster.',
-      buyerCTA: 'Find a Professional',
+      buyerCTA: 'Submit a Request',
       vendorCTA: 'Join as a Professional',
       guarantee: 'Free to start • Verified & trusted • Fast responses'
     },
@@ -60,7 +60,7 @@ const FinalCTA = ({ currentLanguage }: FinalCTAProps) => {
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => navigate(user ? '/explore' : '/signup-choice?type=buyer')}
+                onClick={() => navigate(user ? '/app/buyer/home?compose=1' : '/signup-choice?type=buyer')}
                 className="border-2 border-paper/50 bg-transparent hover:bg-paper/10 text-paper px-10 py-6 text-lg font-bold rounded-xl gap-2"
               >
                 {lang.buyerCTA}
@@ -71,7 +71,7 @@ const FinalCTA = ({ currentLanguage }: FinalCTAProps) => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
               <Button 
                 size="lg" 
-                onClick={() => navigate(user ? '/marketplace' : '/signup-choice?type=seller')}
+                onClick={() => navigate(user ? '/app/seller/home' : '/signup-choice?type=seller')}
                 className="bg-paper text-accent hover:bg-paper/90 px-10 py-6 text-lg font-bold rounded-xl shadow-2xl gap-2"
               >
                 {lang.vendorCTA}

@@ -31,9 +31,9 @@ interface SEOHeadProps {
 }
 
 export const SEOHead = ({
-  title = 'MaintMENA — Early Maintenance Signals & Verified Tenders for MENA Facilities',
-  description = 'Discover maintenance opportunities before competitors. Get weekly intelligence briefs, verified tenders, and direct buyer access for MENA facilities. Start your 14-day free trial.',
-  keywords = 'MENA maintenance, facility management, industrial tenders, RFQ platform, maintenance intelligence',
+  title = 'MaintMENA - On-Demand Maintenance Dispatch in Saudi Arabia',
+  description = 'Request maintenance, get matched with verified service pros, and track jobs from dispatch through completion with MaintMENA.',
+  keywords = 'Saudi maintenance, home repair, service dispatch, maintenance app, verified technicians',
   canonical,
   ogImage = 'https://maintmena.com/og-image.jpg',
   noindex = false,

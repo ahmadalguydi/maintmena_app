@@ -11,7 +11,6 @@ const Footer = ({ currentLanguage }: FooterProps) => {
       nav: [
         { label: 'How It Works', href: '#brief' },
         { label: 'Categories', href: '#board' },
-        { label: 'Pricing', href: '#pricing' },
         { label: 'About', href: '/about' },
         { label: 'FAQ', href: '#faq' }
       ],
@@ -27,7 +26,6 @@ const Footer = ({ currentLanguage }: FooterProps) => {
       nav: [
         { label: 'كيف يعمل', href: '#brief' },
         { label: 'الفئات', href: '#board' },
-        { label: 'الأسعار', href: '#pricing' },
         { label: 'عن', href: '/about' },
         { label: 'الأسئلة', href: '#faq' }
       ],
@@ -52,10 +50,10 @@ const Footer = ({ currentLanguage }: FooterProps) => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <a href="/explore" className="px-4 py-2 rounded-md border border-rule text-ink hover:bg-muted/50 transition-colors">
+            <a href="/signup-choice?type=buyer" className="px-4 py-2 rounded-md border border-rule text-ink hover:bg-muted/50 transition-colors">
               {currentLanguage === 'ar' ? 'للمشترين' : 'For Buyers'}
             </a>
-            <a href="/marketplace" className="px-4 py-2 rounded-md bg-accent-2 hover:bg-accent-2/90 text-white transition-colors">
+            <a href="/signup-choice?type=seller" className="px-4 py-2 rounded-md bg-accent-2 hover:bg-accent-2/90 text-white transition-colors">
               {currentLanguage === 'ar' ? 'للمحترفين' : 'For Pros'}
             </a>
           </div>
@@ -66,17 +64,15 @@ const Footer = ({ currentLanguage }: FooterProps) => {
           <div>
             <h4 className="font-semibold text-ink mb-3">{currentLanguage === 'ar' ? 'للمشترين' : 'For Buyers'}</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/explore" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'ابحث عن محترف' : 'Find a Pro'}</a></li>
-              <li><a href="/pricing" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'الأسعار' : 'Pricing'}</a></li>
+              <li><a href="/signup-choice?type=buyer" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'أرسل طلب' : 'Submit a Request'}</a></li>
               <li><a href="#how-it-works" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'كيف يعمل' : 'How it works'}</a></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold text-ink mb-3">{currentLanguage === 'ar' ? 'للمحترفين' : 'For Pros'}</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/marketplace" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'ابحث عن عمل' : 'Find a Job'}</a></li>
-              <li><a href="/pricing" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'الأسعار' : 'Pricing'}</a></li>
-              <li><a href="/resources" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'المصادر' : 'Resources'}</a></li>
+              <li><a href="/signup-choice?type=seller" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'استقبل الطلبات' : 'Receive Requests'}</a></li>
+              <li><a href="/app/onboarding/signup?type=seller" className="text-muted-foreground hover:text-accent transition-colors">{currentLanguage === 'ar' ? 'انضم كمحترف' : 'Join as a Pro'}</a></li>
             </ul>
           </div>
           <div>

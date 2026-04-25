@@ -17,16 +17,9 @@ interface PushTokenRow {
   platform: string;
 }
 
-interface BookingRequestRow {
+interface MaintenanceRequestAuthorizationRow {
   buyer_id: string;
-  seller_id: string | null;
-}
-
-interface QuoteSubmissionAuthorizationRow {
-  seller_id: string | null;
-  maintenance_requests?: {
-    buyer_id: string;
-  } | null;
+  assigned_seller_id: string | null;
 }
 
 interface WebPushSubscriptionToken {
@@ -186,13 +179,9 @@ function getNotificationTarget(notification: NotificationInsert, userType: 'buye
   const id = notification.content_id;
 
   if (type === 'new_message') {
-    return userType === 'buyer' ? '/app/buyer/messages' : '/app/seller/messages';
+    return id ? `/app/messages/thread?request=${id}` : userType === 'buyer' ? '/app/buyer/messages' : '/app/seller/messages';
   }
   if (type === 'job_dispatched') return '/app/seller/home';
-  if (type === 'booking_response') {
-    return userType === 'buyer' ? '/app/buyer/home' : '/app/seller/home';
-  }
-  if (type === 'quote_revision_requested') return '/app/seller/home';
   if (type === 'warranty_nudge' || type === 'auto_close') {
     return userType === 'buyer' ? '/app/buyer/activity' : '/app/seller/home';
   }
@@ -290,34 +279,45 @@ export async function authorizeClientNotification(
     return false;
   }
 
-  switch (notification.notification_type) {
-    case 'booking_response': {
-      const { data } = await serviceClient
-        .from('booking_requests')
-        .select('buyer_id, seller_id')
-        .eq('id', notification.content_id)
-        .maybeSingle<BookingRequestRow>();
+  const requestNotificationTypes = new Set([
+    'job_accepted',
+    'job_status_updated',
+    'seller_on_way',
+    'seller_arrived',
+    'price_approval_needed',
+    'job_halted',
+    'job_resolution_progress',
+    'job_resolved',
+    'job_completed',
+    'job_cancelled',
+    'review_prompt_reminder',
+    'warranty_nudge',
+    'auto_close',
+  ]);
 
-      return !!data && data.seller_id === actorUserId && data.buyer_id === notification.user_id;
-    }
-
-    case 'quote_revision_requested': {
-      const { data } = await serviceClient
-        .from('quote_submissions')
-        .select('seller_id, maintenance_requests!inner(buyer_id)')
-        .eq('id', notification.content_id)
-        .maybeSingle<QuoteSubmissionAuthorizationRow>();
-
-      return (
-        !!data &&
-        data.maintenance_requests?.buyer_id === actorUserId &&
-        data.seller_id === notification.user_id
-      );
-    }
-
-    default:
-      return false;
+  if (!requestNotificationTypes.has(notification.notification_type)) {
+    return false;
   }
+
+  const { data } = await serviceClient
+    .from('maintenance_requests')
+    .select('buyer_id, assigned_seller_id')
+    .eq('id', notification.content_id)
+    .maybeSingle<MaintenanceRequestAuthorizationRow>();
+
+  if (!data?.buyer_id || !data.assigned_seller_id) return false;
+
+  const actorIsBuyer = data.buyer_id === actorUserId;
+  const actorIsSeller = data.assigned_seller_id === actorUserId;
+  const recipientIsBuyer = data.buyer_id === notification.user_id;
+  const recipientIsSeller = data.assigned_seller_id === notification.user_id;
+
+  if (actorIsSeller && recipientIsBuyer) return true;
+  if (actorIsBuyer && recipientIsSeller) {
+    return notification.notification_type === 'job_cancelled' || notification.notification_type === 'job_halted';
+  }
+
+  return false;
 }
 
 export async function sendPushForNotification(
@@ -463,6 +463,7 @@ export async function sendPushForNotification(
 export async function insertNotificationAndSendPush(
   serviceClient: ReturnType<typeof getServiceSupabaseClient>,
   notification: NotificationInsert,
+  options: { deliverPush?: boolean } = {},
 ): Promise<{ duplicate: boolean; notificationId: string | null; sent: number; skipped: number }> {
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
@@ -505,11 +506,13 @@ export async function insertNotificationAndSendPush(
     throw error ?? new Error('Failed to insert notification');
   }
 
-  const delivery = await sendPushForNotification(serviceClient, {
-    ...notification,
-    content_id: notification.content_id ?? null,
-    id: data.id,
-  });
+  const delivery = options.deliverPush
+    ? await sendPushForNotification(serviceClient, {
+      ...notification,
+      content_id: notification.content_id ?? null,
+      id: data.id,
+    })
+    : { sent: 0, skipped: 0 };
 
   return {
     duplicate: false,

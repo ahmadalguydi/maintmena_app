@@ -31,7 +31,6 @@ export { HaltedJobCard } from './HaltedJobCard';
 // Booking & Contract Components
 // ==========================================
 export { BookingConfirmedSheet } from './BookingConfirmedSheet';
-export { BookingNegotiationSheet } from './BookingNegotiationSheet';
 export { ContractDownloadButton } from './ContractDownloadButton';
 export { ContractExecutedSheet } from './ContractExecutedSheet';
 export { CounterProposalReviewSheet } from './CounterProposalReviewSheet';

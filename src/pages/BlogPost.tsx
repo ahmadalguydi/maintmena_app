@@ -16,6 +16,12 @@ import { Block } from '@/components/admin/blog-editor/types';
 import { BlockRenderer } from '@/components/admin/blog-editor/BlockRenderer';
 import { createSafeHtml } from '@/lib/sanitize';
 
+type UntypedSupabase = {
+  from: (table: string) => any;
+};
+
+const db = supabase as unknown as UntypedSupabase;
+
 interface BlogPost {
   id: string;
   slug: string;
@@ -96,7 +102,7 @@ export default function BlogPost({ currentLanguage }: BlogPostProps) {
 
   const fetchBlog = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('blogs')
         .select('*')
         .eq('slug', slug)
@@ -104,33 +110,35 @@ export default function BlogPost({ currentLanguage }: BlogPostProps) {
         .single();
 
       if (error) throw error;
+      const blogData = data as BlogPost & { blocks_en?: unknown; blocks_ar?: unknown };
 
       setBlog({
-        ...data,
-        blocks_en: (data.blocks_en as unknown) as Block[] | undefined,
-        blocks_ar: (data.blocks_ar as unknown) as Block[] | undefined,
+        ...blogData,
+        blocks_en: blogData.blocks_en as Block[] | undefined,
+        blocks_ar: blogData.blocks_ar as Block[] | undefined,
       });
 
       // Increment view count
-      await supabase
+      await db
         .from('blogs')
-        .update({ views_count: (data.views_count || 0) + 1 })
-        .eq('id', data.id);
+        .update({ views_count: (blogData.views_count || 0) + 1 })
+        .eq('id', blogData.id);
 
       // Fetch related blogs
-      const { data: related } = await supabase
+      const { data: related } = await db
         .from('blogs')
         .select('*')
-        .eq('category', data.category)
+        .eq('category', blogData.category)
         .eq('status', 'published')
-        .neq('id', data.id)
+        .neq('id', blogData.id)
         .limit(3);
 
-      setRelatedBlogs(related?.map(item => ({
+      const relatedItems = (related ?? []) as Array<BlogPost & { blocks_en?: unknown; blocks_ar?: unknown }>;
+      setRelatedBlogs(relatedItems.map(item => ({
         ...item,
-        blocks_en: (item.blocks_en as unknown) as Block[] | undefined,
-        blocks_ar: (item.blocks_ar as unknown) as Block[] | undefined,
-      })) || []);
+        blocks_en: item.blocks_en as Block[] | undefined,
+        blocks_ar: item.blocks_ar as Block[] | undefined,
+      })));
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error fetching blog:', error);
       toast.error(isRTL ? 'خطأ في تحميل المقال' : 'Error loading article');
@@ -382,18 +390,18 @@ export default function BlogPost({ currentLanguage }: BlogPostProps) {
               </h3>
               <p className="text-sm md:text-base text-muted-foreground mb-5 max-w-2xl mx-auto">
                 {isRTL
-                  ? 'احصل على عروض أسعار مجانية من مقاولين موثوقين في منطقتك'
-                  : 'Get free quotes from verified contractors in your area'}
+                  ? 'أرسل طلبك وسنوصلك بمقدم خدمة مناسب في منطقتك'
+                  : 'Submit your request and get matched with a suitable provider in your area'}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link to="/explore" onClick={() => handleCTAClick('blog_cta_explore')}>
+                <Link to="/signup-choice?type=buyer" onClick={() => handleCTAClick('blog_cta_request')}>
                   <Button size="lg" className="w-full sm:w-auto font-medium">
-                    {isRTL ? 'استكشف المقاولين' : 'Explore Contractors'}
+                    {isRTL ? 'أرسل طلب' : 'Submit a Request'}
                   </Button>
                 </Link>
-                <Link to="/pricing" onClick={() => handleCTAClick('blog_cta_pricing')}>
+                <Link to="/signup-choice?type=seller" onClick={() => handleCTAClick('blog_cta_seller')}>
                   <Button size="lg" variant="outline" className="w-full sm:w-auto font-medium">
-                    {isRTL ? 'الأسعار' : 'View Pricing'}
+                    {isRTL ? 'انضم كمحترف' : 'Join as a Pro'}
                   </Button>
                 </Link>
               </div>

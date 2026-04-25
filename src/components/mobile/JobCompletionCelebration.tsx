@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHaptics } from '@/hooks/useHaptics';
-import { celebrateFireworks, celebrateSuccess } from '@/lib/celebration';
-import { useAnimation, AnimatePresence } from 'framer-motion';
-import { LazyServiceLocationMap } from '@/components/maps/LazyServiceLocationMap';
+import { useAnimation } from 'framer-motion';
 import { getCelebrationCopy, localizeCategory } from '@/lib/translations';
+import { RequestSummaryCard } from '@/components/mobile/RequestSummaryCard';
+import { CelebrationReviewModal } from '@/components/mobile/CelebrationReviewModal';
+import { SERVICE_CATEGORIES } from '@/lib/serviceCategories';
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -15,8 +16,12 @@ export interface BuyerCelebrationData {
   variant: 'buyer';
   providerName: string;
   providerAvatar?: string;
+  providerId?: string;
+  providerRating?: number;
+  providerVerified?: boolean;
   amount?: number;
   category?: string;
+  subIssue?: string;
   title?: string;
   date?: string;
   requestId: string;
@@ -44,6 +49,38 @@ interface Props {
   currentLanguage: 'en' | 'ar';
   onDismiss: () => void;
   onReview?: () => void;
+  /**
+   * Optional: when provided, the buyer's primary CTA opens the in-place
+   * review modal and delegates submission to this callback (rather than
+   * falling back to `onReview`, which is the legacy scroll-to-section flow).
+   * The callback should resolve on success and throw on failure so the
+   * modal can surface retry state.
+   */
+  onSubmitReview?: (rating: number, reviewText: string) => Promise<void> | void;
+}
+
+// ─── Category → icon lookup ──────────────────────────────────────────────────
+// The celebration surface is rendered on a dark background. The light
+// RequestSummaryCard pops against it; the icon tile inside the card echoes
+// the buyer's original request category.
+function getCategoryIcon(category: string | undefined): string {
+  if (!category) return '✨';
+  const key = category.toLowerCase().trim();
+  for (const group of Object.values(SERVICE_CATEGORIES)) {
+    for (const entry of group) {
+      if (entry.key === key || entry.en.toLowerCase() === key || entry.ar === category) {
+        return entry.icon;
+      }
+    }
+  }
+  // Fallback by substring
+  if (key.includes('ac') || key.includes('hvac')) return '❄️';
+  if (key.includes('plumb')) return '🚰';
+  if (key.includes('elect')) return '⚡';
+  if (key.includes('paint')) return '🎨';
+  if (key.includes('clean')) return '🧹';
+  if (key.includes('carpent') || key.includes('handy')) return '🔧';
+  return '✨';
 }
 
 // â”€â”€â”€ Animated counter hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -157,21 +194,20 @@ function TimelineBar({ steps, isRTL, currentLanguage }: { steps: TimelineStep[];
 
 import confetti from 'canvas-confetti';
 
-export const JobCompletionCelebration = ({ data, currentLanguage, onDismiss, onReview }: Props) => {
+export const JobCompletionCelebration = ({ data, currentLanguage, onDismiss, onReview, onSubmitReview }: Props) => {
   const navigate = useNavigate();
   const { vibrate, notificationSuccess } = useHaptics();
   const firedRef = useRef(false);
   const isRTL = currentLanguage === 'ar';
   const isSeller = data.variant === 'seller';
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const amount = isSeller
     ? (data as SellerCelebrationData).amount
     : (data as BuyerCelebrationData).amount ?? 0;
 
-  const jobTitle = (data as any).title; 
   const category = data.category;
-  const avatar = isSeller ? (data as SellerCelebrationData).buyerAvatar : (data as BuyerCelebrationData).providerAvatar;
-  const jobDate = data.date;
+  const categoryIcon = useMemo(() => getCategoryIcon(category), [category]);
   const emojiControls = useAnimation();
   
   // Memoize celebration copy so random string doesn't jump around on re-renders
@@ -229,11 +265,23 @@ export const JobCompletionCelebration = ({ data, currentLanguage, onDismiss, onR
     if (isSeller) {
       onDismiss();
       navigate('/app/seller/earnings');
+      return;
+    }
+    // Buyer path: prefer the in-place review modal; fall back to legacy scroll.
+    if (onSubmitReview) {
+      setShowReviewModal(true);
     } else {
       onDismiss();
       if (onReview) onReview();
     }
-  }, [isSeller, onDismiss, navigate, onReview]);
+  }, [isSeller, onDismiss, navigate, onReview, onSubmitReview]);
+
+  const handleReviewSubmit = useCallback(async (rating: number, reviewText: string) => {
+    if (!onSubmitReview) return;
+    await onSubmitReview(rating, reviewText);
+    setShowReviewModal(false);
+    onDismiss();
+  }, [onSubmitReview, onDismiss]);
 
   const handleSecondary = useCallback(() => {
     onDismiss();
@@ -246,32 +294,24 @@ export const JobCompletionCelebration = ({ data, currentLanguage, onDismiss, onR
 
   const t = {
     en: {
-      title: 'Great Job!',
+      title: isSeller ? 'Job Closed!' : 'Great Job!',
       subtitle: isSeller
-        ? 'Awaiting buyer approval. Make sure you left a good impression to get an excellent rating!'
+        ? 'The buyer confirmed the price and completion code. This request is officially complete.'
         : 'Your job has been successfully completed by the pro.',
-      earningsLabel: 'Earning Reward',
-      jobSummaryPrefix: 'Job Summary',
-      verifiedText: 'Verified Completion',
+      earningsLabel: 'Final Amount Recorded',
       primarySeller: 'View My Earnings',
       primaryBuyer: 'Rate the Service',
       secondary: 'Close',
-      details: 'Details',
-      provider: 'With',
-      buyer: 'For',
     },
     ar: {
-      title: dynamicCopy.title,
-      subtitle: dynamicCopy.subtitle,
-      earningsLabel: 'أرباحك بهالمهمة',
-      jobSummaryPrefix: 'ملخص الطلب',
-      verifiedText: 'إتمام موثق',
+      title: isSeller ? 'تم إغلاق الطلب!' : dynamicCopy.title,
+      subtitle: isSeller
+        ? 'أكد العميل السعر ورمز الإغلاق. الطلب مكتمل وموثق الآن.'
+        : dynamicCopy.subtitle,
+      earningsLabel: 'المبلغ النهائي المسجل',
       primarySeller: 'شوف أرباحك',
       primaryBuyer: 'قيّم البطل',
       secondary: 'الرجوع للرئيسية',
-      details: 'التفاصيل',
-      provider: 'مع',
-      buyer: 'لـ',
     },
   }[currentLanguage];
 
@@ -279,7 +319,7 @@ export const JobCompletionCelebration = ({ data, currentLanguage, onDismiss, onR
 
   return (
     <motion.div
-      className="fixed inset-0 z-[200] flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden bg-[#111111]"
+      className="fixed inset-0 z-[200] flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden bg-[#14120f]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -297,27 +337,15 @@ export const JobCompletionCelebration = ({ data, currentLanguage, onDismiss, onR
         <X size={20} />
       </motion.button>
 
-      {/* â”€â”€ Top section: Glowing circle & text â”€â”€ */}
+      {/* â”€â”€ Top section: Hero circle & text â”€â”€ */}
       <div className="flex flex-col items-center justify-center w-full px-6 pt-16 pb-4 z-10 relative shrink-0">
-        {/* Glowing Orange Circle */}
+        {/* Simpler solid circle — matches spec: w-28 h-28, solid #D97725, soft tinted shadow */}
         <motion.div
           initial={{ scale: 0.5, opacity: 0, y: 30 }}
           animate={emojiControls}
-          className="relative mb-6"
+          className="relative mb-6 w-28 h-28 bg-[#D97725] rounded-full flex items-center justify-center shadow-lg shadow-[#D97725]/20"
         >
-          {/* Outer glow */}
-          <div className="absolute inset-0 rounded-full bg-[#E5832D]/30 blur-[40px] transform scale-150" />
-          
-          {/* Main circle */}
-          <div className="w-[140px] h-[140px] rounded-full bg-gradient-to-br from-[#FF9A44] to-[#D66512] shadow-inner flex items-center justify-center relative z-10">
-            {/* The confetti emoji inside */}
-            <div
-              className="text-6xl"
-              style={{ filter: 'drop-shadow(0px 10px 15px rgba(0,0,0,0.3))' }}
-            >
-              🎉
-            </div>
-          </div>
+          <span className="text-5xl leading-none">🎉</span>
         </motion.div>
 
         {/* Title */}
@@ -398,80 +426,56 @@ export const JobCompletionCelebration = ({ data, currentLanguage, onDismiss, onR
           </motion.div>
         )}
 
-        {/* BUYER: SHOW ELEGANT SUMMARY CARD (MIMICS HOME SCREEN) */}
-        {!isSeller && (
-          <motion.div
-            className="w-full rounded-[24px] bg-[#1A1A1A] border border-white/5 overflow-hidden relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col mb-4"
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 220, damping: 24, delay: 0.6 }}
-          >
-             {/* Map Preview at top */}
-             <div className="h-28 w-full border-b border-white/5 relative overflow-hidden shrink-0">
-                <LazyServiceLocationMap
-                   currentLanguage={currentLanguage}
-                   lat={(data as BuyerCelebrationData).lat}
-                   lng={(data as BuyerCelebrationData).lng}
-                   locationLabel={(data as BuyerCelebrationData).location || ''}
-                   heightClassName="h-full"
-                   className="rounded-none opacity-60"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-transparent to-transparent" />
-             </div>
-
-             <div className="p-6 pt-4 relative">
-                {/* Verified Badge */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 w-fit mb-5">
-                  <ShieldCheck size={14} className="text-emerald-500" />
-                  <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">{t.verifiedText}</span>
-                </div>
-
-                <div className="flex items-center gap-4 mb-6">
-                   {/* Provider Avatar */}
-                   <div className="relative shrink-0">
-                      <div className="w-14 h-14 rounded-2xl border border-white/10 p-0.5 overflow-hidden bg-[#222] shadow-xl">
-                        {avatar ? (
-                          <img src={avatar} alt="Avatar" className="w-full h-full rounded-[14px] object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xl bg-[#333]">👤</div>
-                        )}
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center ring-[3px] ring-[#1A1A1A] text-white">
-                        <Check size={10} strokeWidth={4} />
-                      </div>
-                   </div>
-                   
-                   <div className="min-w-0">
-                      <p className={cn("text-white/40 text-[11px] mb-0.5 font-medium uppercase tracking-tight", isRTL ? "font-ar-body" : "font-body")}>
-                        {isSeller ? t.buyer : t.provider} {(data as any).providerName || (data as any).buyerName}
-                      </p>
-                      <h3 className={cn("text-white font-bold text-[20px] leading-tight truncate", isRTL ? "font-ar-heading" : "font-heading")}>
-                        {jobTitle || (isRTL ? 'طلب خدمة صيانة' : 'Maintenance Request')}
-                      </h3>
-                   </div>
-                </div>
-
-                {/* Info Row */}
-                <div className="w-full grid grid-cols-2 gap-8 pt-5 border-t border-white/5">
-                   <div>
-                     <p className="text-white/30 text-[10px] mb-1.5 uppercase tracking-widest font-bold">{t.details}</p>
-                     <p className="text-white/90 text-[14px] font-bold truncate">{localizeCategory(category, currentLanguage)}</p>
-                   </div>
-                   <div className={cn("border-white/5", isRTL ? "border-r pr-8" : "border-l pl-8")}>
-                     <p className="text-white/30 text-[10px] mb-1.5 uppercase tracking-widest font-bold">Date</p>
-                     <p className="text-white/90 text-[14px] font-bold">{jobDate || new Date().toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' })}</p>
-                   </div>
-                </div>
-             </div>
-
-             {/* Subtle scanline background effect */}
-             <div className="absolute inset-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent 2px)', backgroundSize: '100% 2px' }} />
-          </motion.div>
-        )}
+        {/* BUYER: REQUEST SUMMARY CARD (matches home-screen language) */}
+        {!isSeller && (() => {
+          const buyer = data as BuyerCelebrationData;
+          const fallbackDate = new Date().toLocaleDateString(
+            currentLanguage === 'ar' ? 'ar-EG' : 'en-US',
+            { day: 'numeric', month: 'short' },
+          );
+          return (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 24, delay: 0.6 }}
+              className="mb-4 dark"
+            >
+              <RequestSummaryCard
+                forceDark
+                currentLanguage={currentLanguage}
+                category={localizeCategory(category, currentLanguage)}
+                categoryIcon={<span>{categoryIcon}</span>}
+                subIssue={buyer.subIssue ?? null}
+                description={buyer.title ?? null}
+                location={buyer.location ?? (isRTL ? 'الموقع' : 'Location')}
+                time={buyer.date || fallbackDate}
+                lat={buyer.lat}
+                lng={buyer.lng}
+                statusTitle={isRTL ? 'مكتمل' : 'Completed'}
+                statusSubtitle={isRTL ? 'تم التوثيق' : 'Verified completion'}
+                statusColor="bg-green-500"
+                providerName={buyer.providerName}
+                providerAvatar={buyer.providerAvatar}
+                providerId={buyer.providerId}
+                providerRating={buyer.providerRating}
+                providerVerified={buyer.providerVerified}
+                isProviderAssigned
+                onViewProvider={
+                  buyer.providerId
+                    ? () => {
+                        onDismiss();
+                        navigate(`/app/buyer/vendor/${buyer.providerId}`);
+                      }
+                    : undefined
+                }
+              />
+            </motion.div>
+          );
+        })()}
       </div>
 
       {/* â”€â”€ Bottom section: Actions â”€â”€ */}
-      <div className="w-full pb-safe-or-8 pt-4 px-5 relative z-10 mt-auto bg-gradient-to-t from-[#000000]/95 via-[#000000]/80 to-transparent shrink-0">
+      <div className="w-full pb-safe-or-8 pt-4 px-5 relative z-10 mt-auto bg-gradient-to-t from-[#14120f]/95 via-[#14120f]/80 to-transparent shrink-0">
         {/* Timeline removed from here */}
 
         {/* CTA buttons */}
@@ -504,6 +508,17 @@ export const JobCompletionCelebration = ({ data, currentLanguage, onDismiss, onR
           </button>
         </motion.div>
       </div>
+
+      {/* In-place review modal (buyer only, requires onSubmitReview) */}
+      {!isSeller && onSubmitReview && (
+        <CelebrationReviewModal
+          open={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          onSubmit={handleReviewSubmit}
+          currentLanguage={currentLanguage}
+          sellerName={(data as BuyerCelebrationData).providerName}
+        />
+      )}
     </motion.div>
   );
 };

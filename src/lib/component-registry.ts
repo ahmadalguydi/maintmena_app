@@ -153,7 +153,7 @@ export const MOBILE_COMPONENTS: Record<string, ComponentMetadata> = {
         version: '1.0.0',
         status: 'stable',
         category: 'mobile',
-        description: 'Job listing card for marketplace',
+        description: 'Job listing card for dispatch workflows',
         author: 'design-system',
         createdAt: '2024-06-01',
         lastModified: '2024-12-27',

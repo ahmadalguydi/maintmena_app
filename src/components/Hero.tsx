@@ -25,7 +25,7 @@ const Hero = ({ currentLanguage, onSamplePdfOpen }: HeroProps) => {
     const urlParams = new URLSearchParams(window.location.search);
     const paramVariant = urlParams.get("h1");
 
-    const validVariants: H1Variant[] = ["B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "O", "P"];
+    const validVariants: H1Variant[] = ["B"];
 
     if (paramVariant && validVariants.includes(paramVariant as H1Variant)) {
       setH1Variant(paramVariant as H1Variant);
@@ -149,8 +149,8 @@ const Hero = ({ currentLanguage, onSamplePdfOpen }: HeroProps) => {
     if (!user) {
       toast.info(
         currentLanguage === "ar"
-          ? "سجّل كمشتري عشان تلقى مقدمي خدمات موثوقين. احصل على عروض، قارن، واحجز بثقة!"
-          : "Sign up as a buyer to find trusted service providers. Get quotes, compare, and book with confidence!",
+          ? "سجّل كمشتري عشان ترسل طلبك ونوصلك بمقدم الخدمة المناسب."
+          : "Sign up as a buyer to submit a request and get matched with the right provider.",
         {
           duration: 5000,
           action: {
@@ -176,8 +176,8 @@ const Hero = ({ currentLanguage, onSamplePdfOpen }: HeroProps) => {
       return;
     }
 
-    // Logged in as buyer or admin - allow navigation
-    navigate("/explore");
+    // Logged in as buyer or admin - start a request
+    navigate("/app/buyer/home?compose=1");
   };
 
   const handleFindJobClick = () => {
@@ -212,8 +212,8 @@ const Hero = ({ currentLanguage, onSamplePdfOpen }: HeroProps) => {
       return;
     }
 
-    // Logged in as seller or admin - allow navigation
-    navigate("/marketplace");
+    // Logged in as seller or admin - view dispatched opportunities
+    navigate("/app/seller/home");
   };
 
   return (
@@ -256,8 +256,8 @@ const Hero = ({ currentLanguage, onSamplePdfOpen }: HeroProps) => {
               </h2>
               <p className="text-muted-foreground mb-6 leading-relaxed">
                 {currentLanguage === "ar"
-                  ? "ابحث عن محترفين موثوقين للصيانة، التجديد، أو البناء. قارن العروض واحجز بثقة"
-                  : "Find trusted professionals for maintenance, renovation, or construction. Compare quotes and book with confidence."}
+                  ? "أرسل طلبك وسنوصلك بمقدم خدمة مناسب حسب موقعك ونوع المشكلة."
+                  : "Submit a request and we will match you with a suitable provider based on location and job type."}
               </p>
 
               <ul className="space-y-2 mb-6 text-sm">
@@ -271,7 +271,7 @@ const Hero = ({ currentLanguage, onSamplePdfOpen }: HeroProps) => {
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-accent">✓</span>
-                  <span>{currentLanguage === "ar" ? "احجز وتتبع كل شيء بسهولة" : "Easy Booking & Tracking"}</span>
+                  <span>{currentLanguage === "ar" ? "تتبع الطلب والمحادثة بسهولة" : "Easy request tracking and chat"}</span>
                 </li>
               </ul>
 
@@ -280,7 +280,7 @@ const Hero = ({ currentLanguage, onSamplePdfOpen }: HeroProps) => {
                 onClick={handleFindProClick}
                 className="w-full bg-accent hover:bg-accent-hover text-paper font-bold shadow-lg group-hover:shadow-xl transition-shadow"
               >
-                {currentLanguage === "ar" ? "ابحث عن محترف" : "Find a Pro"}
+                {currentLanguage === "ar" ? "أرسل طلب" : "Submit a Request"}
               </Button>
             </div>
           </motion.div>
@@ -329,7 +329,7 @@ const Hero = ({ currentLanguage, onSamplePdfOpen }: HeroProps) => {
                 onClick={handleFindJobClick}
                 className="w-full bg-accent-2 hover:bg-accent-2/90 text-paper font-bold shadow-lg group-hover:shadow-xl transition-shadow"
               >
-                {currentLanguage === "ar" ? "انضم كمحترف" : "Find a Job"}
+                {currentLanguage === "ar" ? "انضم كمحترف" : "View Requests"}
               </Button>
             </div>
           </motion.div>

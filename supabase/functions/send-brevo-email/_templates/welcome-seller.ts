@@ -77,12 +77,12 @@ export const getWelcomeSellerTemplate = (language: 'en' | 'ar', data: Record<str
             <h2>Start Growing Your Business</h2>
             <p>As a seller on MaintMENA, you can:</p>
             <ul>
-              <li>Browse maintenance and project requests</li>
-              <li>Submit competitive quotes</li>
+                <li>Receive dispatched maintenance and project requests</li>
+                <li>Accept jobs with an estimated price</li>
               <li>Build your reputation through reviews</li>
               <li>Receive secure and timely payments</li>
             </ul>
-            <a href="${dashboardUrl}" class="button">Browse Opportunities</a>
+            <a href="${dashboardUrl}" class="button">View Requests</a>
             <p><strong>Pro tip:</strong> Complete your profile and add certifications to increase your chances!</p>
           </div>
           <div class="footer">

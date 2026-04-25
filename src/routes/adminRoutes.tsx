@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Route } from 'react-router-dom';
+import { Navigate, Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Loader2 } from 'lucide-react';
 
@@ -7,7 +7,6 @@ import { Loader2 } from 'lucide-react';
 const AdminHome = lazy(() => import('@/app/admin/home/AdminHome').then(m => ({ default: m.AdminHome })));
 const AdminReports = lazy(() => import('@/app/admin/reports/AdminReports').then(m => ({ default: m.AdminReports })));
 const AdminUsers = lazy(() => import('@/app/admin/users/AdminUsers').then(m => ({ default: m.AdminUsers })));
-const AdminSupport = lazy(() => import('@/app/admin/support/AdminSupport').then(m => ({ default: m.AdminSupport })));
 const AdminDisputes = lazy(() => import('@/app/admin/disputes/AdminDisputes').then(m => ({ default: m.AdminDisputes })));
 const AdminScores = lazy(() => import('@/app/admin/scores/AdminScores').then(m => ({ default: m.AdminScores })));
 const AdminIssues = lazy(() => import('@/app/admin/issues/AdminIssues').then(m => ({ default: m.AdminIssues })));
@@ -81,11 +80,7 @@ export function adminRoutes({ currentLanguage }: RouteProps) {
                 </ProtectedRoute>
             } />
             <Route path="/app/admin/support" element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                    <Suspense fallback={<RouteLoader />}>
-                        <AdminSupport currentLanguage={currentLanguage} />
-                    </Suspense>
-                </ProtectedRoute>
+                <Navigate to="/app/admin/home" replace />
             } />
             <Route path="/app/admin/disputes" element={
                 <ProtectedRoute allowedRoles={['admin']}>

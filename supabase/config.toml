@@ -4,16 +4,16 @@ project_id = "owvzutteoguscbymypyl"
 verify_jwt = true
 
 [functions.translate-content]
-verify_jwt = false
+verify_jwt = true
 
 [functions.backfill-translations]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-mock-vendors]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-brevo-email]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-verification-email]
 verify_jwt = false
@@ -24,5 +24,14 @@ verify_jwt = false
 [functions.nudge-completion]
 verify_jwt = false
 
+[functions.deliver-push]
+verify_jwt = false
+
 [functions.send-notification]
+verify_jwt = true
+
+[functions.handle-trial-expiration]
+verify_jwt = true
+
+[functions.process-issue-timeouts]
 verify_jwt = true

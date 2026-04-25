@@ -12,7 +12,7 @@ import { Body, BodySmall, Heading2, Heading3 } from '@/components/mobile/Typogra
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
-import { getNotificationTarget, type AppNotification } from '@/lib/notifications';
+import { getNotificationTarget, notificationQueryKeys, type AppNotification } from '@/lib/notifications';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { SwipeableNotificationItem } from '@/components/mobile/SwipeableNotificationItem';
 import { isToday, isYesterday } from 'date-fns';
@@ -41,8 +41,8 @@ export default function Notifications() {
 
   const handleRefresh = useCallback(async () => {
     if (!user) return;
-    await queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
-    await queryClient.invalidateQueries({ queryKey: ['notifications-unread', user.id] });
+    await queryClient.invalidateQueries({ queryKey: notificationQueryKeys.list(user.id) });
+    await queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount(user.id) });
   }, [user, queryClient]);
 
   const { containerRef, isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
@@ -138,7 +138,7 @@ export default function Notifications() {
           </div>
         </div>
 
-        <ScrollArea viewportRef={containerRef} className="min-h-0 flex-1">
+        <ScrollArea ref={containerRef} className="min-h-0 flex-1">
           {isLoading ? (
             <div className="space-y-4 pt-2">
               {[1, 2, 3, 4, 5].map((index) => (
@@ -171,7 +171,7 @@ export default function Notifications() {
                 {isRTL ? 'إعادة المحاولة' : 'Retry'}
               </Button>
             </motion.div>
-          ) : notifications.filter(n => n.notification_type !== 'new_message').length === 0 ? (
+          ) : notifications.length === 0 ? (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-20 text-center flex flex-col items-center">
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted/30 mb-6">
                 <Bell size={40} className="text-muted-foreground/40" />
@@ -187,7 +187,7 @@ export default function Notifications() {
             </motion.div>
           ) : (
             <div className="space-y-6 pt-2">
-              {groupNotifications(notifications.filter(n => n.notification_type !== 'new_message')).map((group) => (
+              {groupNotifications(notifications).map((group) => (
                 <div key={group.label}>
                   <p className={cn(
                     'text-[13px] font-bold text-muted-foreground/80 tracking-wide mb-3 px-2',

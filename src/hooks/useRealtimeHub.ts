@@ -42,12 +42,15 @@ export function useRealtimeHub() {
                     filter: `user_id=eq.${user.id}`,
                 },
                 (payload) => {
-                    queryClient.invalidateQueries({ queryKey: notificationQueryKeys.list(user.id) });
-                    queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount(user.id) });
-                    queryClient.invalidateQueries({ queryKey: ['nav-unread-messages', user.id] });
-
                     const n = payload.new as NotificationRow | null;
                     if (!n?.notification_type) return;
+
+                    if (n.notification_type === 'new_message') {
+                        queryClient.invalidateQueries({ queryKey: ['nav-unread-messages', user.id] });
+                    } else {
+                        queryClient.invalidateQueries({ queryKey: notificationQueryKeys.list(user.id) });
+                        queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount(user.id) });
+                    }
 
                     // Dedup: skip if we already toasted this notification recently
                     const nId = n.id || `${n.notification_type}_${Date.now()}`;
@@ -71,13 +74,12 @@ export function useRealtimeHub() {
                     // Read window.location directly — avoids any React state/ref lag
                     // after navigation.
                     const currentPath = window.location.pathname + window.location.search;
-                    const isOnMessagesScreen = currentPath.includes('/messages');
                     const isOnSameThread =
                         n.notification_type === 'new_message' &&
                         n.content_id != null &&
                         currentPath.includes(`request=${n.content_id}`);
 
-                    if (!isOnMessagesScreen && !isOnSameThread) {
+                    if (!isOnSameThread) {
                         toast.custom(
                             (toastId) =>
                                 InAppNotificationBanner({
@@ -92,7 +94,11 @@ export function useRealtimeHub() {
                                     onAction: (path) => { toast.dismiss(toastId); navigate(path); },
                                     currentLanguage: lang,
                                 }),
-                            { duration: 6000 }
+                            {
+                                duration: 6000,
+                                position: 'top-center',
+                                className: 'pointer-events-auto',
+                            }
                         );
                     }
                 }

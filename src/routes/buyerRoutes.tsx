@@ -10,10 +10,10 @@ export interface RouteProps {
 const BuyerHome = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/home/BuyerHome'), 'BuyerHome');
 const BuyerActivity = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/activity/BuyerActivity'), 'BuyerActivity');
 const RequestDetail = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/requests/RequestDetail'), 'RequestDetail');
+const VendorProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/vendors/VendorProfile'), 'VendorProfile');
 const BuyerProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/profile/BuyerProfile'), 'BuyerProfile');
 const BuyerEditProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/profile/EditProfile'), 'EditProfile');
 // History removed — Activity screen covers this. Route redirects below.
-const VendorProfile = lazyNamedRoute<RouteProps>(() => import('@/app/buyer/explore/VendorProfile'), 'VendorProfile');
 const MessagesHub = lazyRoute<RouteProps>(() => import('@/app/shared/MessagesHub'));
 const RescheduleJob = lazyNamedRoute<RouteProps>(() => import('@/app/seller/jobs/RescheduleJob'), 'RescheduleJob');
 

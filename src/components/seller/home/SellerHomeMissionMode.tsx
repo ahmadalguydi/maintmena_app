@@ -26,6 +26,7 @@ interface ActiveJob {
     scheduled_start_at?: string;
     service_type?: string;
     description?: string;
+    buyer_id?: string | null;
     buyer_name?: string;
     buyer_phone?: string;
     location?: string;
@@ -358,9 +359,6 @@ export function SellerHomeMissionMode({
                 });
             }
 
-            // Critical: show the code modal immediately so they can finalize with the buyer
-            setTimeout(() => setShowCompletionCodeModal(true), 300);
-
             await queryClient.invalidateQueries({ queryKey: ['seller-active-job'] });
             await queryClient.invalidateQueries({ queryKey: ['seller-active-jobs'] });
             await queryClient.invalidateQueries({ queryKey: ['seller-scheduled-jobs'] });
@@ -375,7 +373,7 @@ export function SellerHomeMissionMode({
     const handleCodeSubmit = async (code: string) => {
         setIsSubmittingCode(true);
         try {
-            const { data: verified, error } = await supabase
+            const { data: verified, error } = await (supabase as any)
                 .rpc('verify_job_completion_code', {
                     p_request_id: activeJob.id,
                     p_code: code,

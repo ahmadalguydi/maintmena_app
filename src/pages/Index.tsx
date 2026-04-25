@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Masthead from '@/components/Masthead';
 import Hero from '@/components/Hero';
-import SamplePdfModal from '@/components/SamplePdfModal';
 import SearchBarHook from '@/components/SearchBarHook';
 import WhyMaintMENA from '@/components/landing/WhyMaintMENA';
 import HowItWorks from '@/components/landing/HowItWorks';
 import CategoryGrid from '@/components/landing/CategoryGrid';
-import PricingSection from '@/components/landing/PricingSection';
 import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQ from '@/components/FAQ';
 import FinalCTA from '@/components/landing/FinalCTA';
@@ -20,7 +18,6 @@ interface IndexProps {
 }
 
 const Index = ({ currentLanguage }: IndexProps) => {
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -35,21 +32,6 @@ const Index = ({ currentLanguage }: IndexProps) => {
     }
   }, [location]);
 
-  const handleSamplePdfOpen = () => {
-    // Analytics tracking
-    if (typeof window !== 'undefined' && (window as any).dataLayer) {
-      (window as any).dataLayer.push({
-        event: 'sample_pdf_modal_open',
-        timestamp: Date.now()
-      });
-    }
-    setIsPdfModalOpen(true);
-  };
-
-  const handleSamplePdfClose = () => {
-    setIsPdfModalOpen(false);
-  };
-
   return (
     <div className="min-h-screen bg-paper text-ink overflow-x-hidden" dir={currentLanguage === 'ar' ? 'rtl' : 'ltr'}>
       <SEOHead 
@@ -59,7 +41,7 @@ const Index = ({ currentLanguage }: IndexProps) => {
         }
         description={currentLanguage === 'ar'
           ? 'احصل على خدمات صيانة وتجديد موثوقة أو انضم كمحترف للحصول على مشاريع حقيقية. مقارنة عروض، حجز سريع، ومراجعات موثوقة'
-          : 'Get trusted maintenance and renovation services or join as a professional to get real projects. Compare quotes, book fast, and read verified reviews.'
+          : 'Get trusted maintenance and renovation services or join as a professional to get real projects. Submit a request, get matched, and track the job.'
         }
         keywords="Saudi maintenance, home repair Saudi Arabia, contractors Riyadh, technicians Jeddah, home renovation, plumbers electricians Saudi, مقاولين السعودية, صيانة منازل"
         canonical="https://maintmena.com"
@@ -70,7 +52,6 @@ const Index = ({ currentLanguage }: IndexProps) => {
         <section id="overview">
           <Hero 
             currentLanguage={currentLanguage} 
-            onSamplePdfOpen={handleSamplePdfOpen}
           />
         </section>
         
@@ -86,10 +67,6 @@ const Index = ({ currentLanguage }: IndexProps) => {
           <CategoryGrid currentLanguage={currentLanguage} />
         </section>
         
-        <section id="pricing">
-          <PricingSection currentLanguage={currentLanguage} />
-        </section>
-        
         <TestimonialsSection currentLanguage={currentLanguage} />
         
         <section id="faq">
@@ -101,12 +78,6 @@ const Index = ({ currentLanguage }: IndexProps) => {
 
       <Footer currentLanguage={currentLanguage} />
 
-      <SamplePdfModal
-        isOpen={isPdfModalOpen}
-        onClose={handleSamplePdfClose}
-        currentLanguage={currentLanguage}
-      />
-      
       {/* Review Schema for Google Rich Results */}
       <ReviewSchema
         businessName="MaintMENA"
@@ -130,7 +101,7 @@ const Index = ({ currentLanguage }: IndexProps) => {
             "@context": "https://schema.org",
             "@type": "Organization",
             "name": "MaintMENA",
-            "description": "The trusted marketplace connecting homeowners with verified professionals and helping pros grow their business across Saudi Arabia.",
+            "description": "On-demand maintenance dispatch connecting customers with verified professionals across Saudi Arabia.",
             "url": "https://maintmena.com",
             "contactPoint": {
               "@type": "ContactPoint",
@@ -138,8 +109,8 @@ const Index = ({ currentLanguage }: IndexProps) => {
             },
             "product": {
               "@type": "Product",
-              "name": "MaintMENA Marketplace",
-              "description": "Service marketplace for home maintenance, renovation, and construction across Saudi Arabia",
+              "name": "MaintMENA Maintenance Dispatch",
+              "description": "On-demand service dispatch for home maintenance, renovation, and construction across Saudi Arabia",
               "category": "Home Services"
             },
             "faqPage": {
@@ -150,7 +121,7 @@ const Index = ({ currentLanguage }: IndexProps) => {
                   "name": "Is MaintMENA free to use?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes! Both buyers and sellers can start with free plans. Buyers get unlimited job posts, and sellers can post up to 3 listings. Premium plans unlock additional features."
+                    "text": "Yes. Buyers can submit requests and sellers can receive dispatched jobs without a subscription plan."
                   }
                 },
                 {

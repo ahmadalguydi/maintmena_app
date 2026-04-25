@@ -58,13 +58,13 @@ const SignupConfirmation = ({ currentLanguage }: SignupConfirmationProps) => {
       tips: {
         title: 'While you wait, here\'s what you can do:',
         items: userType === 'buyer' ? [
-          'Explore available service providers',
-          'Review pricing plans',
-          'Read our maintenance guides'
+          'Request maintenance in a few taps',
+          'Track your assigned pro in real time',
+          'Manage your service history'
         ] : [
-          'Complete your vendor profile',
-          'Review job opportunities',
-          'Explore our resources'
+          'Complete your pro profile',
+          'Set your service coverage',
+          'Get ready for dispatched jobs'
         ]
       },
       buttons: {

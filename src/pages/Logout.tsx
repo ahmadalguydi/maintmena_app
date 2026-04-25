@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, Shield, BookOpen, Mail, Coffee } from 'lucide-react';
+import { ArrowLeft, LogOut, Shield, Mail, Coffee, Wrench } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -13,15 +13,15 @@ const Logout = ({ currentLanguage }: LogoutProps) => {
   const content = {
     en: {
       title: 'You\'ve Been Signed Out',
-      subtitle: 'Thanks for staying informed with MaintMENA',
+      subtitle: 'Thanks for using MaintMENA',
       message: 'Your session has been securely ended. All your data remains safe and your preferences are saved for next time.',
       sessionSummary: {
         title: 'Session Summary',
         stats: [
-          { label: 'Tenders Reviewed', value: '8' },
+          { label: 'Requests Checked', value: '8' },
           { label: 'Time Spent', value: '23 min' },
-          { label: 'Briefs Read', value: '2' },
-          { label: 'Alerts Checked', value: '5' }
+          { label: 'Jobs Tracked', value: '2' },
+          { label: 'Updates Checked', value: '5' }
         ]
       },
       whileAway: {
@@ -30,7 +30,7 @@ const Logout = ({ currentLanguage }: LogoutProps) => {
           {
             icon: Mail,
             title: 'Stay Connected',
-            description: 'We\'ll keep monitoring for opportunities and send weekly briefs to your inbox'
+            description: 'We\'ll keep your service updates and account notifications ready for your next visit'
           },
           {
             icon: Shield,
@@ -38,9 +38,9 @@ const Logout = ({ currentLanguage }: LogoutProps) => {
             description: 'Your account is protected. Sign back in anytime to access your personalized dashboard'
           },
           {
-            icon: BookOpen,
-            title: 'Knowledge Base',
-            description: 'Explore our free resources on maintenance best practices and industry trends'
+            icon: Wrench,
+            title: 'Ready When Needed',
+            description: 'Request maintenance again whenever something needs attention'
           },
           {
             icon: Coffee,
@@ -49,18 +49,9 @@ const Logout = ({ currentLanguage }: LogoutProps) => {
           }
         ]
       },
-      resources: {
-        title: 'Free Resources',
-        links: [
-          'Maintenance Planning Guide',
-          'MENA Industrial Report 2024',
-          'Tender Preparation Checklist',
-          'Safety Compliance Updates'
-        ]
-      },
       cta: {
         primary: 'Sign Back In',
-        secondary: 'Browse Resources',
+        secondary: 'Contact Support',
         tertiary: 'Contact Support'
       }
     },
@@ -100,15 +91,6 @@ const Logout = ({ currentLanguage }: LogoutProps) => {
             title: 'خذ استراحة',
             description: 'الصيانة الصناعية لا تتوقف، لكن يجب أن تستريح أنت. نحن نغطيك بينما تعيد شحن طاقتك'
           }
-        ]
-      },
-      resources: {
-        title: 'الموارد المجانية',
-        links: [
-          'دليل تخطيط الصيانة',
-          'تقرير الصناعة في الشرق الأوسط وشمال أفريقيا 2024',
-          'قائمة فحص إعداد المناقصات',
-          'تحديثات الامتثال للسلامة'
         ]
       },
       cta: {
@@ -226,34 +208,6 @@ const Logout = ({ currentLanguage }: LogoutProps) => {
             </div>
           </motion.div>
 
-          {/* Free Resources */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="mb-12 bg-muted/20 rounded-lg p-8 border border-rule"
-          >
-            <h2 className="text-headline-2 text-center mb-6">
-              {content[currentLanguage].resources.title}
-            </h2>
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              {content[currentLanguage].resources.links.map((link, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.9 + index * 0.1 }}
-                >
-                  <Button variant="ghost" className="w-full justify-start text-sm">
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    {link}
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
           {/* CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -267,7 +221,7 @@ const Logout = ({ currentLanguage }: LogoutProps) => {
                   {content[currentLanguage].cta.primary}
                 </Button>
               </Link>
-              <Link to="/resources">
+              <Link to="/support">
                 <Button variant="outline" size="lg">
                   {content[currentLanguage].cta.secondary}
                 </Button>

@@ -34,7 +34,7 @@ const SellerPricing = ({ currentLanguage }: SellerPricingProps) => {
           features: [
             'Send up to 5 quotes',
             'Receive 10 bookings',
-            'Weekly briefs',
+            'Job notifications',
             'Basic profile'
           ],
           cta: 'Get Started'

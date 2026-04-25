@@ -15,12 +15,12 @@ const Terms = ({ currentLanguage }: TermsProps) => {
         {
           icon: Scale,
           title: "1. Acceptance of Terms",
-          content: "By accessing MaintMENA services, you enter into a binding agreement with us. These terms govern your use of our industrial intelligence platform, including all content, features, and services we provide. If you don't agree with any part of these terms, please don't use our services."
+          content: "By accessing MaintMENA services, you enter into a binding agreement with us. These terms govern your use of our maintenance dispatch platform, including all features and services we provide. If you don't agree with any part of these terms, please don't use our services."
         },
         {
           icon: FileText,
           title: "2. Service Description",
-          content: "MaintMENA provides industrial intelligence through weekly briefings, tender notifications, buyer directories, and market analysis for the MENA region. Our platform delivers verified information about maintenance opportunities, shutdowns, and industry movements to help businesses identify and pursue relevant opportunities."
+          content: "MaintMENA provides on-demand maintenance dispatch. Customers can submit service requests, verified professionals can receive and manage assigned jobs, and admins can coordinate service quality, disputes, reports, payments, and operational workflows."
         },
         {
           icon: CreditCard,
@@ -40,7 +40,7 @@ const Terms = ({ currentLanguage }: TermsProps) => {
         {
           icon: Gavel,
           title: "6. Limitation of Liability",
-          content: "While we strive for accuracy, MaintMENA provides information 'as is' without warranties. We're not liable for business decisions made based on our intelligence, lost opportunities, or indirect damages. Our total liability is limited to the amount you paid for services in the 12 months preceding any claim."
+          content: "While we strive for reliable service, MaintMENA is provided 'as is' without warranties. We're not liable for indirect damages, service delays outside our control, or user decisions made outside the platform. Our total liability is limited to the amount you paid for services in the 12 months preceding any claim."
         }
       ],
       footer: {

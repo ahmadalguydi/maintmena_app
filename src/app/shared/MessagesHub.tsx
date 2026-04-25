@@ -14,6 +14,7 @@ import { Heading3, Body, BodySmall, Caption } from '@/components/mobile/Typograp
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isSupabaseRelationKnownUnavailable } from '@/lib/supabaseSchema';
 import { cn } from '@/lib/utils';
+import { isMissingRpcError, markAllRequestMessagesRead } from '@/lib/messageReadReceipts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Untyped Supabase client for tables not present in the generated schema
@@ -44,6 +45,7 @@ interface MessageRow {
   id: string;
   request_id: string;
   sender_id: string;
+  recipient_id?: string | null;
   content: string;
   created_at: string;
   is_read: boolean;
@@ -62,6 +64,80 @@ interface ProfileRow {
   avatar_url: string | null;
 }
 
+async function fetchConversationsFallback(userId: string): Promise<Conversation[]> {
+  const { data: messageRows, error: messagesError } = await (db as any)
+    .from('messages')
+    .select('id, request_id, sender_id, recipient_id, content, created_at, is_read')
+    .not('request_id', 'is', null)
+    .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+    .order('created_at', { ascending: false })
+    .limit(500);
+
+  if (messagesError) {
+    if (import.meta.env.DEV) console.warn('[MessagesHub] fallback messages query failed:', messagesError);
+    return [];
+  }
+
+  const messages = ((messageRows ?? []) as MessageRow[]).filter((message) => message.request_id);
+  if (messages.length === 0) return [];
+
+  const requestIds = Array.from(new Set(messages.map((message) => message.request_id)));
+  const { data: requestRows } = await (db as any)
+    .from('maintenance_requests')
+    .select('id, buyer_id, assigned_seller_id')
+    .in('id', requestIds);
+
+  const requestsById = new Map(
+    ((requestRows ?? []) as MaintenanceRequestRow[]).map((request) => [request.id, request]),
+  );
+
+  const otherUserIds = Array.from(new Set(
+    requestIds
+      .map((requestId) => {
+        const request = requestsById.get(requestId);
+        if (!request) return null;
+        return request.buyer_id === userId ? request.assigned_seller_id : request.buyer_id;
+      })
+      .filter(Boolean) as string[],
+  ));
+
+  const { data: profileRows } = otherUserIds.length
+    ? await (db as any)
+      .from('profiles')
+      .select('id, full_name, company_name, avatar_url')
+      .in('id', otherUserIds)
+    : { data: [] };
+
+  const profilesById = new Map(
+    ((profileRows ?? []) as ProfileRow[]).map((profile) => [profile.id, profile]),
+  );
+
+  return requestIds
+    .map((requestId) => {
+      const requestMessages = messages.filter((message) => message.request_id === requestId);
+      const lastMessage = requestMessages[0];
+      const request = requestsById.get(requestId);
+      const otherUserId = request
+        ? request.buyer_id === userId
+          ? request.assigned_seller_id
+          : request.buyer_id
+        : null;
+      const profile = otherUserId ? profilesById.get(otherUserId) : null;
+
+      return {
+        id: requestId,
+        request_id: requestId,
+        last_message: lastMessage.content,
+        last_message_at: lastMessage.created_at,
+        unread_count: requestMessages.filter((message) => message.recipient_id === userId && !message.is_read).length,
+        other_user_name: profile?.full_name || profile?.company_name || 'MaintMENA user',
+        other_user_avatar: profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherUserId || requestId}`,
+        other_user_id: otherUserId ?? undefined,
+      };
+    })
+    .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime());
+}
+
 const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -75,12 +151,7 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
   const markAllReadMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) return;
-      const { error } = await db
-        .from('messages')
-        .update({ is_read: true })
-        .eq('recipient_id', user.id)
-        .eq('is_read', false);
-      if (error) throw error;
+      await markAllRequestMessagesRead(user.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
@@ -98,9 +169,13 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
         user_uuid: user.id 
       });
 
-      if (error) {
+      if (error && !isMissingRpcError(error)) {
         if (import.meta.env.DEV) console.error('[MessagesHub] RPC Error:', error);
         return [];
+      }
+
+      if (error && isMissingRpcError(error)) {
+        return fetchConversationsFallback(user.id);
       }
 
       return (data as any[] || []).map(row => ({
@@ -150,6 +225,7 @@ const MessagesHub = ({ currentLanguage }: MessagesHubProps) => {
           event: '*',
           schema: 'public',
           table: 'messages',
+          filter: `recipient_id=eq.${user.id}`,
         },
         (payload) => {
           const newRecord = payload.new as Record<string, unknown>;

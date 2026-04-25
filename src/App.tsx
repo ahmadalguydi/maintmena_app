@@ -151,12 +151,25 @@ function PageViewTracker() {
 
   return null;
 }
-function NativeRedirect() {
+const APP_MODE_SESSION_KEY = 'maintmena:app-mode';
+
+function AppRouteBoundary() {
     const location = useLocation();
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (Capacitor.isNativePlatform() && location.pathname === '/') {
+        const isAppRoute = location.pathname.startsWith('/app');
+
+        if (isAppRoute) {
+            window.sessionStorage.setItem(APP_MODE_SESSION_KEY, '1');
+            return;
+        }
+
+        const isAppSession =
+            Capacitor.isNativePlatform() ||
+            window.sessionStorage.getItem(APP_MODE_SESSION_KEY) === '1';
+
+        if (isAppSession) {
             navigate('/app', { replace: true });
         }
     }, [location.pathname, navigate]);
@@ -213,7 +226,7 @@ const App = () => {
                   <CelebrationProvider currentLanguage={currentLanguage}>
                     <PageViewTracker />
                     <ScrollToTop />
-                    <NativeRedirect />
+                    <AppRouteBoundary />
                     <NativeSystemBarsSync />
                     <RealtimeHub />
                     <RoutePrefetcher />

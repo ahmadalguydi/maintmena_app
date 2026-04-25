@@ -48,7 +48,7 @@ const Masthead = ({ currentLanguage }: MastheadProps) => {
                 {currentLanguage === 'ar' ? 'مينت مينا' : 'MaintMENA'}
               </h1>
               <p className={`text-byline ${currentLanguage === 'ar' ? 'text-sm' : 'text-xs sm:text-sm'}`}>
-                {currentLanguage === 'ar' ? 'السوق الصناعي' : 'Industrial Marketplace'}
+                {currentLanguage === 'ar' ? 'تطبيق صيانة عند الطلب' : 'On-Demand Maintenance'}
               </p>
             </div>
           </div>

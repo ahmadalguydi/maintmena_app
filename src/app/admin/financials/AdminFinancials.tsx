@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,13 +6,10 @@ import { GradientHeader } from '@/components/mobile/GradientHeader';
 import { SoftCard } from '@/components/mobile/SoftCard';
 import { Body, BodySmall, Caption, Heading3 } from '@/components/mobile/Typography';
 import {
+    Calculator,
     DollarSign,
-    TrendingUp,
-    TrendingDown,
     CheckCircle2,
-    Calendar,
-    BarChart3,
-    ArrowRight,
+    Percent,
 } from 'lucide-react';
 import { format, startOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
@@ -30,7 +28,7 @@ interface FinancialStats {
     monthRevenue: number;
     totalCompleted: number;
     avgJobValue: number;
-    recentJobs: { id: string; title: string | null; category: string; budget: number; completed_at: string; city: string | null }[];
+    recentJobs: { id: string; title: string | null; category: string; amount: number; completed_at: string; city: string | null }[];
     categoryRevenue: { category: string; total: number; count: number }[];
     last7Days: { date: string; revenue: number; count: number }[];
 }
@@ -38,6 +36,7 @@ interface FinancialStats {
 export function AdminFinancials({ currentLanguage }: AdminFinancialsProps) {
     const navigate = useNavigate();
     const isArabic = currentLanguage === 'ar';
+    const [feePercent, setFeePercent] = useState(10);
 
     const { data: stats, isLoading } = useQuery({
         queryKey: ['admin-financials'],
@@ -47,28 +46,33 @@ export function AdminFinancials({ currentLanguage }: AdminFinancialsProps) {
             const weekStart = startOfWeek(now, { weekStartsOn: 0 }).toISOString();
             const monthStart = startOfMonth(now).toISOString();
 
-            // All completed jobs with budget
+            // Completed requests use buyer-confirmed paid amount first, then seller final amount,
+            // then the older budget field as a fallback for historical rows.
             const { data: jobs } = await supabase
                 .from('maintenance_requests')
-                .select('id, title, category, budget, updated_at, city')
+                .select('id, title, category, budget, final_amount, buyer_confirmed_paid_amount, updated_at, city')
                 .in('status', ['completed', 'closed'])
-                .not('budget', 'is', null)
                 .order('updated_at', { ascending: false })
                 .limit(500);
 
-            const allJobs = (jobs || []).filter(j => j.budget && j.budget > 0);
+            const allJobs = (jobs || [])
+                .map(j => ({
+                    ...j,
+                    completedValue: Number(j.buyer_confirmed_paid_amount ?? j.final_amount ?? j.budget ?? 0),
+                }))
+                .filter(j => j.completedValue > 0);
 
-            const totalRevenue = allJobs.reduce((s, j) => s + (j.budget || 0), 0);
-            const todayRevenue = allJobs.filter(j => j.updated_at >= todayStart).reduce((s, j) => s + (j.budget || 0), 0);
-            const weekRevenue = allJobs.filter(j => j.updated_at >= weekStart).reduce((s, j) => s + (j.budget || 0), 0);
-            const monthRevenue = allJobs.filter(j => j.updated_at >= monthStart).reduce((s, j) => s + (j.budget || 0), 0);
+            const totalRevenue = allJobs.reduce((s, j) => s + j.completedValue, 0);
+            const todayRevenue = allJobs.filter(j => j.updated_at >= todayStart).reduce((s, j) => s + j.completedValue, 0);
+            const weekRevenue = allJobs.filter(j => j.updated_at >= weekStart).reduce((s, j) => s + j.completedValue, 0);
+            const monthRevenue = allJobs.filter(j => j.updated_at >= monthStart).reduce((s, j) => s + j.completedValue, 0);
             const avgJobValue = allJobs.length > 0 ? totalRevenue / allJobs.length : 0;
 
             // Category breakdown
             const catMap: Record<string, { total: number; count: number }> = {};
             allJobs.forEach(j => {
                 if (!catMap[j.category]) catMap[j.category] = { total: 0, count: 0 };
-                catMap[j.category].total += j.budget || 0;
+                catMap[j.category].total += j.completedValue;
                 catMap[j.category].count++;
             });
             const categoryRevenue = Object.entries(catMap)
@@ -83,7 +87,7 @@ export function AdminFinancials({ currentLanguage }: AdminFinancialsProps) {
                 const dayJobs = allJobs.filter(j => j.updated_at.startsWith(dayStr));
                 return {
                     date: dayStr,
-                    revenue: dayJobs.reduce((s, j) => s + (j.budget || 0), 0),
+                    revenue: dayJobs.reduce((s, j) => s + j.completedValue, 0),
                     count: dayJobs.length,
                 };
             });
@@ -92,7 +96,7 @@ export function AdminFinancials({ currentLanguage }: AdminFinancialsProps) {
                 id: j.id,
                 title: j.title,
                 category: j.category,
-                budget: j.budget!,
+                amount: j.completedValue,
                 completed_at: j.updated_at,
                 city: j.city,
             }));
@@ -108,11 +112,11 @@ export function AdminFinancials({ currentLanguage }: AdminFinancialsProps) {
 
     const t = {
         en: {
-            title: 'Financials', totalRevenue: 'Total Revenue', today: 'Today',
+            title: 'Financials', totalRevenue: 'Completed Job Value', today: 'Today',
             thisWeek: 'This Week', thisMonth: 'This Month', avgJob: 'Avg. Job Value',
             totalJobs: 'Completed Jobs', recentJobs: 'Recent Completions',
-            byCategory: 'Revenue by Category', dailyTrend: '7-Day Trend',
-            noData: 'No revenue data yet', sar: 'SAR',
+            byCategory: 'Value by Category', dailyTrend: '7-Day Trend',
+            noData: 'No completed job value yet', sar: 'SAR',
         },
         ar: {
             title: 'المالية', totalRevenue: 'إجمالي الإيرادات', today: 'اليوم',
@@ -123,9 +127,45 @@ export function AdminFinancials({ currentLanguage }: AdminFinancialsProps) {
         },
     }[currentLanguage];
 
+    const simulationCopy = {
+        en: {
+            title: 'Fee Simulation',
+            note: 'Planning view only. No subscription or in-app payment is active.',
+            variableFee: 'Variable fee per completed seller request',
+            expectedGain: 'Expected platform gain',
+            providerNet: 'Estimated provider net',
+            avgFee: 'Avg. fee per job',
+        },
+        ar: {
+            title: 'Fee Simulation',
+            note: 'Planning view only. No subscription or in-app payment is active.',
+            variableFee: 'Variable fee per completed seller request',
+            expectedGain: 'Expected platform gain',
+            providerNet: 'Estimated provider net',
+            avgFee: 'Avg. fee per job',
+        },
+    }[currentLanguage];
+
     const fmt = (n: number) => n.toLocaleString(isArabic ? 'ar-SA' : 'en-US', { maximumFractionDigits: 0 });
 
     const maxBar = Math.max(...(stats?.last7Days.map(d => d.revenue) || [1]), 1);
+    const normalizedFeePercent = Math.min(100, Math.max(0, feePercent));
+    const simulatedFees = useMemo(() => {
+        if (!stats) return null;
+        const platformFee = stats.totalRevenue * (normalizedFeePercent / 100);
+        const providerNet = Math.max(stats.totalRevenue - platformFee, 0);
+        return {
+            platformFee,
+            providerNet,
+            avgFee: stats.totalCompleted > 0 ? platformFee / stats.totalCompleted : 0,
+        };
+    }, [normalizedFeePercent, stats]);
+
+    const handleFeePercentChange = (value: string) => {
+        const next = Number(value);
+        if (!Number.isFinite(next)) return;
+        setFeePercent(Math.min(100, Math.max(0, next)));
+    };
 
     return (
         <div className="pb-28 min-h-screen bg-background" dir={isArabic ? 'rtl' : 'ltr'}>
@@ -163,6 +203,70 @@ export function AdminFinancials({ currentLanguage }: AdminFinancialsProps) {
                                 </Caption>
                             </SoftCard>
                         </motion.div>
+
+                        {simulatedFees && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+                                <SoftCard className="p-5 space-y-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                            <Calculator size={18} className="text-primary" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <Heading3 lang={currentLanguage} className="text-sm font-semibold">
+                                                {simulationCopy.title}
+                                            </Heading3>
+                                            <Caption lang={currentLanguage} className="text-muted-foreground">
+                                                {simulationCopy.note}
+                                            </Caption>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <BodySmall lang={currentLanguage} className="text-xs font-medium">
+                                                {simulationCopy.variableFee}
+                                            </BodySmall>
+                                            <div className="flex items-center gap-1 rounded-xl border border-border/60 px-2 py-1">
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    max={100}
+                                                    step={0.5}
+                                                    value={normalizedFeePercent}
+                                                    onChange={(event) => handleFeePercentChange(event.target.value)}
+                                                    className="w-14 bg-transparent text-right text-sm font-semibold tabular-nums outline-none"
+                                                />
+                                                <Percent size={14} className="text-muted-foreground" />
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min={0}
+                                            max={35}
+                                            step={0.5}
+                                            value={Math.min(normalizedFeePercent, 35)}
+                                            onChange={(event) => handleFeePercentChange(event.target.value)}
+                                            className="w-full accent-primary"
+                                            aria-label={simulationCopy.variableFee}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { label: simulationCopy.expectedGain, value: simulatedFees.platformFee },
+                                            { label: simulationCopy.providerNet, value: simulatedFees.providerNet },
+                                            { label: simulationCopy.avgFee, value: simulatedFees.avgFee },
+                                        ].map(item => (
+                                            <div key={item.label} className="rounded-xl bg-muted/50 p-3 text-center">
+                                                <p className="text-sm font-bold tabular-nums text-foreground">{fmt(item.value)}</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">{t.sar}</p>
+                                                <p className="text-[10px] text-muted-foreground leading-tight">{item.label}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </SoftCard>
+                            </motion.div>
+                        )}
 
                         {/* Period breakdown */}
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
@@ -274,7 +378,7 @@ export function AdminFinancials({ currentLanguage }: AdminFinancialsProps) {
                                                 </Caption>
                                             </div>
                                             <BodySmall lang={currentLanguage} className="font-semibold text-green-600 tabular-nums flex-shrink-0">
-                                                {fmt(job.budget)} {t.sar}
+                                                {fmt(job.amount)} {t.sar}
                                             </BodySmall>
                                         </div>
                                     ))}
